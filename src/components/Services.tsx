@@ -1,4 +1,7 @@
+"use client";
+
 import SectionHeader from "./SectionHeader";
+import { useFadeIn } from "@/hooks/useFadeIn";
 import styles from "./Services.module.css";
 
 const services = [
@@ -28,8 +31,10 @@ const services = [
 ];
 
 export default function Services() {
+  const ref = useFadeIn<HTMLElement>();
+
   return (
-    <section className={styles.section}>
+    <section ref={ref} className={`${styles.section} fade-in`}>
       <div className={styles.container}>
         <SectionHeader title="Services" id="services" />
         <div className={styles.grid}>

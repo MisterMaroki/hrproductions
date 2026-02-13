@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import SectionHeader from "./SectionHeader";
 import Lightbox from "./Lightbox";
+import { useFadeIn } from "@/hooks/useFadeIn";
 import styles from "./Gallery.module.css";
 
 const images = [
@@ -15,10 +16,11 @@ const images = [
 ];
 
 export default function Gallery() {
+  const ref = useFadeIn<HTMLElement>();
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   return (
-    <section className={styles.section}>
+    <section ref={ref} className={`${styles.section} fade-in`}>
       <div className={styles.container}>
         <SectionHeader title="Work" id="work" />
         <div className={styles.grid}>

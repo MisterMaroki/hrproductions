@@ -49,6 +49,17 @@ button {
   background: none;
 }
 
+.fade-in {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+}
+
+.fade-in.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 @media (max-width: 900px) {
   body {
     padding-bottom: 5rem;

@@ -5,6 +5,7 @@ import SectionHeader from "./SectionHeader";
 import AgentDetails from "./AgentDetails";
 import PropertyBlock from "./PropertyBlock";
 import Basket from "./Basket";
+import { useFadeIn } from "@/hooks/useFadeIn";
 import styles from "./BookingSection.module.css";
 
 export interface AgentInfo {
@@ -41,6 +42,7 @@ function createProperty(): PropertyBooking {
 }
 
 export default function BookingSection() {
+  const ref = useFadeIn<HTMLElement>();
   const [agent, setAgent] = useState<AgentInfo>({
     name: "",
     company: "",
@@ -63,7 +65,7 @@ export default function BookingSection() {
     setProperties((prev) => prev.filter((p) => p.id !== id));
 
   return (
-    <section className={styles.section}>
+    <section ref={ref} className={`${styles.section} fade-in`}>
       <div className={styles.container}>
         <SectionHeader title="Book" id="book" />
         <div className={styles.layout}>
