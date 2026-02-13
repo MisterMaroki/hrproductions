@@ -1,6 +1,6 @@
 .footer {
   border-top: 1px solid var(--color-border);
-  padding: 2rem var(--content-padding);
+  padding: 3rem var(--content-padding);
 }
 
 .inner {
@@ -14,18 +14,28 @@
 .brand {
   font-family: var(--font-heading);
   font-size: 1rem;
+  font-style: italic;
+}
+
+.tagline {
+  font-family: var(--font-heading);
+  font-size: 0.9rem;
+  font-style: italic;
+  color: var(--color-muted);
 }
 
 .contact a {
-  font-size: 0.9rem;
-  transition: opacity 0.2s ease;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  color: var(--color-muted);
+  transition: color 0.2s ease;
 }
 
 .contact a:hover {
-  opacity: 0.6;
+  color: var(--color-text);
 }
 
-@media (max-width: 500px) {
+@media (max-width: 600px) {
   .inner {
     flex-direction: column;
     gap: 0.75rem;

@@ -9,23 +9,41 @@
 
 .grid {
   columns: 3;
-  column-gap: 4px;
+  column-gap: 6px;
 }
 
 .item {
   display: block;
   width: 100%;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
   cursor: pointer;
   border: none;
   padding: 0;
   background: none;
   break-inside: avoid;
+  overflow: hidden;
+  position: relative;
 }
 
-.item:hover {
-  opacity: 0.85;
-  transition: opacity 0.2s ease;
+.item img {
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), filter 0.6s ease;
+}
+
+.item:hover img {
+  transform: scale(1.03);
+}
+
+.item::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0);
+  transition: background-color 0.4s ease;
+  pointer-events: none;
+}
+
+.item:hover::after {
+  background-color: rgba(0, 0, 0, 0.08);
 }
 
 @media (max-width: 900px) {
@@ -37,5 +55,10 @@
 @media (max-width: 500px) {
   .grid {
     columns: 1;
+    column-gap: 0;
+  }
+
+  .item {
+    margin-bottom: 4px;
   }
 }

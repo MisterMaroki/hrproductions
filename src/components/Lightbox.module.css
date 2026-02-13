@@ -1,21 +1,29 @@
 .backdrop {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.95);
+  background-color: rgba(0, 0, 0, 0.97);
   z-index: 200;
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: fadeIn 0.2s ease-out;
+  animation: fadeIn 0.3s ease-out;
 }
 
 .close {
   position: absolute;
-  top: 1.5rem;
-  right: 1.5rem;
+  top: 2rem;
+  right: 2rem;
   color: white;
-  font-size: 1.5rem;
+  font-size: 1rem;
   z-index: 201;
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+  font-family: var(--font-body);
+  letter-spacing: 0.1em;
+}
+
+.close:hover {
+  opacity: 1;
 }
 
 .arrow {
@@ -23,9 +31,15 @@
   top: 50%;
   transform: translateY(-50%);
   color: white;
-  font-size: 2rem;
+  font-size: 1.5rem;
   z-index: 201;
-  padding: 1rem;
+  padding: 1.5rem;
+  opacity: 0.4;
+  transition: opacity 0.2s ease;
+}
+
+.arrow:hover {
+  opacity: 1;
 }
 
 .left {
@@ -36,17 +50,13 @@
   right: 1rem;
 }
 
-.arrow:hover,
-.close:hover {
-  opacity: 0.6;
-}
-
 .imageWrap {
-  max-width: 90vw;
-  max-height: 90vh;
+  max-width: 85vw;
+  max-height: 85vh;
   display: flex;
   align-items: center;
   justify-content: center;
+  animation: imageReveal 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes fadeIn {
@@ -55,5 +65,16 @@
   }
   to {
     opacity: 1;
+  }
+}
+
+@keyframes imageReveal {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }

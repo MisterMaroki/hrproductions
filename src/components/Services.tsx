@@ -36,7 +36,7 @@ export default function Services() {
   return (
     <section ref={ref} className={`${styles.section} fade-in`}>
       <div className={styles.container}>
-        <SectionHeader title="Services" id="services" />
+        <SectionHeader title="Services" id="services" number="02 — What We Offer" />
         <div className={styles.grid}>
           {services.map((service) => (
             <div key={service.name} className={styles.card}>

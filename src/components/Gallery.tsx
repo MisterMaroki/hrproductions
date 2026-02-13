@@ -22,7 +22,7 @@ export default function Gallery() {
   return (
     <section ref={ref} className={`${styles.section} fade-in`}>
       <div className={styles.container}>
-        <SectionHeader title="Work" id="work" />
+        <SectionHeader title="Work" id="work" number="01 — Portfolio" />
         <div className={styles.grid}>
           {images.map((src, i) => (
             <button

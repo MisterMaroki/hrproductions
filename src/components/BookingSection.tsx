@@ -67,7 +67,7 @@ export default function BookingSection() {
   return (
     <section ref={ref} className={`${styles.section} fade-in`}>
       <div className={styles.container}>
-        <SectionHeader title="Book" id="book" />
+        <SectionHeader title="Book" id="book" number="03 — Get Started" />
         <div className={styles.layout}>
           <div className={styles.form}>
             <AgentDetails agent={agent} onChange={setAgent} />
