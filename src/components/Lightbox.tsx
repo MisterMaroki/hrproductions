@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import styles from "./Lightbox.module.css";
 
@@ -40,7 +41,7 @@ export default function Lightbox({
     };
   }, [onClose, goPrev, goNext]);
 
-  return (
+  return createPortal(
     <div className={styles.backdrop} onClick={onClose}>
       <button className={styles.close} onClick={onClose}>
         &#x2715;
@@ -72,6 +73,7 @@ export default function Lightbox({
       >
         &#8594;
       </button>
-    </div>
+    </div>,
+    document.body
   );
 }

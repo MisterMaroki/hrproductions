@@ -85,7 +85,7 @@
 
 .subtitle {
   font-family: var(--font-body);
-  font-size: clamp(0.75rem, 1.5vw, 0.9rem);
+  font-size: clamp(0.85rem, 1.5vw, 1rem);
   font-weight: 400;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -121,7 +121,7 @@
 
 .ctaText {
   font-family: var(--font-body);
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   font-weight: 500;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -154,7 +154,7 @@
 
 .scrollLabel {
   font-family: var(--font-body);
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-weight: 500;
   letter-spacing: 0.2em;
   text-transform: uppercase;
