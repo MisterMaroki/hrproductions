@@ -1,11 +1,12 @@
 import Nav from "@/components/Nav";
+import Hero from "@/components/Hero";
 
 export default function Home() {
   return (
     <>
       <Nav />
       <main id="top">
-        <p>Harrison Ross</p>
+        <Hero />
       </main>
     </>
   );
