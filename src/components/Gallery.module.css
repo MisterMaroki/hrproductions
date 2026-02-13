@@ -7,58 +7,170 @@
   margin: 0 auto;
 }
 
+/* ================================================
+   Editorial Grid — 12-column magazine layout
+   ================================================ */
+
 .grid {
-  columns: 3;
-  column-gap: 6px;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 12px;
 }
 
-.item {
-  display: block;
-  width: 100%;
-  margin-bottom: 6px;
+/* ================================================
+   Scroll-triggered reveal (per item)
+   ================================================ */
+
+.gridItem {
+  opacity: 0;
+  transform: translateY(40px) scale(1.03);
+  transition:
+    opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: var(--delay, 0s);
+}
+
+.gridItem.revealed {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* ================================================
+   Image Items
+   ================================================ */
+
+.imageItem {
+  grid-column: span var(--span, 12);
+  position: relative;
+  aspect-ratio: var(--aspect, 4/3);
+  overflow: hidden;
   cursor: pointer;
   border: none;
   padding: 0;
-  background: none;
-  break-inside: avoid;
-  overflow: hidden;
-  position: relative;
+  background: #1a1816;
+  display: block;
+  width: 100%;
 }
 
-.item img {
-  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), filter 0.6s ease;
+.imageItem img {
+  transition:
+    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.7s ease;
 }
 
-.item:hover img {
+.imageItem:hover img {
   transform: scale(1.03);
+  filter: brightness(1.06);
 }
 
-.item::after {
+/* Cinematic bottom vignette on hover */
+.imageItem::after {
   content: "";
   position: absolute;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0);
-  transition: background-color 0.4s ease;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.2) 0%,
+    transparent 50%
+  );
+  opacity: 0;
+  transition: opacity 0.5s ease;
   pointer-events: none;
 }
 
-.item:hover::after {
-  background-color: rgba(0, 0, 0, 0.08);
+.imageItem:hover::after {
+  opacity: 1;
 }
+
+/* Full-width hero images */
+.heroItem {
+  grid-column: 1 / -1;
+}
+
+/* ================================================
+   Editorial Text Blocks
+   ================================================ */
+
+.textBlock {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+}
+
+.manifestoText {
+  font-family: var(--font-body);
+  font-size: clamp(1.05rem, 1.8vw, 1.3rem);
+  line-height: 1.9;
+  color: var(--color-muted);
+  max-width: 580px;
+  text-align: center;
+  letter-spacing: 0.015em;
+}
+
+.quoteText {
+  font-family: var(--font-heading);
+  font-size: clamp(2rem, 4.5vw, 3.5rem);
+  font-style: italic;
+  font-weight: 400;
+  text-align: center;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+}
+
+/* ================================================
+   Tablet — 2-column grid
+   ================================================ */
 
 @media (max-width: 900px) {
   .grid {
-    columns: 2;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .imageItem {
+    grid-column: span 1;
+  }
+
+  .heroItem {
+    grid-column: 1 / -1;
+  }
+
+  .textBlock {
+    padding: 3rem 1rem;
+  }
+
+  .quoteText {
+    font-size: clamp(1.6rem, 4vw, 2.5rem);
   }
 }
 
-@media (max-width: 500px) {
+/* ================================================
+   Mobile — single column
+   ================================================ */
+
+@media (max-width: 600px) {
   .grid {
-    columns: 1;
-    column-gap: 0;
+    grid-template-columns: 1fr;
+    gap: 5px;
   }
 
-  .item {
-    margin-bottom: 4px;
+  .imageItem {
+    grid-column: 1 / -1;
+  }
+
+  .textBlock {
+    padding: 2.5rem 0;
+  }
+
+  .manifestoText {
+    font-size: 0.95rem;
+    line-height: 1.8;
+  }
+
+  .quoteText {
+    font-size: clamp(1.4rem, 6vw, 2rem);
   }
 }
