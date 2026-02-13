@@ -4,6 +4,7 @@ import { useState } from "react";
 import SectionHeader from "./SectionHeader";
 import AgentDetails from "./AgentDetails";
 import PropertyBlock from "./PropertyBlock";
+import Basket from "./Basket";
 import styles from "./BookingSection.module.css";
 
 export interface AgentInfo {
@@ -82,7 +83,7 @@ export default function BookingSection() {
             </button>
           </div>
           <div className={styles.basket}>
-            {/* Basket component will be added in Task 10 */}
+            <Basket properties={properties} agent={agent} />
           </div>
         </div>
       </div>
