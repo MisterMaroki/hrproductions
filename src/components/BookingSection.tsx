@@ -3,6 +3,7 @@
 import { useState } from "react";
 import SectionHeader from "./SectionHeader";
 import AgentDetails from "./AgentDetails";
+import PropertyBlock from "./PropertyBlock";
 import styles from "./BookingSection.module.css";
 
 export interface AgentInfo {
@@ -67,7 +68,15 @@ export default function BookingSection() {
         <div className={styles.layout}>
           <div className={styles.form}>
             <AgentDetails agent={agent} onChange={setAgent} />
-            {/* Property blocks will be added in Task 9 */}
+            {properties.map((property) => (
+              <PropertyBlock
+                key={property.id}
+                property={property}
+                onChange={(updates) => updateProperty(property.id, updates)}
+                onRemove={() => removeProperty(property.id)}
+                canRemove={properties.length > 1}
+              />
+            ))}
             <button className={styles.addProperty} onClick={addProperty}>
               + Add Another Property
             </button>
