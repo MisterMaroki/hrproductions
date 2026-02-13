@@ -1,0 +1,47 @@
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem var(--content-padding);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+  background-color: transparent;
+  border-bottom: 1px solid transparent;
+}
+
+.scrolled {
+  background-color: var(--color-bg);
+  border-bottom-color: var(--color-border);
+}
+
+.logo {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+}
+
+.links {
+  display: flex;
+  gap: 2rem;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+}
+
+.links a:hover {
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+@media (max-width: 600px) {
+  .links {
+    gap: 1.25rem;
+    font-size: 0.8rem;
+  }
+
+  .logo {
+    font-size: 1.1rem;
+  }
+}

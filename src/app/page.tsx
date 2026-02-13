@@ -1,3 +1,12 @@
+import Nav from "@/components/Nav";
+
 export default function Home() {
-  return <main>Harrison Ross</main>;
+  return (
+    <>
+      <Nav />
+      <main id="top">
+        <p>Harrison Ross</p>
+      </main>
+    </>
+  );
 }
