@@ -1,0 +1,50 @@
+.section {
+  padding: var(--section-padding) var(--content-padding);
+}
+
+.container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 3rem;
+  align-items: start;
+}
+
+.form {
+  min-width: 0;
+}
+
+.basket {
+  position: sticky;
+  top: 5rem;
+}
+
+.addProperty {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 500;
+  padding: 0.85rem 2rem;
+  border: 1px solid var(--color-border);
+  width: 100%;
+  text-align: center;
+  transition: background-color 0.2s ease;
+}
+
+.addProperty:hover {
+  background-color: var(--color-text);
+  color: var(--color-white);
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .basket {
+    position: static;
+  }
+}

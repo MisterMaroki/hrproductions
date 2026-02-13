@@ -1,0 +1,48 @@
+.fieldset {
+  border: none;
+  margin-bottom: 3rem;
+}
+
+.legend {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 400;
+  margin-bottom: 1.5rem;
+  display: block;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.input {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-white);
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.input:focus {
+  border-color: var(--color-text);
+  outline: 2px solid var(--color-text);
+  outline-offset: -2px;
+}
+
+@media (max-width: 500px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
