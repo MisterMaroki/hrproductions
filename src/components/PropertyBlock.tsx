@@ -15,31 +15,34 @@ export default function PropertyBlock({
   onRemove,
   canRemove,
 }: Props) {
-  const toggleService = (
-    service: "photography" | "standardVideo" | "agentPresentedVideo" | "drone"
-  ) => {
-    if (service === "standardVideo") {
-      onChange({
-        standardVideo: !property.standardVideo,
-        agentPresentedVideo: false,
-        drone: !property.standardVideo ? property.drone : false,
-      });
-    } else if (service === "agentPresentedVideo") {
-      onChange({
-        agentPresentedVideo: !property.agentPresentedVideo,
-        standardVideo: false,
-        drone: !property.agentPresentedVideo ? property.drone : false,
-      });
-    } else if (service === "drone") {
-      if (property.standardVideo || property.agentPresentedVideo) {
-        onChange({ drone: !property.drone });
-      }
-    } else if (service === "photography") {
-      onChange({ photography: !property.photography });
-    }
+  const togglePhotography = () => {
+    onChange({ photography: !property.photography });
   };
 
-  const hasVideo = property.standardVideo || property.agentPresentedVideo;
+  const toggleDronePhotography = () => {
+    onChange({ dronePhotography: !property.dronePhotography });
+  };
+
+  const toggleStandardVideo = () => {
+    const next = !property.standardVideo;
+    onChange({
+      standardVideo: next,
+      agentPresentedVideo: false,
+      agentPresentedVideoDrone: false,
+      standardVideoDrone: next ? property.standardVideoDrone : false,
+    });
+  };
+
+  const toggleAgentPresentedVideo = () => {
+    const next = !property.agentPresentedVideo;
+    onChange({
+      agentPresentedVideo: next,
+      standardVideo: false,
+      standardVideoDrone: false,
+      agentPresentedVideoDrone: next ? property.agentPresentedVideoDrone : false,
+    });
+  };
+
   const subtotal = calcPropertyTotal(property);
 
   return (
@@ -95,57 +98,117 @@ export default function PropertyBlock({
             />
           </label>
         </div>
+
+        <label className={styles.field}>
+          <span>Notes &amp; Access</span>
+          <textarea
+            value={property.notes}
+            onChange={(e) => onChange({ notes: e.target.value })}
+            className={`${styles.input} ${styles.textarea}`}
+            placeholder="Key/lockbox codes, parking info, access instructions..."
+            rows={3}
+          />
+        </label>
       </div>
 
       <div className={styles.services}>
         <span className={styles.servicesLabel}>Services</span>
-        <div className={styles.pills}>
+
+        {/* Photography */}
+        <div className={styles.serviceGroup}>
           <button
             className={`${styles.pill} ${property.photography ? styles.active : ""}`}
-            onClick={() => toggleService("photography")}
+            onClick={togglePhotography}
             type="button"
           >
             Photography
           </button>
+          {property.photography && (
+            <label className={styles.serviceOption}>
+              <span>Number of photos</span>
+              <input
+                type="number"
+                min={20}
+                value={property.photoCount}
+                onChange={(e) =>
+                  onChange({ photoCount: Math.max(20, parseInt(e.target.value, 10) || 20) })
+                }
+                className={styles.input}
+              />
+            </label>
+          )}
+        </div>
+
+        {/* Drone Photography */}
+        <div className={styles.serviceGroup}>
+          <button
+            className={`${styles.pill} ${property.dronePhotography ? styles.active : ""}`}
+            onClick={toggleDronePhotography}
+            type="button"
+          >
+            Drone Photography
+          </button>
+          {property.dronePhotography && (
+            <label className={styles.serviceOption}>
+              <span>Package</span>
+              <select
+                value={property.dronePhotoCount}
+                onChange={(e) =>
+                  onChange({ dronePhotoCount: parseInt(e.target.value, 10) as 8 | 20 })
+                }
+                className={styles.input}
+              >
+                <option value={8}>8 photos — £75</option>
+                <option value={20}>20 photos — £140</option>
+              </select>
+            </label>
+          )}
+        </div>
+
+        {/* Unpresented Property Video */}
+        <div className={styles.serviceGroup}>
           <button
             className={`${styles.pill} ${property.standardVideo ? styles.active : ""}`}
-            onClick={() => toggleService("standardVideo")}
+            onClick={toggleStandardVideo}
             type="button"
           >
-            Property Video
+            Unpresented Property Video
           </button>
-          <button
-            className={`${styles.pill} ${property.drone ? styles.active : ""} ${!hasVideo ? styles.disabled : ""}`}
-            onClick={() => toggleService("drone")}
-            type="button"
-            disabled={!hasVideo}
-          >
-            Drone Footage
-          </button>
+          {property.standardVideo && (
+            <label className={styles.serviceOption}>
+              <input
+                type="checkbox"
+                checked={property.standardVideoDrone}
+                onChange={(e) => onChange({ standardVideoDrone: e.target.checked })}
+                className={styles.checkbox}
+              />
+              <span>Add drone footage (+£65)</span>
+            </label>
+          )}
+        </div>
+
+        {/* Agent Presented Video */}
+        <div className={styles.serviceGroup}>
           <button
             className={`${styles.pill} ${property.agentPresentedVideo ? styles.active : ""}`}
-            onClick={() => toggleService("agentPresentedVideo")}
+            onClick={toggleAgentPresentedVideo}
             type="button"
           >
-            Agent Presented
+            Agent Presented Video
           </button>
+          {property.agentPresentedVideo && (
+            <label className={styles.serviceOption}>
+              <input
+                type="checkbox"
+                checked={property.agentPresentedVideoDrone}
+                onChange={(e) => onChange({ agentPresentedVideoDrone: e.target.checked })}
+                className={styles.checkbox}
+              />
+              <span>Add drone footage (+£65)</span>
+            </label>
+          )}
         </div>
       </div>
-
-      {property.photography && (
-        <label className={styles.photoCount}>
-          <span>Number of photos</span>
-          <input
-            type="number"
-            min={20}
-            value={property.photoCount}
-            onChange={(e) =>
-              onChange({ photoCount: Math.max(20, parseInt(e.target.value, 10) || 20) })
-            }
-            className={styles.input}
-          />
-        </label>
-      )}
 
       {subtotal > 0 && (
         <div className={styles.subtotal}>
