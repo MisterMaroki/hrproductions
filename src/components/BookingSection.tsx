@@ -20,11 +20,15 @@ export interface PropertyBooking {
   address: string;
   bedrooms: number;
   preferredDate: string;
+  notes: string;
   photography: boolean;
   photoCount: number;
+  dronePhotography: boolean;
+  dronePhotoCount: 8 | 20;
   standardVideo: boolean;
+  standardVideoDrone: boolean;
   agentPresentedVideo: boolean;
-  drone: boolean;
+  agentPresentedVideoDrone: boolean;
 }
 
 function createProperty(): PropertyBooking {
@@ -33,11 +37,15 @@ function createProperty(): PropertyBooking {
     address: "",
     bedrooms: 2,
     preferredDate: "",
+    notes: "",
     photography: false,
     photoCount: 20,
+    dronePhotography: false,
+    dronePhotoCount: 8,
     standardVideo: false,
+    standardVideoDrone: false,
     agentPresentedVideo: false,
-    drone: false,
+    agentPresentedVideoDrone: false,
   };
 }
 
@@ -83,6 +91,16 @@ export default function BookingSection() {
             <button className={styles.addProperty} onClick={addProperty}>
               + Add Another Property
             </button>
+
+            <div className={styles.disclaimer}>
+              <h4 className={styles.disclaimerTitle}>Important Information</h4>
+              <ul className={styles.disclaimerList}>
+                <li>Unpresented property videos are allocated 1 hour per shoot. Agent-presented videos are allocated 2 hours. Additional time may incur extra charges.</li>
+                <li>Properties must include a full address. Shoots within 10 miles of Brighton are included. Properties beyond 10 miles will incur a per-mile travel charge, quoted separately.</li>
+                <li>Multi-property bookings on the same day receive £15 off each additional property.</li>
+                <li>All prices are exclusive of VAT.</li>
+              </ul>
+            </div>
           </div>
           <div className={styles.basket}>
             <Basket properties={properties} agent={agent} />
