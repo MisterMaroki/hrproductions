@@ -27,10 +27,14 @@ interface CheckoutBody {
     email: string;
     phone: string;
   };
+  discountCode?: string;
+  discountPercentage?: number;
 }
 
 function buildLineItems(
-  properties: PropertyPayload[]
+  properties: PropertyPayload[],
+  discountCode?: string,
+  discountPercentage?: number,
 ): Stripe.Checkout.SessionCreateParams.LineItem[] {
   const items: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
 
@@ -138,13 +142,33 @@ function buildLineItems(
     });
   }
 
+  // Discount code
+  if (discountPercentage && discountPercentage > 0) {
+    const serviceTotal = items
+      .filter((item) => (item.price_data as { unit_amount: number }).unit_amount > 0)
+      .reduce((sum, item) => sum + (item.price_data as { unit_amount: number }).unit_amount, 0);
+    const codeDiscountPence = Math.round(serviceTotal * (discountPercentage / 100));
+    if (codeDiscountPence > 0) {
+      items.push({
+        price_data: {
+          currency: "gbp",
+          product_data: {
+            name: `Discount code (${discountCode || ""}): ${discountPercentage}% off`,
+          },
+          unit_amount: -codeDiscountPence,
+        },
+        quantity: 1,
+      });
+    }
+  }
+
   return items;
 }
 
 export async function POST(request: Request) {
   try {
     const body: CheckoutBody = await request.json();
-    const { properties, agent } = body;
+    const { properties, agent, discountCode, discountPercentage } = body;
 
     if (!properties?.length) {
       return NextResponse.json(
@@ -153,7 +177,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const lineItems = buildLineItems(properties);
+    const lineItems = buildLineItems(properties, discountCode, discountPercentage);
 
     // Filter out any discount-only submissions
     const serviceItems = lineItems.filter(
@@ -180,12 +204,22 @@ export async function POST(request: Request) {
         agent_company: agent.company,
         agent_email: agent.email,
         agent_phone: agent.phone,
+        discount_code: discountCode || "",
+        discount_percentage: String(discountPercentage || 0),
         properties: JSON.stringify(
           properties.map((p) => ({
             address: p.address,
             bedrooms: p.bedrooms,
             preferredDate: p.preferredDate,
             notes: p.notes,
+            photography: p.photography,
+            photoCount: p.photoCount,
+            dronePhotography: p.dronePhotography,
+            dronePhotoCount: p.dronePhotoCount,
+            standardVideo: p.standardVideo,
+            standardVideoDrone: p.standardVideoDrone,
+            agentPresentedVideo: p.agentPresentedVideo,
+            agentPresentedVideoDrone: p.agentPresentedVideoDrone,
           }))
         ),
       },
