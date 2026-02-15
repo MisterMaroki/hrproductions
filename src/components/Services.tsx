@@ -11,14 +11,14 @@ const services = [
     details: ["£6.50 per photo · Min 20 per property", "10% off for 100+ photos"],
   },
   {
-    name: "Property Video",
-    price: "From £125",
-    details: ["2-bed base · +£30 per extra bedroom", "Professional edit included"],
+    name: "Drone Photography",
+    price: "From £75",
+    details: ["8 photos — £75", "20 photos — £140"],
   },
   {
-    name: "Drone Footage",
-    price: "+£65",
-    details: ["Add-on to any video package", "Aerial property & surroundings"],
+    name: "Unpresented Property Video",
+    price: "From £125",
+    details: ["2-bed base · +£30 per extra bedroom", "Add drone footage for +£65"],
   },
   {
     name: "Agent Presented Video",
