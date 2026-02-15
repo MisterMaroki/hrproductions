@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import type { PropertyBooking, AgentInfo } from "./BookingSection";
 import {
   calcPhotography,
+  calcDronePhotography,
   calcStandardVideo,
   calcAgentPresentedVideo,
-  calcDrone,
+  calcVideoDrone,
   calcPropertyTotal,
+  calcMultiPropertyDiscount,
 } from "@/lib/pricing";
 import styles from "./Basket.module.css";
 
@@ -17,7 +19,7 @@ interface Props {
 }
 
 function getLineItems(property: PropertyBooking) {
-  const items: { label: string; price: number }[] = [];
+  const items: { label: string; price: number; indent?: boolean }[] = [];
 
   if (property.photography) {
     const price = calcPhotography(property.photoCount);
@@ -28,21 +30,29 @@ function getLineItems(property: PropertyBooking) {
     });
   }
 
+  if (property.dronePhotography) {
+    items.push({
+      label: `Drone Photography (${property.dronePhotoCount} photos)`,
+      price: calcDronePhotography(property.dronePhotoCount),
+    });
+  }
+
   if (property.agentPresentedVideo) {
     items.push({
       label: `Agent Presented Video (${property.bedrooms}-bed)`,
       price: calcAgentPresentedVideo(property.bedrooms),
     });
+    if (property.agentPresentedVideoDrone) {
+      items.push({ label: "Drone footage", price: calcVideoDrone(), indent: true });
+    }
   } else if (property.standardVideo) {
     items.push({
-      label: `Property Video (${property.bedrooms}-bed)`,
+      label: `Unpresented Video (${property.bedrooms}-bed)`,
       price: calcStandardVideo(property.bedrooms),
     });
-  }
-
-  const hasVideo = property.standardVideo || property.agentPresentedVideo;
-  if (property.drone && hasVideo) {
-    items.push({ label: "Drone Footage", price: calcDrone() });
+    if (property.standardVideoDrone) {
+      items.push({ label: "Drone footage", price: calcVideoDrone(), indent: true });
+    }
   }
 
   return items;
@@ -50,6 +60,7 @@ function getLineItems(property: PropertyBooking) {
 
 export default function Basket({ properties, agent }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const propertyTotals = properties.map((p) => ({
     property: p,
@@ -57,23 +68,33 @@ export default function Basket({ properties, agent }: Props) {
     subtotal: calcPropertyTotal(p),
   }));
 
-  const grandTotal = propertyTotals.reduce((sum, p) => sum + p.subtotal, 0);
-  const hasItems = grandTotal > 0;
+  const subtotalBeforeDiscount = propertyTotals.reduce((sum, p) => sum + p.subtotal, 0);
+  const discount = calcMultiPropertyDiscount(properties.length);
+  const grandTotal = Math.max(0, subtotalBeforeDiscount - discount);
+  const hasItems = subtotalBeforeDiscount > 0;
 
-  const handleCheckout = () => {
-    // TODO: Replace with Stripe Checkout Session redirect when Stripe account is set up
-    const orderLines = propertyTotals
-      .filter(({ items }) => items.length > 0)
-      .map(({ property, items, subtotal }) =>
-        `${property.address || "TBC"} (${property.bedrooms}-bed, ${property.preferredDate || "date TBC"}):\n${items.map((i) => `  - ${i.label}: £${i.price.toFixed(2)}`).join("\n")}\n  Subtotal: £${subtotal.toFixed(2)}`
-      )
-      .join("\n\n");
+  const handleCheckout = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ properties, agent }),
+      });
 
-    const body = `New Booking Request\n\nAgent: ${agent.name}\nCompany: ${agent.company}\nEmail: ${agent.email}\nPhone: ${agent.phone}\n\n${orderLines}\n\nTotal: £${grandTotal.toFixed(2)}`;
+      const data = await res.json();
 
-    const mailto = `mailto:hello@harrisonross.co.uk?subject=${encodeURIComponent(`Booking Request — £${grandTotal.toFixed(2)}`)}&body=${encodeURIComponent(body)}`;
-    window.location.href = mailto;
-  };
+      if (!res.ok) {
+        throw new Error(data.error || "Checkout failed");
+      }
+
+      window.location.href = data.url;
+    } catch (err) {
+      console.error("Checkout error:", err);
+      alert("Something went wrong. Please try again.");
+      setLoading(false);
+    }
+  }, [properties, agent]);
 
   const basketContent = (
     <>
@@ -85,8 +106,8 @@ export default function Basket({ properties, agent }: Props) {
               {property.address || "No address yet"}
             </p>
             {items.map((item) => (
-              <div key={item.label} className={styles.lineItem}>
-                <span>{item.label}</span>
+              <div key={item.label} className={`${styles.lineItem} ${item.indent ? styles.indented : ""}`}>
+                <span>{item.indent ? `+ ${item.label}` : item.label}</span>
                 <span>£{item.price.toFixed(2)}</span>
               </div>
             ))}
@@ -98,6 +119,13 @@ export default function Basket({ properties, agent }: Props) {
         );
       })}
 
+      {discount > 0 && (
+        <div className={styles.discountLine}>
+          <span>Multi-property discount ({properties.length} properties)</span>
+          <span>-£{discount.toFixed(2)}</span>
+        </div>
+      )}
+
       <div className={styles.total}>
         <span>Total</span>
         <span>£{grandTotal.toFixed(2)}</span>
@@ -106,9 +134,9 @@ export default function Basket({ properties, agent }: Props) {
       <button
         className={styles.checkout}
         onClick={handleCheckout}
-        disabled={!hasItems}
+        disabled={!hasItems || loading}
       >
-        Proceed to Payment
+        {loading ? "Redirecting…" : "Proceed to Payment"}
       </button>
     </>
   );
@@ -138,9 +166,9 @@ export default function Basket({ properties, agent }: Props) {
           <button
             className={styles.mobileCheckout}
             onClick={handleCheckout}
-            disabled={!hasItems}
+            disabled={!hasItems || loading}
           >
-            Pay
+            {loading ? "…" : "Pay"}
           </button>
         </div>
         {mobileOpen && (

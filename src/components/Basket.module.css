@@ -50,6 +50,22 @@
   padding-top: 0.5rem;
 }
 
+.indented {
+  padding-left: 1rem;
+  font-size: 0.825rem;
+}
+
+.discountLine {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  padding: 0.75rem 0;
+  color: #2d7a3a;
+  font-weight: 500;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 0.75rem;
+}
+
 .total {
   display: flex;
   justify-content: space-between;
