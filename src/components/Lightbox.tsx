@@ -1,30 +1,38 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import styles from "./Lightbox.module.css";
 
+export type LightboxItem = {
+  type: "image" | "video";
+  src: string;
+  alt: string;
+};
+
 interface LightboxProps {
-  images: string[];
+  items: LightboxItem[];
   index: number;
   onClose: () => void;
   onNavigate: (index: number) => void;
 }
 
 export default function Lightbox({
-  images,
+  items,
   index,
   onClose,
   onNavigate,
 }: LightboxProps) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
   const goPrev = useCallback(
-    () => onNavigate(index > 0 ? index - 1 : images.length - 1),
-    [index, images.length, onNavigate]
+    () => onNavigate(index > 0 ? index - 1 : items.length - 1),
+    [index, items.length, onNavigate]
   );
   const goNext = useCallback(
-    () => onNavigate(index < images.length - 1 ? index + 1 : 0),
-    [index, images.length, onNavigate]
+    () => onNavigate(index < items.length - 1 ? index + 1 : 0),
+    [index, items.length, onNavigate]
   );
 
   useEffect(() => {
@@ -41,38 +49,67 @@ export default function Lightbox({
     };
   }, [onClose, goPrev, goNext]);
 
+  // Pause video when navigating away
+  useEffect(() => {
+    return () => {
+      videoRef.current?.pause();
+    };
+  }, [index]);
+
+  const current = items[index];
+
   return createPortal(
     <div className={styles.backdrop} onClick={onClose}>
       <button className={styles.close} onClick={onClose}>
         &#x2715;
       </button>
-      <button
-        className={`${styles.arrow} ${styles.left}`}
-        onClick={(e) => {
-          e.stopPropagation();
-          goPrev();
-        }}
-      >
-        &#8592;
-      </button>
+      {items.length > 1 && (
+        <button
+          className={`${styles.arrow} ${styles.left}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            goPrev();
+          }}
+        >
+          &#8592;
+        </button>
+      )}
       <div className={styles.imageWrap} onClick={(e) => e.stopPropagation()}>
-        <Image
-          src={`/images/${images[index]}`}
-          alt={`Property photograph ${index + 1}`}
-          width={1200}
-          height={800}
-          style={{ width: "100%", height: "auto", maxHeight: "90vh", objectFit: "contain" }}
-        />
+        {current.type === "video" ? (
+          <video
+            ref={videoRef}
+            key={current.src}
+            src={current.src}
+            controls
+            autoPlay
+            className={styles.video}
+          />
+        ) : (
+          <Image
+            src={current.src}
+            alt={current.alt}
+            width={1200}
+            height={800}
+            style={{
+              width: "100%",
+              height: "auto",
+              maxHeight: "90vh",
+              objectFit: "contain",
+            }}
+          />
+        )}
       </div>
-      <button
-        className={`${styles.arrow} ${styles.right}`}
-        onClick={(e) => {
-          e.stopPropagation();
-          goNext();
-        }}
-      >
-        &#8594;
-      </button>
+      {items.length > 1 && (
+        <button
+          className={`${styles.arrow} ${styles.right}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            goNext();
+          }}
+        >
+          &#8594;
+        </button>
+      )}
     </div>,
     document.body
   );

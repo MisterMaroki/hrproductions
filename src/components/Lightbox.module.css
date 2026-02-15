@@ -78,3 +78,10 @@
     transform: scale(1);
   }
 }
+
+.video {
+  max-width: 85vw;
+  max-height: 85vh;
+  border-radius: 2px;
+  outline: none;
+}
