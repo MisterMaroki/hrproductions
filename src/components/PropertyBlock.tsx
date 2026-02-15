@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { PropertyBooking } from "./BookingSection";
 import { calcPropertyTotal } from "@/lib/pricing";
 import styles from "./PropertyBlock.module.css";
@@ -41,6 +42,30 @@ export default function PropertyBlock({
       standardVideoDrone: false,
       agentPresentedVideoDrone: next ? property.agentPresentedVideoDrone : false,
     });
+  };
+
+  const [dateStatus, setDateStatus] = useState<{
+    available: boolean;
+    reason?: string;
+    hoursRemaining?: number;
+  } | null>(null);
+  const [checkingDate, setCheckingDate] = useState(false);
+
+  const checkDateAvailability = async (date: string) => {
+    if (!date) {
+      setDateStatus(null);
+      return;
+    }
+    setCheckingDate(true);
+    try {
+      const res = await fetch(`/api/availability?date=${date}`);
+      const data = await res.json();
+      setDateStatus(data);
+    } catch {
+      setDateStatus(null);
+    } finally {
+      setCheckingDate(false);
+    }
   };
 
   const subtotal = calcPropertyTotal(property);
@@ -92,10 +117,23 @@ export default function PropertyBlock({
             <input
               type="date"
               value={property.preferredDate}
-              onChange={(e) => onChange({ preferredDate: e.target.value })}
+              onChange={(e) => {
+                onChange({ preferredDate: e.target.value });
+                checkDateAvailability(e.target.value);
+              }}
               className={styles.input}
               required
             />
+            {checkingDate && (
+              <p className={styles.dateChecking}>Checking availability…</p>
+            )}
+            {dateStatus && !checkingDate && (
+              <p className={dateStatus.available ? styles.dateAvailable : styles.dateUnavailable}>
+                {dateStatus.available
+                  ? `Available — ${dateStatus.hoursRemaining}h remaining`
+                  : dateStatus.reason || "This date is unavailable"}
+              </p>
+            )}
           </label>
         </div>
 
