@@ -2,7 +2,9 @@ import {
   calcPhotography,
   calcStandardVideo,
   calcAgentPresentedVideo,
-  calcDrone,
+  calcDronePhotography,
+  calcVideoDrone,
+  calcMultiPropertyDiscount,
   calcPropertyTotal,
 } from "../pricing";
 
@@ -56,62 +58,127 @@ describe("calcAgentPresentedVideo", () => {
   });
 });
 
-describe("calcDrone", () => {
+describe("calcDronePhotography", () => {
+  it("returns 75 for 8 photos", () => {
+    expect(calcDronePhotography(8)).toBe(75);
+  });
+
+  it("returns 140 for 20 photos", () => {
+    expect(calcDronePhotography(20)).toBe(140);
+  });
+});
+
+describe("calcVideoDrone", () => {
   it("returns 65", () => {
-    expect(calcDrone()).toBe(65);
+    expect(calcVideoDrone()).toBe(65);
+  });
+});
+
+describe("calcMultiPropertyDiscount", () => {
+  it("returns 0 for 1 property", () => {
+    expect(calcMultiPropertyDiscount(1)).toBe(0);
+  });
+
+  it("returns 15 for 2 properties", () => {
+    expect(calcMultiPropertyDiscount(2)).toBe(15);
+  });
+
+  it("returns 30 for 3 properties", () => {
+    expect(calcMultiPropertyDiscount(3)).toBe(30);
+  });
+
+  it("returns 60 for 5 properties", () => {
+    expect(calcMultiPropertyDiscount(5)).toBe(60);
   });
 });
 
 describe("calcPropertyTotal", () => {
+  const base = {
+    bedrooms: 2,
+    photography: false,
+    photoCount: 20,
+    dronePhotography: false,
+    dronePhotoCount: 8 as const,
+    standardVideo: false,
+    standardVideoDrone: false,
+    agentPresentedVideo: false,
+    agentPresentedVideoDrone: false,
+  };
+
   it("calculates photography only", () => {
     const total = calcPropertyTotal({
+      ...base,
       bedrooms: 3,
       photography: true,
-      photoCount: 20,
-      standardVideo: false,
-      agentPresentedVideo: false,
-      drone: false,
     });
     expect(total).toBe(130);
   });
 
-  it("calculates video + drone", () => {
+  it("calculates drone photography (8 photos)", () => {
     const total = calcPropertyTotal({
+      ...base,
+      dronePhotography: true,
+      dronePhotoCount: 8,
+    });
+    expect(total).toBe(75);
+  });
+
+  it("calculates drone photography (20 photos)", () => {
+    const total = calcPropertyTotal({
+      ...base,
+      dronePhotography: true,
+      dronePhotoCount: 20,
+    });
+    expect(total).toBe(140);
+  });
+
+  it("calculates video + video drone", () => {
+    const total = calcPropertyTotal({
+      ...base,
       bedrooms: 3,
-      photography: false,
-      photoCount: 0,
       standardVideo: true,
-      agentPresentedVideo: false,
-      drone: true,
+      standardVideoDrone: true,
     });
     expect(total).toBe(220); // 155 + 65
   });
 
-  it("calculates agent presented video + drone + photography", () => {
+  it("calculates agent presented video + video drone + photography", () => {
     const total = calcPropertyTotal({
+      ...base,
       bedrooms: 4,
       photography: true,
       photoCount: 30,
-      standardVideo: false,
       agentPresentedVideo: true,
-      drone: true,
+      agentPresentedVideoDrone: true,
     });
     // 4 bed agent presented = (125 + 2*30) * 1.5 = 185 * 1.5 = 277.5
-    // drone = 65
+    // video drone = 65
     // photography = 30 * 6.5 = 195
     // total = 277.5 + 65 + 195 = 537.5
     expect(total).toBe(537.5);
   });
 
-  it("ignores drone when no video selected", () => {
+  it("video drone ignored when no video selected", () => {
     const total = calcPropertyTotal({
-      bedrooms: 2,
+      ...base,
+      photography: true,
+      standardVideoDrone: true,
+    });
+    expect(total).toBe(130); // only photography
+  });
+
+  it("calculates all services combined", () => {
+    const total = calcPropertyTotal({
+      ...base,
+      bedrooms: 3,
       photography: true,
       photoCount: 20,
-      standardVideo: false,
-      agentPresentedVideo: false,
-      drone: true,
+      dronePhotography: true,
+      dronePhotoCount: 8,
+      standardVideo: true,
+      standardVideoDrone: true,
     });
-    expect(total).toBe(130); // drone ignored
+    // photography: 130, drone photo: 75, video (3-bed): 155, video drone: 65
+    expect(total).toBe(425);
   });
 });
