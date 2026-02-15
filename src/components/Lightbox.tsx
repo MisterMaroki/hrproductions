@@ -51,8 +51,9 @@ export default function Lightbox({
 
   // Pause video when navigating away
   useEffect(() => {
+    const video = videoRef.current;
     return () => {
-      videoRef.current?.pause();
+      video?.pause();
     };
   }, [index]);
 
@@ -82,6 +83,7 @@ export default function Lightbox({
             src={current.src}
             controls
             autoPlay
+            playsInline
             className={styles.video}
           />
         ) : (
