@@ -9,7 +9,7 @@ import styles from "./Gallery.module.css";
 
 /* ─── Data ─────────────────────────────────────────────── */
 
-type PhotoItem = {
+type GridItem = {
   src: string;
   span: number;
   aspect: string;
@@ -24,7 +24,7 @@ const photoImages = [
   "IMG_2913.JPG", "IMG_2914.JPG", "IMG_2916.JPG",
 ];
 
-const photoLayout: PhotoItem[] = [
+const photoLayout: GridItem[] = [
   { src: photoImages[0], span: 12, aspect: "16/9", delay: 0 },
   { src: photoImages[1], span: 7, aspect: "4/5", delay: 0 },
   { src: photoImages[2], span: 5, aspect: "3/4", delay: 0.12 },
@@ -46,19 +46,12 @@ const photoLayout: PhotoItem[] = [
   { src: photoImages[18], span: 12, aspect: "2/1", delay: 0 },
 ];
 
-type DroneItem = {
-  src: string;
-  span: number;
-  aspect: string;
-  delay: number;
-};
-
 // Drone photos — add filenames here when content is ready
-const droneLayout: DroneItem[] = [
-  // Example entries (uncomment and update when content arrives):
-  // { src: "drone_001.jpg", span: 12, aspect: "21/9", delay: 0 },
-  // { src: "drone_002.jpg", span: 6, aspect: "16/9", delay: 0 },
-  // { src: "drone_003.jpg", span: 6, aspect: "16/9", delay: 0.12 },
+const droneLayout: GridItem[] = [
+  // Example entries — span: 2 = full-width panoramic, 1 = half-width
+  // { src: "drone_001.jpg", span: 2, aspect: "21/9", delay: 0 },
+  // { src: "drone_002.jpg", span: 1, aspect: "16/9", delay: 0 },
+  // { src: "drone_003.jpg", span: 1, aspect: "16/9", delay: 0.12 },
 ];
 
 type VideoEntry = {
@@ -194,7 +187,7 @@ export default function Gallery() {
             {droneLayout.map((item, i) => (
               <button
                 key={item.src}
-                className={`${styles.gridItem} ${styles.imageItem} ${item.span === 12 ? styles.heroItem : ""}`}
+                className={`${styles.gridItem} ${styles.imageItem} ${item.span === 2 ? styles.heroItem : ""}`}
                 style={{
                   "--delay": `${item.delay}s`,
                   "--span": `${item.span}`,
