@@ -16,6 +16,8 @@ import styles from "./Basket.module.css";
 interface Props {
   properties: PropertyBooking[];
   agent: AgentInfo;
+  discountCode: string;
+  discountPercentage: number;
 }
 
 function getLineItems(property: PropertyBooking) {
@@ -58,7 +60,7 @@ function getLineItems(property: PropertyBooking) {
   return items;
 }
 
-export default function Basket({ properties, agent }: Props) {
+export default function Basket({ properties, agent, discountCode, discountPercentage }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -70,7 +72,10 @@ export default function Basket({ properties, agent }: Props) {
 
   const subtotalBeforeDiscount = propertyTotals.reduce((sum, p) => sum + p.subtotal, 0);
   const discount = calcMultiPropertyDiscount(properties.length);
-  const grandTotal = Math.max(0, subtotalBeforeDiscount - discount);
+  const codeDiscountAmount = discountPercentage > 0
+    ? Math.round((subtotalBeforeDiscount - discount) * (discountPercentage / 100) * 100) / 100
+    : 0;
+  const grandTotal = Math.max(0, subtotalBeforeDiscount - discount - codeDiscountAmount);
   const hasItems = subtotalBeforeDiscount > 0;
 
   const handleCheckout = useCallback(async () => {
@@ -79,7 +84,7 @@ export default function Basket({ properties, agent }: Props) {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ properties, agent }),
+        body: JSON.stringify({ properties, agent, discountCode, discountPercentage }),
       });
 
       const data = await res.json();
@@ -94,7 +99,7 @@ export default function Basket({ properties, agent }: Props) {
       alert("Something went wrong. Please try again.");
       setLoading(false);
     }
-  }, [properties, agent]);
+  }, [properties, agent, discountCode, discountPercentage]);
 
   const basketContent = (
     <>
@@ -123,6 +128,13 @@ export default function Basket({ properties, agent }: Props) {
         <div className={styles.discountLine}>
           <span>Multi-property discount ({properties.length} properties)</span>
           <span>-£{discount.toFixed(2)}</span>
+        </div>
+      )}
+
+      {codeDiscountAmount > 0 && (
+        <div className={styles.discountLine}>
+          <span>Discount ({discountCode}: {discountPercentage}% off)</span>
+          <span>-£{codeDiscountAmount.toFixed(2)}</span>
         </div>
       )}
 

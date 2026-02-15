@@ -82,6 +82,70 @@
   font-weight: 700;
 }
 
+.discountInput {
+  margin-bottom: 1.5rem;
+}
+
+.discountRow {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.discountField {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.discountField:focus {
+  outline: none;
+  border-color: var(--color-text);
+}
+
+.discountField:disabled {
+  opacity: 0.5;
+}
+
+.discountApply,
+.discountRemove {
+  padding: 0.75rem 1.25rem;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 1px solid var(--color-text);
+  transition: opacity 0.2s ease;
+}
+
+.discountApply {
+  background-color: var(--color-text);
+  color: var(--color-white);
+}
+
+.discountRemove {
+  background: transparent;
+  color: var(--color-text);
+}
+
+.discountApply:hover,
+.discountRemove:hover {
+  opacity: 0.75;
+}
+
+.discountApplied {
+  font-size: 0.8rem;
+  color: #2d7a3a;
+  margin-top: 0.5rem;
+  font-weight: 500;
+}
+
 @media (max-width: 900px) {
   .layout {
     grid-template-columns: 1fr;

@@ -61,6 +61,10 @@ export default function BookingSection() {
     createProperty(),
   ]);
 
+  const [discountCode, setDiscountCode] = useState("");
+  const [discountPercentage, setDiscountPercentage] = useState(0);
+  const [appliedCode, setAppliedCode] = useState("");
+
   const addProperty = () =>
     setProperties((prev) => [...prev, createProperty()]);
 
@@ -103,7 +107,67 @@ export default function BookingSection() {
             </div>
           </div>
           <div className={styles.basket}>
-            <Basket properties={properties} agent={agent} />
+            <div className={styles.discountInput}>
+              <div className={styles.discountRow}>
+                <input
+                  className={styles.discountField}
+                  type="text"
+                  placeholder="Discount code"
+                  value={discountCode}
+                  onChange={(e) => setDiscountCode(e.target.value)}
+                  disabled={!!appliedCode}
+                />
+                {appliedCode ? (
+                  <button
+                    className={styles.discountRemove}
+                    onClick={() => {
+                      setAppliedCode("");
+                      setDiscountPercentage(0);
+                      setDiscountCode("");
+                    }}
+                  >
+                    Remove
+                  </button>
+                ) : (
+                  <button
+                    className={styles.discountApply}
+                    onClick={async () => {
+                      if (!discountCode.trim()) return;
+                      try {
+                        const res = await fetch("/api/discount/validate", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ code: discountCode }),
+                        });
+                        if (!res.ok) {
+                          const data = await res.json();
+                          alert(data.error || "Invalid code");
+                          return;
+                        }
+                        const data = await res.json();
+                        setAppliedCode(data.code);
+                        setDiscountPercentage(data.percentage);
+                      } catch {
+                        alert("Failed to validate code");
+                      }
+                    }}
+                  >
+                    Apply
+                  </button>
+                )}
+              </div>
+              {appliedCode && (
+                <p className={styles.discountApplied}>
+                  {appliedCode}: {discountPercentage}% off applied
+                </p>
+              )}
+            </div>
+            <Basket
+              properties={properties}
+              agent={agent}
+              discountCode={appliedCode}
+              discountPercentage={discountPercentage}
+            />
           </div>
         </div>
       </div>
