@@ -12,8 +12,9 @@ function getSecret() {
 }
 
 export async function verifyPassword(password: string): Promise<boolean> {
-  const hash = process.env.ADMIN_PASSWORD_HASH;
-  if (!hash) return false;
+  const encoded = process.env.ADMIN_PASSWORD_HASH;
+  if (!encoded) return false;
+  const hash = Buffer.from(encoded, "base64").toString("utf-8");
   return compare(password, hash);
 }
 

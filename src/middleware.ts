@@ -10,8 +10,10 @@ function getSecret() {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Only protect admin routes (except login page)
+  // Allow login page and login/logout API through without auth
   if (pathname === "/admin/login") return NextResponse.next();
+  if (pathname === "/api/admin/login") return NextResponse.next();
+  if (pathname === "/api/admin/logout") return NextResponse.next();
 
   const isAdminPage = pathname.startsWith("/admin");
   const isAdminApi = pathname.startsWith("/api/admin");
