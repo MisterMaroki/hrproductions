@@ -12,15 +12,14 @@
 }
 
 .brand {
-  font-family: var(--font-heading);
+  font-family: var(--font-body);
   font-size: 1rem;
-  font-style: italic;
+  font-weight: 600;
 }
 
 .tagline {
-  font-family: var(--font-heading);
+  font-family: var(--font-body);
   font-size: 0.9rem;
-  font-style: italic;
   color: var(--color-muted);
 }
 
