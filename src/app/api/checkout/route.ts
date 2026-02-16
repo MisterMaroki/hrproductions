@@ -10,7 +10,11 @@ import {
   type PropertyServices,
 } from "@/lib/pricing";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+let _stripe: Stripe;
+function getStripe() {
+  if (!_stripe) _stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+  return _stripe;
+}
 
 interface PropertyPayload extends PropertyServices {
   id: string;
@@ -193,7 +197,7 @@ export async function POST(request: Request) {
 
     const origin = new URL(request.url).origin;
 
-    const session = await stripe.checkout.sessions.create({
+    const session = await getStripe().checkout.sessions.create({
       mode: "payment",
       line_items: lineItems,
       customer_email: agent.email || undefined,

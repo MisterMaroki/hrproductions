@@ -6,7 +6,11 @@ import { eq, sql } from "drizzle-orm";
 import { calcWorkHours } from "@/lib/scheduling";
 import { calcPropertyTotal, type PropertyServices } from "@/lib/pricing";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+let _stripe: Stripe;
+function getStripe() {
+  if (!_stripe) _stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+  return _stripe;
+}
 
 export async function POST(request: Request) {
   const body = await request.text();
@@ -19,7 +23,7 @@ export async function POST(request: Request) {
   let event: Stripe.Event;
 
   try {
-    event = stripe.webhooks.constructEvent(
+    event = getStripe().webhooks.constructEvent(
       body,
       signature,
       process.env.STRIPE_WEBHOOK_SECRET!
