@@ -33,7 +33,9 @@ export default function Nav() {
 
 	return (
 		<>
-			<nav className={`${styles.nav} ${scrolled ? styles.scrolled : ''} ${menuOpen ? styles.open : ''}`}>
+			<nav
+				className={`${styles.nav} ${scrolled ? styles.scrolled : ''} ${menuOpen ? styles.open : ''}`}
+			>
 				<div className={styles.inner}>
 					<a href="#top" className={styles.logo}>
 						<Image
@@ -55,14 +57,18 @@ export default function Nav() {
 					{/* Desktop links */}
 					<div className={styles.links}>
 						{links.map((l) => (
-							<a key={l.href} href={l.href}>{l.label}</a>
+							<a key={l.href} href={l.href}>
+								{l.label}
+							</a>
 						))}
 					</div>
 				</div>
 			</nav>
 
 			{/* Fullscreen mobile menu */}
-			<div className={`${styles.mobileMenu} ${menuOpen ? styles.mobileMenuOpen : ''}`}>
+			<div
+				className={`${styles.mobileMenu} ${menuOpen ? styles.mobileMenuOpen : ''}`}
+			>
 				<div className={styles.menuInner}>
 					<div className={styles.menuLinks}>
 						{links.map((l, i) => (
@@ -70,7 +76,9 @@ export default function Nav() {
 								key={l.href}
 								href={l.href}
 								className={`${styles.menuLink} ${menuOpen ? styles.menuLinkVisible : ''}`}
-								style={{ transitionDelay: menuOpen ? `${0.15 + i * 0.08}s` : '0s' }}
+								style={{
+									transitionDelay: menuOpen ? `${0.15 + i * 0.08}s` : '0s',
+								}}
 								onClick={() => setMenuOpen(false)}
 							>
 								<span className={styles.menuNumber}>0{i + 1}</span>
@@ -83,7 +91,9 @@ export default function Nav() {
 						style={{ transitionDelay: menuOpen ? '0.45s' : '0s' }}
 					>
 						<div className={styles.menuRule} />
-						<p className={styles.menuTagline}>Property Marketing & Visual Media</p>
+						<p className={styles.menuTagline}>
+							Property Marketing & Visual Media
+						</p>
 					</div>
 				</div>
 			</div>
