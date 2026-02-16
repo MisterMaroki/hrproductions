@@ -1,8 +1,8 @@
-import { Instrument_Serif, DM_Sans } from "next/font/google";
+import { Libre_Franklin, DM_Sans } from "next/font/google";
 import "./globals.css";
 
-const instrumentSerif = Instrument_Serif({
-  weight: "400",
+const libreFranklin = Libre_Franklin({
+  weight: ["400", "500", "600", "700"],
   style: ["normal", "italic"],
   subsets: ["latin"],
   variable: "--font-heading",
@@ -16,7 +16,7 @@ const dmSans = DM_Sans({
 });
 
 export const metadata = {
-  title: "Harrison Ross — Property Videography & Photography",
+  title: "The Property Room — Property Videography & Photography",
   description:
     "Professional property videography, photography, and drone footage for estate agents. Book online.",
 };
@@ -29,7 +29,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${instrumentSerif.variable} ${dmSans.variable}`}
+      className={`${libreFranklin.variable} ${dmSans.variable}`}
     >
       <body>{children}</body>
     </html>

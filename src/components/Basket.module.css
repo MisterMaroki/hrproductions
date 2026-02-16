@@ -16,7 +16,6 @@
 .empty {
   font-size: 0.85rem;
   color: var(--color-muted);
-  font-style: italic;
   font-family: var(--font-heading);
 }
 
