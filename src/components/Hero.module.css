@@ -3,163 +3,200 @@
   width: 100%;
   height: 100vh;
   height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
 }
 
-.videoWrap {
+/* Ken Burns slow zoom on the background image */
+.imageWrap {
   position: absolute;
   inset: 0;
+  animation: kenBurns 20s ease-out forwards;
 }
 
-.video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+@keyframes kenBurns {
+  from {
+    transform: scale(1.05);
+  }
+  to {
+    transform: scale(1);
+  }
 }
 
-/* Cinematic gradient — light top, heavy at the bottom to ground the content */
 .overlay {
   position: absolute;
   inset: 0;
   background: linear-gradient(
     180deg,
-    rgba(0, 0, 0, 0.35) 0%,
-    rgba(0, 0, 0, 0.25) 50%,
-    rgba(0, 0, 0, 0.65) 100%
+    rgba(0, 0, 0, 0.3) 0%,
+    rgba(0, 0, 0, 0.55) 50%,
+    rgba(0, 0, 0, 0.7) 100%
   );
   z-index: 1;
 }
 
-/* Bottom-anchored content — editorial lower-third */
 .content {
-  position: absolute;
-  bottom: 4rem;
-  left: 0;
-  right: 0;
+  position: relative;
   z-index: 2;
-  max-width: var(--max-width);
-  margin: 0 auto;
+  text-align: center;
+  color: var(--color-white);
   padding: 0 var(--content-padding);
 }
 
-/* Animated rule line — draws in from left like a film timeline */
-.rule {
-  width: 100%;
-  height: 1px;
-  background: rgba(255, 255, 255, 0.25);
-  margin-bottom: 1.75rem;
-  transform: scaleX(0);
-  transform-origin: left;
-  animation: drawLine 1s cubic-bezier(0.16, 1, 0.3, 1) 0.4s forwards;
+/* Staggered title reveal */
+.titleWrap {
+  overflow: hidden;
 }
 
-@keyframes drawLine {
-  to {
-    transform: scaleX(1);
-  }
+.title {
+  font-family: var(--font-heading);
+  font-size: clamp(4rem, 12vw, 9rem);
+  font-weight: 400;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  margin-bottom: 1.5rem;
+  font-style: italic;
 }
 
-/* Headline + CTA sit on the same baseline */
-.bar {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 3rem;
+.line {
+  display: block;
+  animation: revealUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   opacity: 0;
-  animation: fadeUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.8s forwards;
+  transform: translateY(100%);
 }
 
-@keyframes fadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
+.line:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+@keyframes revealUp {
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
-.headline {
-  font-family: var(--font-body);
-  font-weight: 600;
-  font-size: clamp(1.6rem, 3.5vw, 2.8rem);
-  line-height: 1.15;
-  color: var(--color-white);
-  letter-spacing: -0.01em;
+/* Subtitle */
+.subtitleWrap {
+  overflow: hidden;
 }
 
-/* Button — sharp, minimal, inverts on hover */
-.cta {
-  flex-shrink: 0;
+.subtitle {
   font-family: var(--font-body);
-  font-size: 0.8rem;
-  font-weight: 500;
-  letter-spacing: 0.18em;
+  font-size: clamp(0.85rem, 1.5vw, 1rem);
+  font-weight: 400;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
+  opacity: 0;
+  animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards;
+  margin-bottom: 3rem;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 0.8;
+    transform: translateY(0);
+  }
+}
+
+/* CTA with expanding underline */
+.ctaWrap {
+  opacity: 0;
+  animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.8s forwards;
+}
+
+.cta {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
   color: var(--color-white);
-  padding: 1rem 2.25rem;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  background: transparent;
-  white-space: nowrap;
-  transition:
-    background 0.4s cubic-bezier(0.16, 1, 0.3, 1),
-    border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1),
-    color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.cta:hover {
-  background: var(--color-white);
-  border-color: var(--color-white);
-  color: #0a0a0a;
+.ctaText {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
 }
 
-/* Scroll indicator — subtle centered tick */
+.ctaLine {
+  display: block;
+  width: 40px;
+  height: 1px;
+  background-color: var(--color-white);
+  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cta:hover .ctaLine {
+  width: 80px;
+}
+
+/* Scroll indicator — bottom left, vertical */
 .scrollIndicator {
   position: absolute;
-  bottom: 1.5rem;
-  left: 50%;
-  transform: translateX(-50%);
+  bottom: 2.5rem;
+  left: var(--content-padding);
   z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
   opacity: 0;
-  animation: fadeIn 0.6s ease 1.8s forwards;
+  animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 1.2s forwards;
 }
 
-@keyframes fadeIn {
-  to {
-    opacity: 0.45;
-  }
+.scrollLabel {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-white);
+  opacity: 0.6;
 }
 
-.scrollTick {
+.scrollLine {
   display: block;
-  width: 1px;
-  height: 24px;
-  background: var(--color-white);
-  animation: pulse 2.5s ease-in-out infinite 2.5s;
+  width: 40px;
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.4);
+  position: relative;
+  overflow: hidden;
 }
 
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 0.3;
-    transform: scaleY(1);
+.scrollLine::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background-color: var(--color-white);
+  animation: scrollPulse 2s ease-in-out infinite 2s;
+}
+
+@keyframes scrollPulse {
+  0% {
+    left: -100%;
   }
   50% {
-    opacity: 0.8;
-    transform: scaleY(1.4);
+    left: 0;
+  }
+  100% {
+    left: 100%;
   }
 }
 
 @media (max-width: 600px) {
-  .content {
-    bottom: 3rem;
-  }
-
-  .bar {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1.5rem;
+  .title {
+    font-size: clamp(3.5rem, 15vw, 5rem);
   }
 
   .scrollIndicator {
