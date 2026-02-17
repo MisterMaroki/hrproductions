@@ -39,3 +39,12 @@ export const blockedDays = sqliteTable("blocked_days", {
   reason: text("reason"),
   createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
+
+export const galleryVideos = sqliteTable("gallery_videos", {
+  id: text("id").primaryKey(),
+  bunnyVideoId: text("bunny_video_id").notNull().unique(),
+  title: text("title").notNull(),
+  sortOrder: integer("sort_order").notNull().default(0),
+  visible: integer("visible").notNull().default(0),
+  createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+});
