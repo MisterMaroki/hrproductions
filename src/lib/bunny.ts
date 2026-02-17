@@ -40,3 +40,31 @@ export async function fetchBunnyVideos(
 
   return items;
 }
+
+export function buildCdnUrl(hostname: string, path: string): string {
+  return `https://${hostname}/${path}`;
+}
+
+export interface BunnyStorageFile {
+  ObjectName: string;
+  Length: number;
+  IsDirectory: boolean;
+}
+
+export async function fetchBunnyStorageFiles(
+  apiKey: string,
+  zoneName: string,
+  path: string
+): Promise<BunnyStorageFile[]> {
+  const res = await fetch(
+    `https://storage.bunnycdn.com/${zoneName}/${path}`,
+    { headers: { AccessKey: apiKey } }
+  );
+
+  if (!res.ok) {
+    throw new Error(`Bunny Storage API error: ${res.status}`);
+  }
+
+  const files: BunnyStorageFile[] = await res.json();
+  return files.filter((f) => !f.IsDirectory);
+}

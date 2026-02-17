@@ -1,4 +1,4 @@
-import { buildThumbnailUrl, buildPlayUrl } from "../bunny";
+import { buildThumbnailUrl, buildPlayUrl, buildCdnUrl } from "../bunny";
 
 describe("bunny URL builders", () => {
   const pullZone = "vz-abc123.b-cdn.net";
@@ -13,6 +13,12 @@ describe("bunny URL builders", () => {
   it("builds play URL", () => {
     expect(buildPlayUrl(pullZone, videoId)).toBe(
       "https://vz-abc123.b-cdn.net/test-video-guid-123/play_720p.mp4"
+    );
+  });
+
+  it("builds CDN URL", () => {
+    expect(buildCdnUrl("propertyroom.b-cdn.net", "images/photo.webp")).toBe(
+      "https://propertyroom.b-cdn.net/images/photo.webp"
     );
   });
 });
