@@ -16,7 +16,7 @@ export default function AdminNav() {
 	return (
 		<nav className={styles.nav}>
 			<div className={styles.inner}>
-				<span className={styles.brand}>PropertyRoom Admin</span>
+				<Link href="/" className={styles.brand}>PropertyRoom Admin</Link>
 				<div className={styles.links}>
 					<Link
 						href="/admin/calendar"

@@ -45,6 +45,8 @@
   aspect-ratio: var(--aspect, 4/3);
   overflow: hidden;
   cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
   border: none;
   padding: 0;
   background: #1a1816;
@@ -100,6 +102,8 @@
   aspect-ratio: 16/9;
   overflow: hidden;
   cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
   border: none;
   padding: 0;
   background: #1a1816;

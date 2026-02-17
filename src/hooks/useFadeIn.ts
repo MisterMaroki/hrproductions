@@ -16,11 +16,22 @@ export function useFadeIn<T extends HTMLElement>() {
           observer.unobserve(el);
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.05 }
     );
 
     observer.observe(el);
-    return () => observer.disconnect();
+
+    // Fallback for mobile Safari where IntersectionObserver can fail silently
+    const fallback = setTimeout(() => {
+      if (!el.classList.contains("visible")) {
+        el.classList.add("visible");
+      }
+    }, 2000);
+
+    return () => {
+      observer.disconnect();
+      clearTimeout(fallback);
+    };
   }, []);
 
   return ref;
