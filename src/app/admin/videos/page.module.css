@@ -1,0 +1,240 @@
+.main {
+  padding: 2rem;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.title {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.hint {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: var(--color-muted);
+  margin-bottom: 2rem;
+}
+
+.syncBtn {
+  padding: 0.5rem 1rem;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  background-color: var(--color-text);
+  color: var(--color-white);
+  border: 1px solid var(--color-text);
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.syncBtn:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.syncBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.table {
+  border: 1px solid var(--color-border);
+}
+
+.tableHeader {
+  display: grid;
+  grid-template-columns: 2fr 1fr 80px 100px;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--color-border);
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.tableRow {
+  display: grid;
+  grid-template-columns: 2fr 1fr 80px 100px;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.85rem;
+  align-items: center;
+}
+
+.tableRow:last-child {
+  border-bottom: none;
+}
+
+.hidden {
+  opacity: 0.4;
+}
+
+.titleCell {
+  overflow: hidden;
+}
+
+.titleBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text);
+  cursor: pointer;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: text-decoration-color 0.2s ease;
+}
+
+.titleBtn:hover {
+  text-decoration-color: var(--color-text);
+}
+
+.idCell {
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: var(--color-muted);
+}
+
+.orderCell {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.arrowBtn {
+  background: none;
+  border: 1px solid var(--color-border);
+  padding: 0.15rem 0.4rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  color: var(--color-text);
+  transition: border-color 0.2s ease;
+}
+
+.arrowBtn:hover:not(:disabled) {
+  border-color: var(--color-text);
+}
+
+.arrowBtn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.editForm {
+  display: flex;
+  gap: 0.3rem;
+  align-items: center;
+}
+
+.editInput {
+  padding: 0.3rem 0.5rem;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text);
+  flex: 1;
+  min-width: 0;
+}
+
+.editInput:focus {
+  outline: none;
+  border-color: var(--color-text);
+}
+
+.saveBtn,
+.cancelBtn {
+  padding: 0.25rem 0.5rem;
+  font-family: var(--font-body);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border: 1px solid;
+}
+
+.saveBtn {
+  border-color: #2d7a3a;
+  color: #2d7a3a;
+  background: transparent;
+}
+
+.saveBtn:hover {
+  background-color: #2d7a3a;
+  color: white;
+}
+
+.cancelBtn {
+  border-color: var(--color-border);
+  color: var(--color-muted);
+  background: transparent;
+}
+
+.cancelBtn:hover {
+  border-color: var(--color-text);
+  color: var(--color-text);
+}
+
+.toggleBtn {
+  padding: 0.3rem 0.6rem;
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border: 1px solid;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.toggleActive {
+  border-color: #2d7a3a;
+  color: #2d7a3a;
+  background: transparent;
+}
+
+.toggleActive:hover {
+  background-color: #2d7a3a;
+  color: white;
+}
+
+.toggleInactive {
+  border-color: #c0392b;
+  color: #c0392b;
+  background: transparent;
+}
+
+.toggleInactive:hover {
+  background-color: #c0392b;
+  color: white;
+}
+
+.empty {
+  padding: 2rem;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--color-muted);
+  font-style: italic;
+}
