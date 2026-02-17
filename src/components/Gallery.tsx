@@ -17,54 +17,33 @@ type GridItem = {
 };
 
 const photoImages = [
-  "IMG_2897.JPG", "IMG_2898.JPG", "IMG_2899.JPG", "IMG_2900.JPG",
-  "IMG_2901.JPG", "IMG_2902.JPG", "IMG_2903.JPG", "IMG_2904.JPG",
-  "IMG_2905.JPG", "IMG_2906.JPG", "IMG_2907.JPG", "IMG_2908.JPG",
-  "IMG_2909.JPG", "IMG_2910.JPG", "IMG_2911.JPG", "IMG_2912.JPG",
-  "IMG_2913.JPG", "IMG_2914.JPG", "IMG_2916.JPG",
+  "1DSC01429.webp",
+  "2DSC01414.webp",
+  "3DSC01449.webp",
+  "4DSC01181.webp",
+  "5DJI_20260128175643_0562_D.webp",
+  "6DSC01156.webp",
+  "7DJI_20260211220307_0652_D.webp",
+  "8_ESRGAN_71939.webp",
 ];
 
 const photoLayout: GridItem[] = [
   { src: photoImages[0], span: 12, aspect: "16/9", delay: 0 },
-  { src: photoImages[1], span: 7, aspect: "4/5", delay: 0 },
-  { src: photoImages[2], span: 5, aspect: "3/4", delay: 0.12 },
-  { src: photoImages[3], span: 5, aspect: "1/1", delay: 0 },
-  { src: photoImages[4], span: 7, aspect: "4/5", delay: 0.12 },
-  { src: photoImages[5], span: 4, aspect: "4/5", delay: 0 },
-  { src: photoImages[6], span: 4, aspect: "4/5", delay: 0.1 },
-  { src: photoImages[7], span: 4, aspect: "4/5", delay: 0.2 },
-  { src: photoImages[8], span: 8, aspect: "3/2", delay: 0 },
-  { src: photoImages[9], span: 4, aspect: "4/5", delay: 0.15 },
-  { src: photoImages[10], span: 4, aspect: "4/5", delay: 0 },
-  { src: photoImages[11], span: 8, aspect: "3/2", delay: 0.15 },
-  { src: photoImages[12], span: 6, aspect: "3/4", delay: 0 },
-  { src: photoImages[13], span: 6, aspect: "3/4", delay: 0.1 },
-  { src: photoImages[14], span: 12, aspect: "21/9", delay: 0 },
-  { src: photoImages[15], span: 4, aspect: "1/1", delay: 0 },
-  { src: photoImages[16], span: 4, aspect: "1/1", delay: 0.1 },
-  { src: photoImages[17], span: 4, aspect: "1/1", delay: 0.2 },
-  { src: photoImages[18], span: 12, aspect: "2/1", delay: 0 },
+  { src: photoImages[1], span: 6, aspect: "4/5", delay: 0 },
+  { src: photoImages[2], span: 6, aspect: "4/5", delay: 0.12 },
+  { src: photoImages[3], span: 4, aspect: "1/1", delay: 0 },
+  { src: photoImages[4], span: 4, aspect: "1/1", delay: 0.1 },
+  { src: photoImages[5], span: 4, aspect: "1/1", delay: 0.2 },
+  { src: photoImages[6], span: 6, aspect: "4/5", delay: 0 },
+  { src: photoImages[7], span: 6, aspect: "4/5", delay: 0.12 },
 ];
 
-// Drone photos — add filenames here when content is ready
-const droneLayout: GridItem[] = [
-  // Example entries — span: 2 = full-width panoramic, 1 = half-width
-  // { src: "drone_001.jpg", span: 2, aspect: "21/9", delay: 0 },
-  // { src: "drone_002.jpg", span: 1, aspect: "16/9", delay: 0 },
-  // { src: "drone_003.jpg", span: 1, aspect: "16/9", delay: 0.12 },
-];
-
-type VideoEntry = {
-  src: string;
+interface VideoEntry {
+  id: string;
+  title: string;
   thumbnail: string;
-  alt: string;
-};
-
-// Videos — add entries here when content is ready
-const videoEntries: VideoEntry[] = [
-  // Example entries (uncomment and update when content arrives):
-  // { src: "/videos/tour_001.mp4", thumbnail: "/videos/thumb_001.jpg", alt: "Property tour" },
-];
+  src: string;
+}
 
 /* ─── Scroll reveal hook ───────────────────────────────── */
 
@@ -75,6 +54,8 @@ function useGridReveal(dep: unknown) {
     const grid = ref.current;
     if (!grid) return;
 
+    const items = grid.querySelectorAll<HTMLElement>(`.${styles.gridItem}`);
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -84,13 +65,25 @@ function useGridReveal(dep: unknown) {
           }
         });
       },
-      { threshold: 0.1, rootMargin: "0px 0px -50px 0px" }
+      { threshold: 0.05 }
     );
 
-    const items = grid.querySelectorAll(`.${styles.gridItem}`);
     items.forEach((item) => observer.observe(item));
 
-    return () => observer.disconnect();
+    // Fallback: reveal all items after 2.5s in case IntersectionObserver
+    // fails silently (known issue on mobile Safari with button elements)
+    const fallback = setTimeout(() => {
+      items.forEach((item) => {
+        if (!item.classList.contains(styles.revealed)) {
+          item.classList.add(styles.revealed);
+        }
+      });
+    }, 2500);
+
+    return () => {
+      observer.disconnect();
+      clearTimeout(fallback);
+    };
   }, [dep]);
 
   return ref;
@@ -101,6 +94,15 @@ function useGridReveal(dep: unknown) {
 export default function Gallery() {
   const sectionRef = useFadeIn<HTMLElement>();
 
+  const [videoEntries, setVideoEntries] = useState<VideoEntry[]>([]);
+
+  useEffect(() => {
+    fetch("/api/videos")
+      .then((res) => res.json())
+      .then((data) => setVideoEntries(data))
+      .catch(() => {});
+  }, []);
+
   // Lightbox state
   const [lightbox, setLightbox] = useState<{
     items: LightboxItem[];
@@ -108,7 +110,6 @@ export default function Gallery() {
   } | null>(null);
 
   const photoGridRef = useGridReveal(photoLayout);
-  const droneGridRef = useGridReveal(droneLayout);
   const videoGridRef = useGridReveal(videoEntries);
 
   /* ── Open helpers ── */
@@ -122,20 +123,11 @@ export default function Gallery() {
     setLightbox({ items, index: i });
   };
 
-  const openDrone = (i: number) => {
-    const items: LightboxItem[] = droneLayout.map((d) => ({
-      type: "image",
-      src: `/images/${d.src}`,
-      alt: `Drone photograph`,
-    }));
-    setLightbox({ items, index: i });
-  };
-
   const openVideo = (i: number) => {
     const items: LightboxItem[] = videoEntries.map((v) => ({
       type: "video",
       src: v.src,
-      alt: v.alt,
+      alt: v.title,
     }));
     setLightbox({ items, index: i });
   };
@@ -179,41 +171,9 @@ export default function Gallery() {
           })}
         </div>
 
-        {/* ── Drone Photography ── */}
-        <div className={styles.sectionSpacer} />
-        <SectionHeader title="Drone" id="drone" number="02 — Drone Photography" />
-        {droneLayout.length > 0 ? (
-          <div ref={droneGridRef} className={`${styles.grid} ${styles.droneGrid}`}>
-            {droneLayout.map((item, i) => (
-              <button
-                key={item.src}
-                className={`${styles.gridItem} ${styles.imageItem} ${item.span === 2 ? styles.heroItem : ""}`}
-                style={{
-                  "--delay": `${item.delay}s`,
-                  "--span": `${item.span}`,
-                  "--aspect": item.aspect,
-                } as React.CSSProperties}
-                onClick={() => openDrone(i)}
-              >
-                <Image
-                  src={`/images/${item.src}`}
-                  alt={`Drone photograph ${i + 1}`}
-                  fill
-                  sizes={item.span === 12 ? "100vw" : "(max-width: 900px) 100vw, 50vw"}
-                  style={{ objectFit: "cover" }}
-                />
-              </button>
-            ))}
-          </div>
-        ) : (
-          <div className={styles.placeholder}>
-            <p className={styles.placeholderText}>Coming soon</p>
-          </div>
-        )}
-
         {/* ── Videos ── */}
         <div className={styles.sectionSpacer} />
-        <SectionHeader title="Video" id="video" number="03 — Video" />
+        <SectionHeader title="Video" id="video" number="02 — Video" />
         {videoEntries.length > 0 ? (
           <div ref={videoGridRef} className={`${styles.grid} ${styles.videoGrid}`}>
             {videoEntries.map((item, i) => (
@@ -225,7 +185,7 @@ export default function Gallery() {
               >
                 <Image
                   src={item.thumbnail}
-                  alt={item.alt}
+                  alt={item.title}
                   fill
                   sizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 33vw"
                   style={{ objectFit: "cover" }}
