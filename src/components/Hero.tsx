@@ -13,7 +13,7 @@ export default function Hero() {
           playsInline
           className={styles.video}
         >
-          <source src="/hero.mp4" type="video/mp4" />
+          <source src={process.env.NEXT_PUBLIC_BUNNY_CDN_HERO_URL || "/hero.mp4"} type="video/mp4" />
         </video>
       </div>
       <div className={styles.overlay} />
