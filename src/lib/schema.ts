@@ -48,3 +48,12 @@ export const galleryVideos = sqliteTable("gallery_videos", {
   visible: integer("visible").notNull().default(0),
   createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
+
+export const galleryPhotos = sqliteTable("gallery_photos", {
+  id: text("id").primaryKey(),
+  filename: text("filename").notNull().unique(),
+  title: text("title").notNull(),
+  sortOrder: integer("sort_order").notNull().default(0),
+  visible: integer("visible").notNull().default(0),
+  createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+});
