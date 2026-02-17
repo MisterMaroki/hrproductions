@@ -9,34 +9,36 @@ import styles from "./Gallery.module.css";
 
 /* ─── Data ─────────────────────────────────────────────── */
 
-type GridItem = {
+interface PhotoEntry {
+  id: string;
+  title: string;
   src: string;
-  span: number;
-  aspect: string;
-  delay: number;
-};
+}
 
-const photoImages = [
-  "1DSC01429.webp",
-  "2DSC01414.webp",
-  "3DSC01449.webp",
-  "4DSC01181.webp",
-  "5DJI_20260128175643_0562_D.webp",
-  "6DSC01156.webp",
-  "7DJI_20260211220307_0652_D.webp",
-  "8_ESRGAN_71939.webp",
+// Auto layout pattern — repeats every 8 photos
+const LAYOUT_PATTERN = [
+  { span: 12, aspect: "16/9" },  // hero
+  { span: 6, aspect: "4/5" },    // half
+  { span: 6, aspect: "4/5" },    // half
+  { span: 4, aspect: "1/1" },    // third
+  { span: 4, aspect: "1/1" },    // third
+  { span: 4, aspect: "1/1" },    // third
+  { span: 6, aspect: "4/5" },    // half
+  { span: 6, aspect: "4/5" },    // half
 ];
 
-const photoLayout: GridItem[] = [
-  { src: photoImages[0], span: 12, aspect: "16/9", delay: 0 },
-  { src: photoImages[1], span: 6, aspect: "4/5", delay: 0 },
-  { src: photoImages[2], span: 6, aspect: "4/5", delay: 0.12 },
-  { src: photoImages[3], span: 4, aspect: "1/1", delay: 0 },
-  { src: photoImages[4], span: 4, aspect: "1/1", delay: 0.1 },
-  { src: photoImages[5], span: 4, aspect: "1/1", delay: 0.2 },
-  { src: photoImages[6], span: 6, aspect: "4/5", delay: 0 },
-  { src: photoImages[7], span: 6, aspect: "4/5", delay: 0.12 },
-];
+function getLayoutForIndex(i: number) {
+  const pattern = LAYOUT_PATTERN[i % LAYOUT_PATTERN.length];
+  const groupStart = Math.floor(i / LAYOUT_PATTERN.length) * LAYOUT_PATTERN.length;
+  const posInGroup = i - groupStart;
+  // Stagger delay within each row group
+  let delay = 0;
+  if (posInGroup === 2) delay = 0.12;
+  if (posInGroup === 4) delay = 0.1;
+  if (posInGroup === 5) delay = 0.2;
+  if (posInGroup === 7) delay = 0.12;
+  return { ...pattern, delay };
+}
 
 interface VideoEntry {
   id: string;
@@ -94,7 +96,15 @@ function useGridReveal(dep: unknown) {
 export default function Gallery() {
   const sectionRef = useFadeIn<HTMLElement>();
 
+  const [photoEntries, setPhotoEntries] = useState<PhotoEntry[]>([]);
   const [videoEntries, setVideoEntries] = useState<VideoEntry[]>([]);
+
+  useEffect(() => {
+    fetch("/api/photos")
+      .then((res) => res.json())
+      .then((data) => setPhotoEntries(data))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     fetch("/api/videos")
@@ -109,16 +119,16 @@ export default function Gallery() {
     index: number;
   } | null>(null);
 
-  const photoGridRef = useGridReveal(photoLayout);
+  const photoGridRef = useGridReveal(photoEntries);
   const videoGridRef = useGridReveal(videoEntries);
 
   /* ── Open helpers ── */
 
   const openPhoto = (i: number) => {
-    const items: LightboxItem[] = photoLayout.map((p) => ({
+    const items: LightboxItem[] = photoEntries.map((p) => ({
       type: "image",
-      src: `/images/${p.src}`,
-      alt: `Property photograph`,
+      src: p.src,
+      alt: p.title,
     }));
     setLightbox({ items, index: i });
   };
@@ -138,38 +148,45 @@ export default function Gallery() {
 
         {/* ── Photography ── */}
         <SectionHeader title="Photography" id="work" number="01 — Photography" />
-        <div ref={photoGridRef} className={styles.grid}>
-          {photoLayout.map((item, i) => {
-            const isHero = item.span === 12;
-            return (
-              <button
-                key={item.src}
-                className={`${styles.gridItem} ${styles.imageItem} ${isHero ? styles.heroItem : ""}`}
-                style={{
-                  "--delay": `${item.delay}s`,
-                  "--span": `${item.span}`,
-                  "--aspect": item.aspect,
-                } as React.CSSProperties}
-                onClick={() => openPhoto(i)}
-              >
-                <Image
-                  src={`/images/${item.src}`}
-                  alt={`Property photograph ${i + 1}`}
-                  fill
-                  sizes={
-                    item.span === 12
-                      ? "100vw"
-                      : item.span >= 7
-                        ? "(max-width: 900px) 100vw, 66vw"
-                        : "(max-width: 900px) 50vw, 33vw"
-                  }
-                  style={{ objectFit: "cover" }}
-                  {...(i === 0 ? { priority: true } : {})}
-                />
-              </button>
-            );
-          })}
-        </div>
+        {photoEntries.length > 0 ? (
+          <div ref={photoGridRef} className={styles.grid}>
+            {photoEntries.map((item, i) => {
+              const layout = getLayoutForIndex(i);
+              const isHero = layout.span === 12;
+              return (
+                <button
+                  key={item.id}
+                  className={`${styles.gridItem} ${styles.imageItem} ${isHero ? styles.heroItem : ""}`}
+                  style={{
+                    "--delay": `${layout.delay}s`,
+                    "--span": `${layout.span}`,
+                    "--aspect": layout.aspect,
+                  } as React.CSSProperties}
+                  onClick={() => openPhoto(i)}
+                >
+                  <Image
+                    src={item.src}
+                    alt={item.title}
+                    fill
+                    sizes={
+                      layout.span === 12
+                        ? "100vw"
+                        : layout.span >= 7
+                          ? "(max-width: 900px) 100vw, 66vw"
+                          : "(max-width: 900px) 50vw, 33vw"
+                    }
+                    style={{ objectFit: "cover" }}
+                    {...(i === 0 ? { priority: true } : {})}
+                  />
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <div className={styles.placeholder}>
+            <p className={styles.placeholderText}>Coming soon</p>
+          </div>
+        )}
 
         {/* ── Videos ── */}
         <div className={styles.sectionSpacer} />
