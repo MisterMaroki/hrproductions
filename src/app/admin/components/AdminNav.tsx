@@ -30,6 +30,12 @@ export default function AdminNav() {
 					>
 						Discounts
 					</Link>
+					<Link
+						href="/admin/videos"
+						className={`${styles.link} ${pathname === '/admin/videos' ? styles.active : ''}`}
+					>
+						Videos
+					</Link>
 					<button className={styles.logout} onClick={handleLogout}>
 						Log Out
 					</button>
