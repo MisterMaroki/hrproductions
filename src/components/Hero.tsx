@@ -10,6 +10,8 @@ export default function Hero() {
     const v = videoRef.current;
     if (!v) return;
     v.muted = true;
+    v.src = process.env.NEXT_PUBLIC_BUNNY_CDN_HERO_URL || "/hero.mp4";
+    v.load();
     v.play().catch(() => {});
   }, []);
 
@@ -18,12 +20,11 @@ export default function Hero() {
       <div className={styles.videoWrap}>
         <video
           ref={videoRef}
-          autoPlay
           muted
           loop
           playsInline
+          preload="none"
           className={styles.video}
-          src={process.env.NEXT_PUBLIC_BUNNY_CDN_HERO_URL || "/hero.mp4"}
         />
       </div>
       <div className={styles.overlay} />
