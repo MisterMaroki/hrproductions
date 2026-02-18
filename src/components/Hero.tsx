@@ -1,20 +1,30 @@
 "use client";
 
+import { useRef, useEffect } from "react";
 import styles from "./Hero.module.css";
 
 export default function Hero() {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.muted = true;
+    v.play().catch(() => {});
+  }, []);
+
   return (
     <section className={styles.hero}>
       <div className={styles.videoWrap}>
         <video
+          ref={videoRef}
           autoPlay
           muted
           loop
           playsInline
           className={styles.video}
-        >
-          <source src={process.env.NEXT_PUBLIC_BUNNY_CDN_HERO_URL || "/hero.mp4"} type="video/mp4" />
-        </video>
+          src={process.env.NEXT_PUBLIC_BUNNY_CDN_HERO_URL || "/hero.mp4"}
+        />
       </div>
       <div className={styles.overlay} />
       <div className={styles.content}>
