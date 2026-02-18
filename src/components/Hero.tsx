@@ -9,8 +9,11 @@ export default function Hero() {
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
+    const mobile = window.matchMedia("(max-width: 768px)").matches;
+    const mobileSrc = process.env.NEXT_PUBLIC_BUNNY_CDN_HERO_URL_MOBILE;
+    const desktopSrc = process.env.NEXT_PUBLIC_BUNNY_CDN_HERO_URL || "/hero.mp4";
     v.muted = true;
-    v.src = process.env.NEXT_PUBLIC_BUNNY_CDN_HERO_URL || "/hero.mp4";
+    v.src = mobile && mobileSrc ? mobileSrc : desktopSrc;
     v.load();
     v.play().catch(() => {});
   }, []);
