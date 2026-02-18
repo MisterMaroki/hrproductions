@@ -47,6 +47,16 @@
   color: var(--color-muted);
 }
 
+.inputError {
+  border-color: #c0392b;
+}
+
+.error {
+  font-size: 0.78rem;
+  color: #c0392b;
+  font-weight: 500;
+}
+
 @media (max-width: 500px) {
   .grid {
     grid-template-columns: 1fr;

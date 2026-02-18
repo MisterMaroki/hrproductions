@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import SectionHeader from "./SectionHeader";
 import AgentDetails from "./AgentDetails";
 import PropertyBlock from "./PropertyBlock";
@@ -18,6 +18,7 @@ export interface AgentInfo {
 export interface PropertyBooking {
   id: string;
   address: string;
+  postcode: string;
   bedrooms: number;
   preferredDate: string;
   notes: string;
@@ -31,10 +32,16 @@ export interface PropertyBooking {
   agentPresentedVideoDrone: boolean;
 }
 
+export interface ValidationErrors {
+  agent: Partial<Record<keyof AgentInfo, string>>;
+  properties: Record<string, Record<string, string>>;
+}
+
 function createProperty(): PropertyBooking {
   return {
     id: crypto.randomUUID(),
     address: "",
+    postcode: "",
     bedrooms: 2,
     preferredDate: "",
     notes: "",
@@ -64,6 +71,77 @@ export default function BookingSection() {
   const [discountCode, setDiscountCode] = useState("");
   const [discountPercentage, setDiscountPercentage] = useState(0);
   const [appliedCode, setAppliedCode] = useState("");
+  const [errors, setErrors] = useState<ValidationErrors>({ agent: {}, properties: {} });
+
+  const validate = useCallback((): boolean => {
+    const agentErrors: ValidationErrors["agent"] = {};
+    const propErrors: ValidationErrors["properties"] = {};
+
+    if (!agent.name.trim()) agentErrors.name = "Name is required";
+    if (!agent.company.trim()) agentErrors.company = "Company is required";
+    if (!agent.email.trim()) {
+      agentErrors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(agent.email)) {
+      agentErrors.email = "Enter a valid email";
+    }
+    if (!agent.phone.trim()) agentErrors.phone = "Phone is required";
+
+    for (const p of properties) {
+      const pErr: Record<string, string> = {};
+      if (!p.address.trim()) pErr.address = "Address is required";
+      if (!p.postcode.trim()) pErr.postcode = "Postcode is required";
+      if (!p.preferredDate) {
+        pErr.preferredDate = "Date is required";
+      } else {
+        const tomorrow = new Date();
+        tomorrow.setHours(0, 0, 0, 0);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        if (new Date(p.preferredDate) < tomorrow) {
+          pErr.preferredDate = "Date must be in the future";
+        }
+      }
+      if (p.photography && p.photoCount < 20) pErr.photoCount = "Minimum 20 photos";
+      if (Object.keys(pErr).length > 0) propErrors[p.id] = pErr;
+    }
+
+    const hasErrors =
+      Object.keys(agentErrors).length > 0 ||
+      Object.keys(propErrors).length > 0;
+
+    setErrors({ agent: agentErrors, properties: propErrors });
+
+    if (hasErrors) {
+      setTimeout(() => {
+        const el = document.querySelector("[data-validation-error]");
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 50);
+    }
+
+    return !hasErrors;
+  }, [agent, properties]);
+
+  const clearAgentError = useCallback((field: keyof AgentInfo) => {
+    setErrors((prev) => {
+      if (!prev.agent[field]) return prev;
+      const { [field]: _, ...rest } = prev.agent;
+      return { ...prev, agent: rest };
+    });
+  }, []);
+
+  const clearPropertyError = useCallback((propertyId: string, field: string) => {
+    setErrors((prev) => {
+      const propErrors = prev.properties[propertyId];
+      if (!propErrors?.[field]) return prev;
+      const { [field]: _, ...rest } = propErrors;
+      const properties = { ...prev.properties };
+      if (Object.keys(rest).length === 0) {
+        delete properties[propertyId];
+      } else {
+        properties[propertyId] = rest;
+      }
+      return { ...prev, properties };
+    });
+  }, []);
 
   const addProperty = () =>
     setProperties((prev) => [...prev, createProperty()]);
@@ -82,7 +160,7 @@ export default function BookingSection() {
         <SectionHeader title="Book" id="book" number="03 — Get Started" />
         <div className={styles.layout}>
           <div className={styles.form}>
-            <AgentDetails agent={agent} onChange={setAgent} />
+            <AgentDetails agent={agent} onChange={setAgent} errors={errors.agent} onClearError={clearAgentError} />
             {properties.map((property) => (
               <PropertyBlock
                 key={property.id}
@@ -90,6 +168,8 @@ export default function BookingSection() {
                 onChange={(updates) => updateProperty(property.id, updates)}
                 onRemove={() => removeProperty(property.id)}
                 canRemove={properties.length > 1}
+                errors={errors.properties[property.id]}
+                onClearError={(field) => clearPropertyError(property.id, field)}
               />
             ))}
             <button className={styles.addProperty} onClick={addProperty}>
@@ -167,6 +247,7 @@ export default function BookingSection() {
               agent={agent}
               discountCode={appliedCode}
               discountPercentage={discountPercentage}
+              onValidate={validate}
             />
           </div>
         </div>

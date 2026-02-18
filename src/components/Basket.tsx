@@ -18,6 +18,7 @@ interface Props {
   agent: AgentInfo;
   discountCode: string;
   discountPercentage: number;
+  onValidate: () => boolean;
 }
 
 function getLineItems(property: PropertyBooking) {
@@ -60,7 +61,7 @@ function getLineItems(property: PropertyBooking) {
   return items;
 }
 
-export default function Basket({ properties, agent, discountCode, discountPercentage }: Props) {
+export default function Basket({ properties, agent, discountCode, discountPercentage, onValidate }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -79,6 +80,7 @@ export default function Basket({ properties, agent, discountCode, discountPercen
   const hasItems = subtotalBeforeDiscount > 0;
 
   const handleCheckout = useCallback(async () => {
+    if (!onValidate()) return;
     setLoading(true);
     try {
       const res = await fetch("/api/checkout", {
@@ -99,7 +101,7 @@ export default function Basket({ properties, agent, discountCode, discountPercen
       alert("Something went wrong. Please try again.");
       setLoading(false);
     }
-  }, [properties, agent, discountCode, discountPercentage]);
+  }, [properties, agent, discountCode, discountPercentage, onValidate]);
 
   const basketContent = (
     <>

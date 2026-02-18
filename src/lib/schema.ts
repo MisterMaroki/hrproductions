@@ -4,6 +4,7 @@ import { sql } from "drizzle-orm";
 export const bookings = sqliteTable("bookings", {
   id: text("id").primaryKey(),
   address: text("address").notNull(),
+  postcode: text("postcode"),
   bedrooms: integer("bedrooms").notNull(),
   preferredDate: text("preferred_date").notNull(),
   notes: text("notes"),

@@ -38,7 +38,12 @@ export async function POST(request: Request) {
     const meta = session.metadata || {};
 
     try {
-      const properties = JSON.parse(meta.properties || "[]");
+      const propertyCount = Number(meta.property_count || 0);
+      const properties = [];
+      for (let i = 0; i < propertyCount; i++) {
+        const raw = meta[`property_${i}`];
+        if (raw) properties.push(JSON.parse(raw));
+      }
       const discountCode = meta.discount_code || null;
       const discountPercentage = Number(meta.discount_percentage || 0);
 
@@ -71,6 +76,7 @@ export async function POST(request: Request) {
         await db.insert(bookings).values({
           id: crypto.randomUUID(),
           address: p.address,
+          postcode: p.postcode || null,
           bedrooms: p.bedrooms,
           preferredDate: p.preferredDate,
           notes: p.notes || null,

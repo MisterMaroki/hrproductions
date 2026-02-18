@@ -19,6 +19,7 @@ function getStripe() {
 interface PropertyPayload extends PropertyServices {
   id: string;
   address: string;
+  postcode: string;
   preferredDate: string;
   notes: string;
 }
@@ -37,8 +38,6 @@ interface CheckoutBody {
 
 function buildLineItems(
   properties: PropertyPayload[],
-  discountCode?: string,
-  discountPercentage?: number,
 ): Stripe.Checkout.SessionCreateParams.LineItem[] {
   const items: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
 
@@ -131,42 +130,29 @@ function buildLineItems(
     }
   }
 
-  // Multi-property discount
-  const discount = calcMultiPropertyDiscount(properties.length);
-  if (discount > 0) {
-    items.push({
-      price_data: {
-        currency: "gbp",
-        product_data: {
-          name: `Multi-property discount (${properties.length} properties)`,
-        },
-        unit_amount: -Math.round(discount * 100),
-      },
-      quantity: 1,
-    });
-  }
-
-  // Discount code
-  if (discountPercentage && discountPercentage > 0) {
-    const serviceTotal = items
-      .filter((item) => (item.price_data as { unit_amount: number }).unit_amount > 0)
-      .reduce((sum, item) => sum + (item.price_data as { unit_amount: number }).unit_amount, 0);
-    const codeDiscountPence = Math.round(serviceTotal * (discountPercentage / 100));
-    if (codeDiscountPence > 0) {
-      items.push({
-        price_data: {
-          currency: "gbp",
-          product_data: {
-            name: `Discount code (${discountCode || ""}): ${discountPercentage}% off`,
-          },
-          unit_amount: -codeDiscountPence,
-        },
-        quantity: 1,
-      });
-    }
-  }
-
   return items;
+}
+
+function calcTotalDiscountPence(
+  properties: PropertyPayload[],
+  lineItems: Stripe.Checkout.SessionCreateParams.LineItem[],
+  discountPercentage?: number,
+): number {
+  let total = 0;
+
+  const multiDiscount = calcMultiPropertyDiscount(properties.length);
+  total += Math.round(multiDiscount * 100);
+
+  if (discountPercentage && discountPercentage > 0) {
+    const serviceTotal = lineItems.reduce(
+      (sum, item) => sum + ((item.price_data as { unit_amount: number }).unit_amount),
+      0,
+    );
+    const afterMulti = serviceTotal - Math.round(multiDiscount * 100);
+    total += Math.round(afterMulti * (discountPercentage / 100));
+  }
+
+  return total;
 }
 
 export async function POST(request: Request) {
@@ -181,14 +167,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const lineItems = buildLineItems(properties, discountCode, discountPercentage);
+    const lineItems = buildLineItems(properties);
 
-    // Filter out any discount-only submissions
-    const serviceItems = lineItems.filter(
-      (item) => (item.price_data as { unit_amount: number }).unit_amount > 0
-    );
-
-    if (!serviceItems.length) {
+    if (!lineItems.length) {
       return NextResponse.json(
         { error: "No services selected" },
         { status: 400 }
@@ -196,37 +177,67 @@ export async function POST(request: Request) {
     }
 
     const origin = new URL(request.url).origin;
+    const stripe = getStripe();
 
-    const session = await getStripe().checkout.sessions.create({
+    // Build discounts via Stripe coupon instead of negative line items
+    const totalDiscountPence = calcTotalDiscountPence(
+      properties,
+      lineItems,
+      discountPercentage,
+    );
+
+    const discounts: Stripe.Checkout.SessionCreateParams.Discount[] = [];
+    if (totalDiscountPence > 0) {
+      const coupon = await stripe.coupons.create({
+        amount_off: totalDiscountPence,
+        currency: "gbp",
+        duration: "once",
+        name: [
+          properties.length > 1 ? `Multi-property (${properties.length})` : "",
+          discountCode ? `${discountCode}: ${discountPercentage}% off` : "",
+        ].filter(Boolean).join(" + "),
+      });
+      discounts.push({ coupon: coupon.id });
+    }
+
+    // Store each property in its own metadata key to stay under Stripe's 500-char limit
+    const metadata: Record<string, string> = {
+      agent_name: agent.name,
+      agent_company: agent.company,
+      agent_email: agent.email,
+      agent_phone: agent.phone,
+      discount_code: discountCode || "",
+      discount_percentage: String(discountPercentage || 0),
+      property_count: String(properties.length),
+    };
+
+    for (let i = 0; i < properties.length; i++) {
+      const p = properties[i];
+      metadata[`property_${i}`] = JSON.stringify({
+        address: p.address,
+        postcode: p.postcode,
+        bedrooms: p.bedrooms,
+        preferredDate: p.preferredDate,
+        notes: p.notes,
+        photography: p.photography,
+        photoCount: p.photoCount,
+        dronePhotography: p.dronePhotography,
+        dronePhotoCount: p.dronePhotoCount,
+        standardVideo: p.standardVideo,
+        standardVideoDrone: p.standardVideoDrone,
+        agentPresentedVideo: p.agentPresentedVideo,
+        agentPresentedVideoDrone: p.agentPresentedVideoDrone,
+      });
+    }
+
+    const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items: lineItems,
+      ...(discounts.length > 0 ? { discounts } : {}),
       customer_email: agent.email || undefined,
       success_url: `${origin}/success`,
       cancel_url: `${origin}/#book`,
-      metadata: {
-        agent_name: agent.name,
-        agent_company: agent.company,
-        agent_email: agent.email,
-        agent_phone: agent.phone,
-        discount_code: discountCode || "",
-        discount_percentage: String(discountPercentage || 0),
-        properties: JSON.stringify(
-          properties.map((p) => ({
-            address: p.address,
-            bedrooms: p.bedrooms,
-            preferredDate: p.preferredDate,
-            notes: p.notes,
-            photography: p.photography,
-            photoCount: p.photoCount,
-            dronePhotography: p.dronePhotography,
-            dronePhotoCount: p.dronePhotoCount,
-            standardVideo: p.standardVideo,
-            standardVideoDrone: p.standardVideoDrone,
-            agentPresentedVideo: p.agentPresentedVideo,
-            agentPresentedVideoDrone: p.agentPresentedVideoDrone,
-          }))
-        ),
-      },
+      metadata,
     });
 
     return NextResponse.json({ url: session.url });

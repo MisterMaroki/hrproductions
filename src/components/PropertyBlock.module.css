@@ -79,6 +79,16 @@
   line-height: 1.5;
 }
 
+.inputError {
+  border-color: #c0392b;
+}
+
+.error {
+  font-size: 0.78rem;
+  color: #c0392b;
+  font-weight: 500;
+}
+
 /* ── Date availability ── */
 
 .dateChecking {

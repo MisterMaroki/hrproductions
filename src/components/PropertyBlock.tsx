@@ -8,6 +8,8 @@ interface Props {
   onChange: (updates: Partial<PropertyBooking>) => void;
   onRemove: () => void;
   canRemove: boolean;
+  errors?: Record<string, string>;
+  onClearError?: (field: string) => void;
 }
 
 export default function PropertyBlock({
@@ -15,6 +17,8 @@ export default function PropertyBlock({
   onChange,
   onRemove,
   canRemove,
+  errors = {},
+  onClearError,
 }: Props) {
   const togglePhotography = () => {
     onChange({ photography: !property.photography });
@@ -87,14 +91,30 @@ export default function PropertyBlock({
           <input
             type="text"
             value={property.address}
-            onChange={(e) => onChange({ address: e.target.value })}
-            className={styles.input}
+            onChange={(e) => { onChange({ address: e.target.value }); onClearError?.("address"); }}
+            className={`${styles.input} ${errors.address ? styles.inputError : ""}`}
             placeholder="Full property address"
             required
+            {...(errors.address ? { "data-validation-error": true } : {})}
           />
+          {errors.address && <span className={styles.error}>{errors.address}</span>}
         </label>
 
         <div className={styles.row}>
+          <label className={styles.field}>
+            <span>Postcode</span>
+            <input
+              type="text"
+              value={property.postcode}
+              onChange={(e) => { onChange({ postcode: e.target.value }); onClearError?.("postcode"); }}
+              className={`${styles.input} ${errors.postcode ? styles.inputError : ""}`}
+              placeholder="e.g. BN1 1AA"
+              required
+              {...(errors.postcode ? { "data-validation-error": true } : {})}
+            />
+            {errors.postcode && <span className={styles.error}>{errors.postcode}</span>}
+          </label>
+
           <label className={styles.field}>
             <span>Bedrooms</span>
             <select
@@ -117,13 +137,17 @@ export default function PropertyBlock({
             <input
               type="date"
               value={property.preferredDate}
+              min={new Date(Date.now() + 86400000).toISOString().split("T")[0]}
               onChange={(e) => {
                 onChange({ preferredDate: e.target.value });
+                onClearError?.("preferredDate");
                 checkDateAvailability(e.target.value);
               }}
-              className={styles.input}
+              className={`${styles.input} ${errors.preferredDate ? styles.inputError : ""}`}
               required
+              {...(errors.preferredDate ? { "data-validation-error": true } : {})}
             />
+            {errors.preferredDate && <span className={styles.error}>{errors.preferredDate}</span>}
             {checkingDate && (
               <p className={styles.dateChecking}>Checking availability…</p>
             )}
@@ -166,13 +190,14 @@ export default function PropertyBlock({
               <span>Number of photos</span>
               <input
                 type="number"
-                min={20}
                 value={property.photoCount}
-                onChange={(e) =>
-                  onChange({ photoCount: Math.max(20, parseInt(e.target.value, 10) || 20) })
-                }
-                className={styles.input}
+                onChange={(e) => {
+                  onChange({ photoCount: parseInt(e.target.value, 10) || 0 });
+                  onClearError?.("photoCount");
+                }}
+                className={`${styles.input} ${errors.photoCount ? styles.inputError : ""}`}
               />
+              {errors.photoCount && <span className={styles.error}>{errors.photoCount}</span>}
             </label>
           )}
         </div>

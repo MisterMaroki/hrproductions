@@ -1,14 +1,18 @@
-import type { AgentInfo } from "./BookingSection";
+import type { AgentInfo, ValidationErrors } from "./BookingSection";
 import styles from "./AgentDetails.module.css";
 
 interface Props {
   agent: AgentInfo;
   onChange: (agent: AgentInfo) => void;
+  errors: ValidationErrors["agent"];
+  onClearError: (field: keyof AgentInfo) => void;
 }
 
-export default function AgentDetails({ agent, onChange }: Props) {
-  const update = (field: keyof AgentInfo, value: string) =>
+export default function AgentDetails({ agent, onChange, errors, onClearError }: Props) {
+  const update = (field: keyof AgentInfo, value: string) => {
     onChange({ ...agent, [field]: value });
+    onClearError(field);
+  };
 
   return (
     <fieldset className={styles.fieldset}>
@@ -20,9 +24,11 @@ export default function AgentDetails({ agent, onChange }: Props) {
             type="text"
             value={agent.name}
             onChange={(e) => update("name", e.target.value)}
-            className={styles.input}
+            className={`${styles.input} ${errors.name ? styles.inputError : ""}`}
             required
+            {...(errors.name ? { "data-validation-error": true } : {})}
           />
+          {errors.name && <span className={styles.error}>{errors.name}</span>}
         </label>
         <label className={styles.label}>
           <span>Company</span>
@@ -30,9 +36,11 @@ export default function AgentDetails({ agent, onChange }: Props) {
             type="text"
             value={agent.company}
             onChange={(e) => update("company", e.target.value)}
-            className={styles.input}
+            className={`${styles.input} ${errors.company ? styles.inputError : ""}`}
             required
+            {...(errors.company ? { "data-validation-error": true } : {})}
           />
+          {errors.company && <span className={styles.error}>{errors.company}</span>}
         </label>
         <label className={styles.label}>
           <span>Email</span>
@@ -40,9 +48,11 @@ export default function AgentDetails({ agent, onChange }: Props) {
             type="email"
             value={agent.email}
             onChange={(e) => update("email", e.target.value)}
-            className={styles.input}
+            className={`${styles.input} ${errors.email ? styles.inputError : ""}`}
             required
+            {...(errors.email ? { "data-validation-error": true } : {})}
           />
+          {errors.email && <span className={styles.error}>{errors.email}</span>}
         </label>
         <label className={styles.label}>
           <span>Phone</span>
@@ -50,9 +60,11 @@ export default function AgentDetails({ agent, onChange }: Props) {
             type="tel"
             value={agent.phone}
             onChange={(e) => update("phone", e.target.value)}
-            className={styles.input}
+            className={`${styles.input} ${errors.phone ? styles.inputError : ""}`}
             required
+            {...(errors.phone ? { "data-validation-error": true } : {})}
           />
+          {errors.phone && <span className={styles.error}>{errors.phone}</span>}
         </label>
       </div>
     </fieldset>
