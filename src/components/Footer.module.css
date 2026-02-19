@@ -34,6 +34,25 @@
   color: var(--color-text);
 }
 
+.legal {
+  max-width: var(--max-width);
+  margin: 1.5rem auto 0;
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+}
+
+.legal a {
+  font-size: 0.78rem;
+  color: var(--color-muted);
+  letter-spacing: 0.03em;
+  transition: color 0.2s ease;
+}
+
+.legal a:hover {
+  color: var(--color-text);
+}
+
 @media (max-width: 600px) {
   .inner {
     flex-direction: column;
