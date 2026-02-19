@@ -9,9 +9,18 @@ interface Props {
 }
 
 export default function AgentDetails({ agent, onChange, errors, onClearError }: Props) {
+  const isValidUkPhone = (value: string) => {
+    const cleaned = value.replace(/[\s\-()]/g, "");
+    return /^(?:0[1-37]\d{8,9}|(?:\+44|0044)[1-37]\d{8,9})$/.test(cleaned);
+  };
+
   const update = (field: keyof AgentInfo, value: string) => {
     onChange({ ...agent, [field]: value });
-    onClearError(field);
+    if (field === "phone") {
+      if (isValidUkPhone(value)) onClearError(field);
+    } else {
+      onClearError(field);
+    }
   };
 
   return (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useCallback, useState } from "react";
 import type { PropertyBooking, AgentInfo } from "./BookingSection";
 import {
   calcPhotography,
@@ -62,7 +62,6 @@ function getLineItems(property: PropertyBooking) {
 }
 
 export default function Basket({ properties, agent, discountCode, discountPercentage, onValidate }: Props) {
-  const [mobileOpen, setMobileOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const propertyTotals = properties.map((p) => ({
@@ -167,26 +166,13 @@ export default function Basket({ properties, agent, discountCode, discountPercen
         )}
       </div>
 
-      {/* Mobile bottom bar */}
-      <div className={styles.mobileBar}>
-        <div className={styles.mobileBarInner}>
-          <button
-            className={styles.mobileToggle}
-            onClick={() => setMobileOpen(!mobileOpen)}
-          >
-            {mobileOpen ? "Hide Basket" : "View Basket"} — £
-            {grandTotal.toFixed(2)}
-          </button>
-          <button
-            className={styles.mobileCheckout}
-            onClick={handleCheckout}
-            disabled={!hasItems || loading}
-          >
-            {loading ? "…" : "Pay"}
-          </button>
-        </div>
-        {mobileOpen && (
-          <div className={styles.mobilePanel}>{basketContent}</div>
+      {/* Mobile basket — always visible */}
+      <div className={styles.mobile}>
+        <h3 className={styles.heading}>Your Booking</h3>
+        {hasItems ? (
+          basketContent
+        ) : (
+          <p className={styles.empty}>Select services to get started</p>
         )}
       </div>
     </>

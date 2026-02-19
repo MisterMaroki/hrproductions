@@ -16,9 +16,9 @@ const dmSans = DM_Sans({
 });
 
 export const metadata = {
-  title: "The Property Room — Property Videography & Photography",
+  title: "The Property Room — Property Marketing & Visual Media",
   description:
-    "Professional property videography, photography, and drone footage for estate agents. Book online.",
+    "Professional property marketing and visual media for estate agents. Book online.",
 };
 
 export default function RootLayout({

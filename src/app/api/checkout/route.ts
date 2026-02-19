@@ -21,6 +21,7 @@ interface PropertyPayload extends PropertyServices {
   address: string;
   postcode: string;
   preferredDate: string;
+  timeSlot: string;
   notes: string;
 }
 
@@ -36,13 +37,59 @@ interface CheckoutBody {
   discountPercentage?: number;
 }
 
+function formatSlotTime(time: string): string {
+  const [h, m] = time.split(":").map(Number);
+  const period = h >= 12 ? "pm" : "am";
+  const hour = h > 12 ? h - 12 : h === 0 ? 12 : h;
+  return m === 0 ? `${hour}${period}` : `${hour}:${String(m).padStart(2, "0")}${period}`;
+}
+
+function formatBookingLabel(p: PropertyPayload): string {
+  const parts: string[] = [p.address || "Property"];
+
+  if (p.preferredDate) {
+    const date = new Date(p.preferredDate + "T12:00:00");
+    const day = date.toLocaleDateString("en-GB", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+    });
+    parts.push(day);
+  }
+
+  if (p.timeSlot) {
+    const shootMins = calcShootMinsForLabel(p);
+    const [h, m] = p.timeSlot.split(":").map(Number);
+    const endTotal = h * 60 + m + shootMins;
+    const endTime = `${String(Math.floor(endTotal / 60)).padStart(2, "0")}:${String(endTotal % 60).padStart(2, "0")}`;
+    parts.push(`${formatSlotTime(p.timeSlot)} – ${formatSlotTime(endTime)}`);
+  }
+
+  return parts.join(" · ");
+}
+
+/** Quick duration calc for the label — mirrors scheduling.ts logic */
+function calcShootMinsForLabel(p: PropertyPayload): number {
+  let mins = 0;
+  if (p.photography) mins += 40 + Math.max(0, Math.max(p.photoCount, 20) - 20) * 5;
+  if (p.dronePhotography) mins += 25;
+  if (p.agentPresentedVideo) {
+    mins += 105 + Math.max(0, p.bedrooms - 2) * 10;
+    if (p.agentPresentedVideoDrone) mins += 25;
+  } else if (p.standardVideo) {
+    mins += 40 + Math.max(0, p.bedrooms - 2) * 5;
+    if (p.standardVideoDrone) mins += 25;
+  }
+  return mins;
+}
+
 function buildLineItems(
   properties: PropertyPayload[],
 ): Stripe.Checkout.SessionCreateParams.LineItem[] {
   const items: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
 
   for (const p of properties) {
-    const label = p.address || "Property";
+    const label = formatBookingLabel(p);
 
     if (p.photography) {
       const price = calcPhotography(p.photoCount);
@@ -218,6 +265,7 @@ export async function POST(request: Request) {
         postcode: p.postcode,
         bedrooms: p.bedrooms,
         preferredDate: p.preferredDate,
+        timeSlot: p.timeSlot,
         notes: p.notes,
         photography: p.photography,
         photoCount: p.photoCount,
@@ -236,7 +284,7 @@ export async function POST(request: Request) {
       ...(discounts.length > 0 ? { discounts } : {}),
       customer_email: agent.email || undefined,
       success_url: `${origin}/success`,
-      cancel_url: `${origin}/#book`,
+      cancel_url: `${origin}/book`,
       metadata,
     });
 

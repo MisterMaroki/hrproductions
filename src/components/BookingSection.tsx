@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import SectionHeader from "./SectionHeader";
 import AgentDetails from "./AgentDetails";
 import PropertyBlock from "./PropertyBlock";
+import type { SiblingBooking } from "./PropertyBlock";
 import Basket from "./Basket";
 import { useFadeIn } from "@/hooks/useFadeIn";
+import { isWorkingDay, calcShootMinutes } from "@/lib/scheduling";
 import styles from "./BookingSection.module.css";
 
 export interface AgentInfo {
@@ -21,6 +23,7 @@ export interface PropertyBooking {
   postcode: string;
   bedrooms: number;
   preferredDate: string;
+  timeSlot: string; // "HH:MM" start time
   notes: string;
   photography: boolean;
   photoCount: number;
@@ -44,6 +47,7 @@ function createProperty(): PropertyBooking {
     postcode: "",
     bedrooms: 2,
     preferredDate: "",
+    timeSlot: "",
     notes: "",
     photography: false,
     photoCount: 20,
@@ -84,12 +88,28 @@ export default function BookingSection() {
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(agent.email)) {
       agentErrors.email = "Enter a valid email";
     }
-    if (!agent.phone.trim()) agentErrors.phone = "Phone is required";
+    if (!agent.phone.trim()) {
+      agentErrors.phone = "Phone is required";
+    } else {
+      // Strip spaces, dashes, parens
+      const cleaned = agent.phone.replace(/[\s\-()]/g, "");
+      // UK mobile: 07xxx or +447xxx — 11 digits from 0, 12 from +44
+      // UK landline: 01x/02x/03x or +441/+442/+443 — 10-11 digits from 0
+      const isValid = /^(?:0[1-37]\d{8,9}|(?:\+44|0044)[1-37]\d{8,9})$/.test(cleaned);
+      if (!isValid) agentErrors.phone = "Enter a valid UK phone number";
+    }
 
     for (const p of properties) {
       const pErr: Record<string, string> = {};
       if (!p.address.trim()) pErr.address = "Address is required";
-      if (!p.postcode.trim()) pErr.postcode = "Postcode is required";
+      if (!p.postcode.trim()) {
+        pErr.postcode = "Postcode is required";
+      } else {
+        const pc = p.postcode.replace(/\s/g, "").toUpperCase();
+        if (!/^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/.test(pc)) {
+          pErr.postcode = "Enter a valid UK postcode";
+        }
+      }
       if (!p.preferredDate) {
         pErr.preferredDate = "Date is required";
       } else {
@@ -98,7 +118,13 @@ export default function BookingSection() {
         tomorrow.setDate(tomorrow.getDate() + 1);
         if (new Date(p.preferredDate) < tomorrow) {
           pErr.preferredDate = "Date must be in the future";
+        } else if (!isWorkingDay(p.preferredDate)) {
+          pErr.preferredDate = "We only operate Monday – Saturday";
         }
+      }
+      const hasServices = p.photography || p.dronePhotography || p.standardVideo || p.agentPresentedVideo;
+      if (hasServices && !p.timeSlot) {
+        pErr.timeSlot = "Please select a time slot";
       }
       if (p.photography && p.photoCount < 20) pErr.photoCount = "Minimum 20 photos";
       if (Object.keys(pErr).length > 0) propErrors[p.id] = pErr;
@@ -154,10 +180,27 @@ export default function BookingSection() {
   const removeProperty = (id: string) =>
     setProperties((prev) => prev.filter((p) => p.id !== id));
 
+  // Build sibling booking info so each PropertyBlock can exclude
+  // time slots already claimed by other properties in this booking
+  const siblingMap = useMemo(() => {
+    const map = new Map<string, SiblingBooking[]>();
+    for (const p of properties) {
+      const siblings: SiblingBooking[] = properties
+        .filter((s) => s.id !== p.id && s.preferredDate && s.timeSlot)
+        .map((s) => ({
+          date: s.preferredDate,
+          timeSlot: s.timeSlot,
+          durationMins: calcShootMinutes(s),
+        }));
+      map.set(p.id, siblings);
+    }
+    return map;
+  }, [properties]);
+
   return (
     <section ref={ref} className={`${styles.section} fade-in`}>
       <div className={styles.container}>
-        <SectionHeader title="Book" id="book" number="03 — Get Started" />
+        <SectionHeader title="Book" id="book" />
         <div className={styles.layout}>
           <div className={styles.form}>
             <AgentDetails agent={agent} onChange={setAgent} errors={errors.agent} onClearError={clearAgentError} />
@@ -165,6 +208,7 @@ export default function BookingSection() {
               <PropertyBlock
                 key={property.id}
                 property={property}
+                siblingBookings={siblingMap.get(property.id) || []}
                 onChange={(updates) => updateProperty(property.id, updates)}
                 onRemove={() => removeProperty(property.id)}
                 canRemove={properties.length > 1}
@@ -179,7 +223,7 @@ export default function BookingSection() {
             <div className={styles.disclaimer}>
               <h4 className={styles.disclaimerTitle}>Important Information</h4>
               <ul className={styles.disclaimerList}>
-                <li>Unpresented property videos are allocated 1 hour per shoot. Agent-presented videos are allocated 2 hours. Additional time may incur extra charges.</li>
+                <li>Shoot times are allocated automatically based on your selected services. Available time slots are shown after you choose a date.</li>
                 <li>Properties must include a full address. Shoots within 10 miles of Brighton are included. Properties beyond 10 miles will incur a per-mile travel charge, quoted separately.</li>
                 <li>Multi-property bookings on the same day receive £15 off each additional property.</li>
                 <li>All prices are exclusive of VAT.</li>

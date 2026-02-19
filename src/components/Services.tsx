@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import SectionHeader from "./SectionHeader";
 import { useFadeIn } from "@/hooks/useFadeIn";
 import styles from "./Services.module.css";
@@ -17,15 +18,15 @@ const services = [
   },
   {
     name: "Unpresented Property Video",
-    price: "From £125",
-    details: ["2-bed base · +£30 per extra bedroom", "Add drone footage for +£65"],
+    price: "From £100",
+    details: ["2-bed base · +£25 per extra bedroom", "Add drone footage for +£65"],
   },
   {
     name: "Agent Presented Video",
-    price: "From £187.50",
+    price: "From £150",
     details: [
       "Guided tour with your agent on camera",
-      "Directed by Harrison · +£45 per extra bedroom",
+      "Directed by Harrison · +£25 per extra bedroom",
     ],
   },
 ];
@@ -36,7 +37,7 @@ export default function Services() {
   return (
     <section ref={ref} className={`${styles.section} fade-in`}>
       <div className={styles.container}>
-        <SectionHeader title="Services" id="services" number="02 — What We Offer" />
+        <SectionHeader title="Services" id="services" />
         <div className={styles.grid}>
           {services.map((service) => (
             <div key={service.name} className={styles.card}>
@@ -47,9 +48,9 @@ export default function Services() {
                   {line}
                 </p>
               ))}
-              <a href="#book" className={styles.bookLink}>
+              <Link href="/book" className={styles.bookLink}>
                 Book Now &#8594;
-              </a>
+              </Link>
             </div>
           ))}
         </div>

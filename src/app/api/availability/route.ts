@@ -1,12 +1,17 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { bookings, blockedDays } from "@/lib/schema";
-import { eq, and, sql } from "drizzle-orm";
-import { MAX_DAILY_HOURS } from "@/lib/scheduling";
+import { eq, and } from "drizzle-orm";
+import {
+  getAvailableSlots,
+  isWorkingDay,
+  type ExistingBooking,
+} from "@/lib/scheduling";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const date = searchParams.get("date");
+  const durationParam = searchParams.get("duration"); // shoot duration in minutes
 
   if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
     return NextResponse.json(
@@ -16,6 +21,15 @@ export async function GET(request: Request) {
   }
 
   try {
+    // Reject Sundays
+    if (!isWorkingDay(date)) {
+      return NextResponse.json({
+        available: false,
+        reason: "We only operate Monday – Saturday",
+        slots: [],
+      });
+    }
+
     const [blocked] = await db
       .select()
       .from(blockedDays)
@@ -26,14 +40,15 @@ export async function GET(request: Request) {
       return NextResponse.json({
         available: false,
         reason: blocked.reason || "This date is unavailable",
-        hoursBooked: 0,
-        hoursRemaining: 0,
+        slots: [],
       });
     }
 
-    const [result] = await db
+    // Get existing bookings with time slots for this date
+    const existing = await db
       .select({
-        totalHours: sql<number>`COALESCE(SUM(${bookings.workHours}), 0)`,
+        startTime: bookings.startTime,
+        endTime: bookings.endTime,
       })
       .from(bookings)
       .where(
@@ -43,13 +58,23 @@ export async function GET(request: Request) {
         )
       );
 
-    const hoursBooked = result?.totalHours ?? 0;
-    const hoursRemaining = Math.max(0, MAX_DAILY_HOURS - hoursBooked);
+    const existingBookings: ExistingBooking[] = existing
+      .filter((b) => b.startTime && b.endTime)
+      .map((b) => ({
+        startTime: b.startTime!,
+        endTime: b.endTime!,
+      }));
+
+    // If duration provided, return available time slots
+    const duration = durationParam ? parseInt(durationParam, 10) : 0;
+    const slots = duration > 0
+      ? getAvailableSlots(duration, existingBookings)
+      : [];
 
     return NextResponse.json({
-      available: hoursRemaining > 0,
-      hoursBooked,
-      hoursRemaining,
+      available: slots.length > 0 || duration === 0,
+      slots,
+      existingBookings: existingBookings.length,
     });
   } catch {
     return NextResponse.json(

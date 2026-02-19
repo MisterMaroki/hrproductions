@@ -32,29 +32,29 @@ describe("calcPhotography", () => {
 
 describe("calcStandardVideo", () => {
   it("calculates 2-bed price", () => {
-    expect(calcStandardVideo(2)).toBe(125);
+    expect(calcStandardVideo(2)).toBe(100);
   });
 
   it("calculates 3-bed price", () => {
-    expect(calcStandardVideo(3)).toBe(155);
+    expect(calcStandardVideo(3)).toBe(125);
   });
 
   it("calculates 5-bed price", () => {
-    expect(calcStandardVideo(5)).toBe(215);
+    expect(calcStandardVideo(5)).toBe(175);
   });
 });
 
 describe("calcAgentPresentedVideo", () => {
-  it("calculates 2-bed price (1.5x standard)", () => {
-    expect(calcAgentPresentedVideo(2)).toBe(187.5);
+  it("calculates 2-bed price", () => {
+    expect(calcAgentPresentedVideo(2)).toBe(150);
   });
 
   it("calculates 3-bed price", () => {
-    expect(calcAgentPresentedVideo(3)).toBe(232.5);
+    expect(calcAgentPresentedVideo(3)).toBe(175);
   });
 
   it("calculates 5-bed price", () => {
-    expect(calcAgentPresentedVideo(5)).toBe(322.5);
+    expect(calcAgentPresentedVideo(5)).toBe(225);
   });
 });
 
@@ -139,7 +139,7 @@ describe("calcPropertyTotal", () => {
       standardVideo: true,
       standardVideoDrone: true,
     });
-    expect(total).toBe(220); // 155 + 65
+    expect(total).toBe(190); // 125 + 65
   });
 
   it("calculates agent presented video + video drone + photography", () => {
@@ -151,11 +151,11 @@ describe("calcPropertyTotal", () => {
       agentPresentedVideo: true,
       agentPresentedVideoDrone: true,
     });
-    // 4 bed agent presented = (125 + 2*30) * 1.5 = 185 * 1.5 = 277.5
+    // 4 bed agent presented = 150 + 2*25 = 200
     // video drone = 65
     // photography = 30 * 6.5 = 195
-    // total = 277.5 + 65 + 195 = 537.5
-    expect(total).toBe(537.5);
+    // total = 200 + 65 + 195 = 460
+    expect(total).toBe(460);
   });
 
   it("video drone ignored when no video selected", () => {
@@ -178,7 +178,7 @@ describe("calcPropertyTotal", () => {
       standardVideo: true,
       standardVideoDrone: true,
     });
-    // photography: 130, drone photo: 75, video (3-bed): 155, video drone: 65
-    expect(total).toBe(425);
+    // photography: 130, drone photo: 75, video (3-bed): 125, video drone: 65
+    expect(total).toBe(395);
   });
 });

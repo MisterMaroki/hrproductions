@@ -68,10 +68,25 @@ export async function POST(request: Request) {
 
         const workHours = calcWorkHours({
           photography: p.photography,
+          photoCount: p.photoCount || 20,
           dronePhotography: p.dronePhotography,
           standardVideo: p.standardVideo,
+          standardVideoDrone: p.standardVideoDrone || false,
           agentPresentedVideo: p.agentPresentedVideo,
+          agentPresentedVideoDrone: p.agentPresentedVideoDrone || false,
+          bedrooms: p.bedrooms,
         });
+
+        // Calculate end time from start time + shoot duration
+        let startTime: string | null = p.timeSlot || null;
+        let endTime: string | null = null;
+        if (startTime) {
+          const [h, m] = startTime.split(":").map(Number);
+          const endMins = h * 60 + m + Math.round(workHours * 60);
+          const endH = Math.floor(endMins / 60);
+          const endM = endMins % 60;
+          endTime = `${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}`;
+        }
 
         await db.insert(bookings).values({
           id: crypto.randomUUID(),
@@ -79,6 +94,8 @@ export async function POST(request: Request) {
           postcode: p.postcode || null,
           bedrooms: p.bedrooms,
           preferredDate: p.preferredDate,
+          startTime,
+          endTime,
           notes: p.notes || null,
           agentName: meta.agent_name,
           agentCompany: meta.agent_company || null,

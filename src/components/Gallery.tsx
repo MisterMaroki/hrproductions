@@ -147,7 +147,7 @@ export default function Gallery() {
       <div className={styles.container}>
 
         {/* ── Photography ── */}
-        <SectionHeader title="Photography" id="work" number="01 — Photography" />
+        <SectionHeader title="Photography" id="work" />
         {photoEntries.length > 0 ? (
           <div ref={photoGridRef} className={styles.grid}>
             {photoEntries.map((item, i) => {
@@ -190,7 +190,7 @@ export default function Gallery() {
 
         {/* ── Videos ── */}
         <div className={styles.sectionSpacer} />
-        <SectionHeader title="Video" id="video" number="02 — Video" />
+        <SectionHeader title="Video" id="video" />
         {videoEntries.length > 0 ? (
           <div ref={videoGridRef} className={`${styles.grid} ${styles.videoGrid}`}>
             {videoEntries.map((item, i) => (

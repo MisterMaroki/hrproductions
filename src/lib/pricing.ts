@@ -3,11 +3,10 @@ const PHOTO_MIN = 20;
 const PHOTO_BULK_THRESHOLD = 100;
 const PHOTO_BULK_DISCOUNT = 0.1;
 
-const VIDEO_BASE = 125;
-const VIDEO_PER_BEDROOM = 30;
+const UNPRESENTED_VIDEO_BASE = 100;
+const PRESENTED_VIDEO_BASE = 150;
+const VIDEO_PER_BEDROOM = 25;
 const VIDEO_BASE_BEDROOMS = 2;
-
-const AGENT_PRESENTED_MULTIPLIER = 1.5;
 
 const DRONE_PHOTO_8_PRICE = 75;
 const DRONE_PHOTO_20_PRICE = 140;
@@ -25,11 +24,11 @@ export function calcPhotography(count: number): number {
 }
 
 export function calcStandardVideo(bedrooms: number): number {
-  return VIDEO_BASE + Math.max(0, bedrooms - VIDEO_BASE_BEDROOMS) * VIDEO_PER_BEDROOM;
+  return UNPRESENTED_VIDEO_BASE + Math.max(0, bedrooms - VIDEO_BASE_BEDROOMS) * VIDEO_PER_BEDROOM;
 }
 
 export function calcAgentPresentedVideo(bedrooms: number): number {
-  return calcStandardVideo(bedrooms) * AGENT_PRESENTED_MULTIPLIER;
+  return PRESENTED_VIDEO_BASE + Math.max(0, bedrooms - VIDEO_BASE_BEDROOMS) * VIDEO_PER_BEDROOM;
 }
 
 export function calcDronePhotography(count: 8 | 20): number {

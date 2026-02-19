@@ -2,15 +2,21 @@
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import styles from './Nav.module.css';
 
-const links = [
+const landingLinks = [
 	{ href: '#work', label: 'Gallery' },
 	{ href: '#services', label: 'Services' },
-	{ href: '#book', label: 'Book' },
+	{ href: '/book', label: 'Book' },
 ];
 
-export default function Nav() {
+const bookPageLinks = [
+	{ href: '/#work', label: 'Gallery' },
+	{ href: '/#services', label: 'Services' },
+];
+
+export default function Nav({ bookPage = false }: { bookPage?: boolean }) {
 	const [scrolled, setScrolled] = useState(false);
 	const [menuOpen, setMenuOpen] = useState(false);
 
@@ -31,21 +37,73 @@ export default function Nav() {
 		};
 	}, [menuOpen]);
 
+	const links = bookPage ? bookPageLinks : landingLinks;
+
+	const NavLink = ({ href, children, className, style, onClick }: {
+		href: string;
+		children: React.ReactNode;
+		className?: string;
+		style?: React.CSSProperties;
+		onClick?: () => void;
+	}) => {
+		const isRoute = href.startsWith('/');
+		if (isRoute) {
+			return (
+				<Link href={href} className={className} style={style} onClick={onClick}>
+					{children}
+				</Link>
+			);
+		}
+		// Hash links: scroll without pushing to history so back button works correctly
+		const handleHash = (e: React.MouseEvent<HTMLAnchorElement>) => {
+			e.preventDefault();
+			const id = href.replace('#', '');
+			document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+			window.history.replaceState(null, '', href);
+			onClick?.();
+		};
+		return (
+			<a href={href} className={className} style={style} onClick={handleHash}>
+				{children}
+			</a>
+		);
+	};
+
 	return (
 		<>
 			<nav
 				className={`${styles.nav} ${scrolled ? styles.scrolled : ''} ${menuOpen ? styles.open : ''}`}
 			>
 				<div className={styles.inner}>
-					<a href="#top" className={styles.logo}>
-						<Image
-							src="/logo.svg"
-							alt="The Property Room"
-							width={400}
-							height={400}
-							priority
-						/>
-					</a>
+					{bookPage ? (
+						<Link href="/" className={styles.logo}>
+							<Image
+								src="/logo.svg"
+								alt="The Property Room"
+								width={400}
+								height={400}
+								priority
+							/>
+						</Link>
+					) : (
+						<a
+						href="#top"
+						className={styles.logo}
+						onClick={(e) => {
+							e.preventDefault();
+							window.scrollTo({ top: 0, behavior: 'smooth' });
+							window.history.replaceState(null, '', '/');
+						}}
+					>
+							<Image
+								src="/logo.svg"
+								alt="The Property Room"
+								width={400}
+								height={400}
+								priority
+							/>
+						</a>
+					)}
 					<button
 						className={styles.burger}
 						onClick={() => setMenuOpen(!menuOpen)}
@@ -57,9 +115,9 @@ export default function Nav() {
 					{/* Desktop links */}
 					<div className={styles.links}>
 						{links.map((l) => (
-							<a key={l.href} href={l.href}>
+							<NavLink key={l.href} href={l.href}>
 								{l.label}
-							</a>
+							</NavLink>
 						))}
 					</div>
 				</div>
@@ -72,7 +130,7 @@ export default function Nav() {
 				<div className={styles.menuInner}>
 					<div className={styles.menuLinks}>
 						{links.map((l, i) => (
-							<a
+							<NavLink
 								key={l.href}
 								href={l.href}
 								className={`${styles.menuLink} ${menuOpen ? styles.menuLinkVisible : ''}`}
@@ -83,7 +141,7 @@ export default function Nav() {
 							>
 								<span className={styles.menuNumber}>0{i + 1}</span>
 								<span className={styles.menuLabel}>{l.label}</span>
-							</a>
+							</NavLink>
 						))}
 					</div>
 					<div

@@ -1,10 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import type { PropertyBooking } from "./BookingSection";
 import { calcPropertyTotal } from "@/lib/pricing";
+import { calcShootMinutes, isWorkingDay, TRAVEL_BUFFER, type TimeSlot } from "@/lib/scheduling";
+import DatePicker from "./DatePicker";
 import styles from "./PropertyBlock.module.css";
+
+export interface SiblingBooking {
+  date: string;
+  timeSlot: string;   // "HH:MM" start
+  durationMins: number;
+}
 
 interface Props {
   property: PropertyBooking;
+  siblingBookings: SiblingBooking[];
   onChange: (updates: Partial<PropertyBooking>) => void;
   onRemove: () => void;
   canRemove: boolean;
@@ -14,6 +23,7 @@ interface Props {
 
 export default function PropertyBlock({
   property,
+  siblingBookings,
   onChange,
   onRemove,
   canRemove,
@@ -48,28 +58,119 @@ export default function PropertyBlock({
     });
   };
 
-  const [dateStatus, setDateStatus] = useState<{
-    available: boolean;
-    reason?: string;
-    hoursRemaining?: number;
-  } | null>(null);
-  const [checkingDate, setCheckingDate] = useState(false);
+  const [apiSlots, setApiSlots] = useState<TimeSlot[]>([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [dateMessage, setDateMessage] = useState<{ text: string; ok: boolean } | null>(null);
 
-  const checkDateAvailability = async (date: string) => {
-    if (!date) {
-      setDateStatus(null);
+  const shootMinutes = calcShootMinutes(property);
+
+  const fetchSlots = useCallback(async (date: string, duration: number) => {
+    if (!date || duration <= 0) {
+      setApiSlots([]);
+      setDateMessage(null);
       return;
     }
-    setCheckingDate(true);
-    try {
-      const res = await fetch(`/api/availability?date=${date}`);
-      const data = await res.json();
-      setDateStatus(data);
-    } catch {
-      setDateStatus(null);
-    } finally {
-      setCheckingDate(false);
+
+    if (!isWorkingDay(date)) {
+      setApiSlots([]);
+      setDateMessage({ text: "We only operate Monday – Saturday", ok: false });
+      return;
     }
+
+    setSlotsLoading(true);
+    try {
+      const res = await fetch(
+        `/api/availability?date=${date}&duration=${duration}`
+      );
+      const data = await res.json();
+
+      if (!data.available && data.reason) {
+        setApiSlots([]);
+        setDateMessage({ text: data.reason, ok: false });
+      } else if (data.slots?.length === 0) {
+        setApiSlots([]);
+        setDateMessage({ text: "No available slots on this date", ok: false });
+      } else {
+        setApiSlots(data.slots || []);
+      }
+    } catch {
+      setApiSlots([]);
+      setDateMessage(null);
+    } finally {
+      setSlotsLoading(false);
+    }
+  }, []);
+
+  // Re-fetch slots when date or services change
+  useEffect(() => {
+    if (property.preferredDate && shootMinutes > 0) {
+      fetchSlots(property.preferredDate, shootMinutes);
+    } else {
+      setApiSlots([]);
+      setDateMessage(null);
+    }
+  }, [
+    property.preferredDate,
+    shootMinutes,
+    fetchSlots,
+  ]);
+
+  // Filter out slots that conflict with sibling bookings on the same date
+  const slots = useMemo(() => {
+    if (apiSlots.length === 0) return [];
+
+    const sameDateSiblings = siblingBookings.filter(
+      (s) => s.date === property.preferredDate && s.timeSlot
+    );
+
+    if (sameDateSiblings.length === 0) return apiSlots;
+
+    const blocked = sameDateSiblings.map((s) => {
+      const [h, m] = s.timeSlot.split(":").map(Number);
+      const start = h * 60 + m;
+      return {
+        start: start - TRAVEL_BUFFER,
+        end: start + s.durationMins + TRAVEL_BUFFER,
+      };
+    });
+
+    return apiSlots.filter((slot) => {
+      const [sh, sm] = slot.start.split(":").map(Number);
+      const [eh, em] = slot.end.split(":").map(Number);
+      const slotStart = sh * 60 + sm;
+      const slotEnd = eh * 60 + em;
+      return !blocked.some((b) => slotStart < b.end && slotEnd > b.start);
+    });
+  }, [apiSlots, siblingBookings, property.preferredDate]);
+
+  // Update date message after filtering
+  useEffect(() => {
+    if (slotsLoading || apiSlots.length === 0) return;
+    if (slots.length === 0 && apiSlots.length > 0) {
+      setDateMessage({ text: "No available slots on this date", ok: false });
+    } else if (slots.length > 0) {
+      setDateMessage({
+        text: `${slots.length} time slot${slots.length === 1 ? "" : "s"} available`,
+        ok: true,
+      });
+    }
+  }, [slots, apiSlots, slotsLoading]);
+
+  // Clear time slot when available slots change and it's no longer valid
+  useEffect(() => {
+    if (property.timeSlot) {
+      const stillValid = slots.some((s) => s.start === property.timeSlot);
+      if (!stillValid && slots.length > 0) {
+        onChange({ timeSlot: "" });
+      }
+    }
+  }, [slots]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const formatTime = (time: string) => {
+    const [h, m] = time.split(":").map(Number);
+    const period = h >= 12 ? "pm" : "am";
+    const hour = h > 12 ? h - 12 : h === 0 ? 12 : h;
+    return m === 0 ? `${hour}${period}` : `${hour}:${String(m).padStart(2, "0")}${period}`;
   };
 
   const subtotal = calcPropertyTotal(property);
@@ -106,7 +207,14 @@ export default function PropertyBlock({
             <input
               type="text"
               value={property.postcode}
-              onChange={(e) => { onChange({ postcode: e.target.value }); onClearError?.("postcode"); }}
+              onChange={(e) => {
+                const val = e.target.value;
+                onChange({ postcode: val });
+                const cleaned = val.replace(/\s/g, "").toUpperCase();
+                if (/^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/.test(cleaned)) {
+                  onClearError?.("postcode");
+                }
+              }}
               className={`${styles.input} ${errors.postcode ? styles.inputError : ""}`}
               placeholder="e.g. BN1 1AA"
               required
@@ -132,34 +240,58 @@ export default function PropertyBlock({
             </select>
           </label>
 
-          <label className={styles.field}>
+          <div className={styles.field}>
             <span>Preferred Date</span>
-            <input
-              type="date"
+            <DatePicker
               value={property.preferredDate}
-              min={new Date(Date.now() + 86400000).toISOString().split("T")[0]}
-              onChange={(e) => {
-                onChange({ preferredDate: e.target.value });
+              onChange={(date) => {
+                onChange({ preferredDate: date, timeSlot: "" });
                 onClearError?.("preferredDate");
-                checkDateAvailability(e.target.value);
+                onClearError?.("timeSlot");
               }}
-              className={`${styles.input} ${errors.preferredDate ? styles.inputError : ""}`}
-              required
-              {...(errors.preferredDate ? { "data-validation-error": true } : {})}
+              error={errors.preferredDate}
             />
-            {errors.preferredDate && <span className={styles.error}>{errors.preferredDate}</span>}
-            {checkingDate && (
+            {slotsLoading && (
               <p className={styles.dateChecking}>Checking availability…</p>
             )}
-            {dateStatus && !checkingDate && (
-              <p className={dateStatus.available ? styles.dateAvailable : styles.dateUnavailable}>
-                {dateStatus.available
-                  ? `Available — ${dateStatus.hoursRemaining}h remaining`
-                  : dateStatus.reason || "This date is unavailable"}
+            {dateMessage && !slotsLoading && (
+              <p className={dateMessage.ok ? styles.dateAvailable : styles.dateUnavailable}>
+                {dateMessage.text}
               </p>
             )}
-          </label>
+          </div>
         </div>
+
+        {/* Time slot picker — shown when date is set and services are selected */}
+        {property.preferredDate && shootMinutes > 0 && slots.length > 0 && (
+          <div className={styles.field}>
+            <span>
+              Time Slot
+              <span className={styles.slotDuration}>
+                {Math.floor(shootMinutes / 60)}h{shootMinutes % 60 > 0 ? ` ${shootMinutes % 60}m` : ""} needed
+              </span>
+            </span>
+            <div
+              className={`${styles.slotGrid} ${errors.timeSlot ? styles.slotGridError : ""}`}
+              {...(errors.timeSlot ? { "data-validation-error": true } : {})}
+            >
+              {slots.map((slot) => (
+                <button
+                  key={slot.start}
+                  type="button"
+                  className={`${styles.slotPill} ${property.timeSlot === slot.start ? styles.slotActive : ""}`}
+                  onClick={() => {
+                    onChange({ timeSlot: slot.start });
+                    onClearError?.("timeSlot");
+                  }}
+                >
+                  {formatTime(slot.start)} – {formatTime(slot.end)}
+                </button>
+              ))}
+            </div>
+            {errors.timeSlot && <span className={styles.error}>{errors.timeSlot}</span>}
+          </div>
+        )}
 
         <label className={styles.field}>
           <span>Notes &amp; Access</span>

@@ -7,6 +7,8 @@ export const bookings = sqliteTable("bookings", {
   postcode: text("postcode"),
   bedrooms: integer("bedrooms").notNull(),
   preferredDate: text("preferred_date").notNull(),
+  startTime: text("start_time"),
+  endTime: text("end_time"),
   notes: text("notes"),
   agentName: text("agent_name").notNull(),
   agentCompany: text("agent_company"),

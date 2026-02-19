@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useEffect } from "react";
+import Link from "next/link";
 import styles from "./Hero.module.css";
 
 export default function Hero() {
@@ -35,11 +36,11 @@ export default function Hero() {
         <div className={styles.rule} />
         <div className={styles.bar}>
           <h1 className={styles.headline}>
-            Property Videography &amp; Photography
+            Property Marketing &amp; Visual Media
           </h1>
-          <a href="#book" className={styles.cta}>
+          <Link href="/book" className={styles.cta}>
             Book a Shoot
-          </a>
+          </Link>
         </div>
       </div>
       <div className={styles.scrollIndicator}>
