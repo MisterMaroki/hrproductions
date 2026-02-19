@@ -58,9 +58,14 @@ a {
 
 button {
   font-family: inherit;
+  color: inherit;
   cursor: pointer;
   border: none;
   background: none;
+}
+
+select {
+  color: inherit;
 }
 
 /* Selection */
