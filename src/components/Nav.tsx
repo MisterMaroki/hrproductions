@@ -14,6 +14,7 @@ const landingLinks = [
 const bookPageLinks = [
 	{ href: '/#work', label: 'Gallery' },
 	{ href: '/#services', label: 'Services' },
+	{ href: '/book', label: 'Book' },
 ];
 
 export default function Nav({ bookPage = false }: { bookPage?: boolean }) {
