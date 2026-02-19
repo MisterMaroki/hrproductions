@@ -31,6 +31,9 @@ export default function RootLayout({
       lang="en"
       className={`${libreFranklin.variable} ${dmSans.variable}`}
     >
+      <head>
+        <meta name="format-detection" content="telephone=no, date=no, email=no, address=no" />
+      </head>
       <body>{children}</body>
     </html>
   );
