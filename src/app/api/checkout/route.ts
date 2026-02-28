@@ -6,6 +6,10 @@ import {
   calcStandardVideo,
   calcAgentPresentedVideo,
   calcVideoDrone,
+  calcSocialMediaVideo,
+  calcSocialMediaPresentedVideo,
+  calcFloorPlan,
+  calcFloorPlanVirtualTour,
   calcMultiPropertyDiscount,
   type PropertyServices,
 } from "@/lib/pricing";
@@ -79,6 +83,16 @@ function calcShootMinsForLabel(p: PropertyPayload): number {
   } else if (p.standardVideo) {
     mins += 40 + Math.max(0, p.bedrooms - 2) * 5;
     if (p.standardVideoDrone) mins += 25;
+  }
+  if (p.socialMediaPresentedVideo) {
+    mins += 60 + Math.max(0, p.bedrooms - 2) * 10;
+  } else if (p.socialMediaVideo) {
+    mins += 25 + Math.max(0, p.bedrooms - 2) * 5;
+  }
+  if (p.floorPlanVirtualTour) {
+    mins += 45 + Math.max(0, p.bedrooms - 2) * 10;
+  } else if (p.floorPlan) {
+    mins += 25 + Math.max(0, p.bedrooms - 2) * 5;
   }
   return mins;
 }
@@ -174,6 +188,58 @@ function buildLineItems(
           quantity: 1,
         });
       }
+    }
+
+    if (p.socialMediaPresentedVideo) {
+      items.push({
+        price_data: {
+          currency: "gbp",
+          product_data: {
+            name: `Social Media Video — Presented (${p.bedrooms}-bed)`,
+            description: label,
+          },
+          unit_amount: Math.round(calcSocialMediaPresentedVideo(p.bedrooms) * 100),
+        },
+        quantity: 1,
+      });
+    } else if (p.socialMediaVideo) {
+      items.push({
+        price_data: {
+          currency: "gbp",
+          product_data: {
+            name: `Social Media Video — Unpresented (${p.bedrooms}-bed)`,
+            description: label,
+          },
+          unit_amount: Math.round(calcSocialMediaVideo(p.bedrooms) * 100),
+        },
+        quantity: 1,
+      });
+    }
+
+    if (p.floorPlanVirtualTour) {
+      items.push({
+        price_data: {
+          currency: "gbp",
+          product_data: {
+            name: `Floor Plan + Virtual Tour (${p.bedrooms}-bed)`,
+            description: label,
+          },
+          unit_amount: Math.round(calcFloorPlanVirtualTour(p.bedrooms) * 100),
+        },
+        quantity: 1,
+      });
+    } else if (p.floorPlan) {
+      items.push({
+        price_data: {
+          currency: "gbp",
+          product_data: {
+            name: `Floor Plan (${p.bedrooms}-bed)`,
+            description: label,
+          },
+          unit_amount: Math.round(calcFloorPlan(p.bedrooms) * 100),
+        },
+        quantity: 1,
+      });
     }
   }
 
@@ -275,6 +341,10 @@ export async function POST(request: Request) {
         standardVideoDrone: p.standardVideoDrone,
         agentPresentedVideo: p.agentPresentedVideo,
         agentPresentedVideoDrone: p.agentPresentedVideoDrone,
+        socialMediaVideo: p.socialMediaVideo,
+        socialMediaPresentedVideo: p.socialMediaPresentedVideo,
+        floorPlan: p.floorPlan,
+        floorPlanVirtualTour: p.floorPlanVirtualTour,
       });
     }
 

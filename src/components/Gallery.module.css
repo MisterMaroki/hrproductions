@@ -7,23 +7,30 @@
   margin: 0 auto;
 }
 
-/* ── Section spacing ── */
+/* ── Album Grid — 2 columns ── */
 
-.sectionSpacer {
-  height: var(--section-padding);
-}
-
-/* ── Editorial Grid — 12-column ── */
-
-.grid {
+.albumGrid {
   display: grid;
-  grid-template-columns: repeat(12, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 12px;
 }
 
-/* ── Scroll-triggered reveal ── */
+/* ── Album Card ── */
 
-.gridItem {
+.albumCard {
+  position: relative;
+  aspect-ratio: 3/4;
+  overflow: hidden;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  border: none;
+  padding: 0;
+  background: #1a1816;
+  display: block;
+  width: 100%;
+
+  /* Scroll-triggered reveal */
   opacity: 0;
   transform: translateY(40px) scale(1.03);
   transition:
@@ -32,132 +39,86 @@
   transition-delay: var(--delay, 0s);
 }
 
-.gridItem.revealed {
+.albumCard.revealed {
   opacity: 1;
   transform: translateY(0) scale(1);
 }
 
-/* ── Image items (shared by photo + drone) ── */
-
-.imageItem {
-  grid-column: span var(--span, 12);
-  position: relative;
-  aspect-ratio: var(--aspect, 4/3);
-  overflow: hidden;
-  cursor: pointer;
-  -webkit-appearance: none;
-  appearance: none;
-  border: none;
-  padding: 0;
-  background: #1a1816;
-  display: block;
-  width: 100%;
-}
-
-.imageItem img {
+.albumCard img {
   transition:
     transform 0.7s cubic-bezier(0.16, 1, 0.3, 1),
     filter 0.7s ease;
 }
 
-.imageItem:hover img {
+.albumCard:hover img {
   transform: scale(1.03);
   filter: brightness(1.06);
 }
 
-.imageItem::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.2) 0%, transparent 50%);
-  opacity: 0;
-  transition: opacity 0.5s ease;
-  pointer-events: none;
-}
+/* ── Album Overlay ── */
 
-.imageItem:hover::after {
-  opacity: 1;
-}
-
-.heroItem {
-  grid-column: 1 / -1;
-}
-
-/* ── Drone grid — wider aspect ratios ── */
-
-.droneGrid {
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-}
-
-/* ── Video grid — uniform 3-col ── */
-
-.videoGrid {
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-}
-
-.videoItem {
-  position: relative;
-  aspect-ratio: 16/9;
-  overflow: hidden;
-  cursor: pointer;
-  -webkit-appearance: none;
-  appearance: none;
-  border: none;
-  padding: 0;
-  background: #1a1816;
-  display: block;
-  width: 100%;
-  grid-column: span 1;
-}
-
-.videoItem img {
-  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.videoItem:hover img {
-  transform: scale(1.03);
-}
-
-/* Play button overlay */
-
-.playOverlay {
+.albumOverlay {
   position: absolute;
   inset: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.3);
-  transition: background 0.4s ease;
+  background: rgba(0, 0, 0, 0.35);
+  transition: background 0.5s ease;
   pointer-events: none;
 }
 
-.videoItem:hover .playOverlay {
-  background: rgba(0, 0, 0, 0.15);
+.albumCard:hover .albumOverlay {
+  background: rgba(0, 0, 0, 0.25);
 }
 
-.playIcon {
+.albumTitle {
+  font-family: var(--font-heading);
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
+  font-weight: 700;
+  color: var(--color-white);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.albumCount {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 400;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 0.5rem;
+}
+
+/* ── Play badge for video album ── */
+
+.playBadge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 48px;
   height: 48px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.8);
   color: var(--color-white);
-  opacity: 0.85;
-  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
+  margin-bottom: 1rem;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.4s ease;
 }
 
-.videoItem:hover .playIcon {
-  transform: scale(1.15);
-  opacity: 1;
+.albumCard:hover .playBadge {
+  transform: scale(1.1);
+  border-color: rgba(255, 255, 255, 1);
 }
 
 /* ── Placeholder state ── */
 
-.placeholder {
+.albumPlaceholder {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 6rem 2rem;
+  aspect-ratio: 3/4;
   border: 1px dashed var(--color-muted);
   border-radius: 2px;
 }
@@ -173,58 +134,25 @@
 /* ── Tablet ── */
 
 @media (max-width: 900px) {
-  .grid {
-    grid-template-columns: repeat(2, 1fr);
+  .albumGrid {
     gap: 8px;
-  }
-
-  .imageItem {
-    grid-column: span 1;
-  }
-
-  .heroItem {
-    grid-column: 1 / -1;
-  }
-
-  .droneGrid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .videoGrid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .sectionSpacer {
-    height: 6rem;
   }
 }
 
 /* ── Mobile ── */
 
 @media (max-width: 600px) {
-  .grid {
+  .albumGrid {
     grid-template-columns: 1fr;
-    gap: 5px;
+    gap: 8px;
   }
 
-  .imageItem {
-    grid-column: 1 / -1;
+  .albumCard {
+    aspect-ratio: 4/5;
   }
 
-  .droneGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .videoGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .playIcon {
+  .playBadge {
     width: 40px;
     height: 40px;
-  }
-
-  .sectionSpacer {
-    height: 4rem;
   }
 }

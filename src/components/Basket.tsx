@@ -8,6 +8,10 @@ import {
   calcStandardVideo,
   calcAgentPresentedVideo,
   calcVideoDrone,
+  calcSocialMediaVideo,
+  calcSocialMediaPresentedVideo,
+  calcFloorPlan,
+  calcFloorPlanVirtualTour,
   calcPropertyTotal,
   calcMultiPropertyDiscount,
 } from "@/lib/pricing";
@@ -56,6 +60,30 @@ function getLineItems(property: PropertyBooking) {
     if (property.standardVideoDrone) {
       items.push({ label: "Drone footage", price: calcVideoDrone(), indent: true });
     }
+  }
+
+  if (property.socialMediaPresentedVideo) {
+    items.push({
+      label: `Social Media Video — Presented (${property.bedrooms}-bed)`,
+      price: calcSocialMediaPresentedVideo(property.bedrooms),
+    });
+  } else if (property.socialMediaVideo) {
+    items.push({
+      label: `Social Media Video — Unpresented (${property.bedrooms}-bed)`,
+      price: calcSocialMediaVideo(property.bedrooms),
+    });
+  }
+
+  if (property.floorPlanVirtualTour) {
+    items.push({
+      label: `Floor Plan + Virtual Tour (${property.bedrooms}-bed)`,
+      price: calcFloorPlanVirtualTour(property.bedrooms),
+    });
+  } else if (property.floorPlan) {
+    items.push({
+      label: `Floor Plan (${property.bedrooms}-bed)`,
+      price: calcFloorPlan(property.bedrooms),
+    });
   }
 
   return items;

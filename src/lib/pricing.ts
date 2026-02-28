@@ -8,6 +8,17 @@ const PRESENTED_VIDEO_BASE = 150;
 const VIDEO_PER_BEDROOM = 25;
 const VIDEO_BASE_BEDROOMS = 2;
 
+const SOCIAL_MEDIA_UNPRESENTED_BASE = 100;
+const SOCIAL_MEDIA_PRESENTED_BASE = 150;
+const SOCIAL_MEDIA_PER_BEDROOM = 25;
+const SOCIAL_MEDIA_BASE_BEDROOMS = 2;
+
+const FLOOR_PLAN_BASE = 60;
+const FLOOR_PLAN_PER_BEDROOM = 15;
+const FLOOR_PLAN_TOUR_BASE = 140;
+const FLOOR_PLAN_TOUR_PER_BEDROOM = 20;
+const FLOOR_PLAN_BASE_BEDROOMS = 2;
+
 const DRONE_PHOTO_8_PRICE = 75;
 const DRONE_PHOTO_20_PRICE = 140;
 const DRONE_VIDEO_PRICE = 65;
@@ -39,6 +50,22 @@ export function calcVideoDrone(): number {
   return DRONE_VIDEO_PRICE;
 }
 
+export function calcSocialMediaVideo(bedrooms: number): number {
+  return SOCIAL_MEDIA_UNPRESENTED_BASE + Math.max(0, bedrooms - SOCIAL_MEDIA_BASE_BEDROOMS) * SOCIAL_MEDIA_PER_BEDROOM;
+}
+
+export function calcSocialMediaPresentedVideo(bedrooms: number): number {
+  return SOCIAL_MEDIA_PRESENTED_BASE + Math.max(0, bedrooms - SOCIAL_MEDIA_BASE_BEDROOMS) * SOCIAL_MEDIA_PER_BEDROOM;
+}
+
+export function calcFloorPlan(bedrooms: number): number {
+  return FLOOR_PLAN_BASE + Math.max(0, bedrooms - FLOOR_PLAN_BASE_BEDROOMS) * FLOOR_PLAN_PER_BEDROOM;
+}
+
+export function calcFloorPlanVirtualTour(bedrooms: number): number {
+  return FLOOR_PLAN_TOUR_BASE + Math.max(0, bedrooms - FLOOR_PLAN_BASE_BEDROOMS) * FLOOR_PLAN_TOUR_PER_BEDROOM;
+}
+
 export function calcMultiPropertyDiscount(propertyCount: number): number {
   if (propertyCount <= 1) return 0;
   return (propertyCount - 1) * MULTI_PROPERTY_DISCOUNT;
@@ -54,6 +81,10 @@ export interface PropertyServices {
   standardVideoDrone: boolean;
   agentPresentedVideo: boolean;
   agentPresentedVideoDrone: boolean;
+  socialMediaVideo: boolean;
+  socialMediaPresentedVideo: boolean;
+  floorPlan: boolean;
+  floorPlanVirtualTour: boolean;
 }
 
 export function calcPropertyTotal(services: PropertyServices): number {
@@ -77,6 +108,18 @@ export function calcPropertyTotal(services: PropertyServices): number {
     if (services.standardVideoDrone) {
       total += calcVideoDrone();
     }
+  }
+
+  if (services.socialMediaPresentedVideo) {
+    total += calcSocialMediaPresentedVideo(services.bedrooms);
+  } else if (services.socialMediaVideo) {
+    total += calcSocialMediaVideo(services.bedrooms);
+  }
+
+  if (services.floorPlanVirtualTour) {
+    total += calcFloorPlanVirtualTour(services.bedrooms);
+  } else if (services.floorPlan) {
+    total += calcFloorPlan(services.bedrooms);
   }
 
   return total;

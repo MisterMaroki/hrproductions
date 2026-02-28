@@ -58,6 +58,38 @@ export default function PropertyBlock({
     });
   };
 
+  const toggleSocialMediaVideo = () => {
+    const next = !property.socialMediaVideo;
+    onChange({
+      socialMediaVideo: next,
+      socialMediaPresentedVideo: false,
+    });
+  };
+
+  const toggleSocialMediaPresentedVideo = () => {
+    const next = !property.socialMediaPresentedVideo;
+    onChange({
+      socialMediaPresentedVideo: next,
+      socialMediaVideo: false,
+    });
+  };
+
+  const toggleFloorPlan = () => {
+    const next = !property.floorPlan;
+    onChange({
+      floorPlan: next,
+      floorPlanVirtualTour: false,
+    });
+  };
+
+  const toggleFloorPlanVirtualTour = () => {
+    const next = !property.floorPlanVirtualTour;
+    onChange({
+      floorPlanVirtualTour: next,
+      floorPlan: false,
+    });
+  };
+
   const [apiSlots, setApiSlots] = useState<TimeSlot[]>([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [dateMessage, setDateMessage] = useState<{ text: string; ok: boolean } | null>(null);
@@ -402,6 +434,50 @@ export default function PropertyBlock({
               <span>Add drone footage (+£65)</span>
             </label>
           )}
+        </div>
+
+        {/* Social Media Video — Unpresented */}
+        <div className={styles.serviceGroup}>
+          <button
+            className={`${styles.pill} ${property.socialMediaVideo ? styles.active : ""}`}
+            onClick={toggleSocialMediaVideo}
+            type="button"
+          >
+            Social Media Video (Unpresented)
+          </button>
+        </div>
+
+        {/* Social Media Video — Presented */}
+        <div className={styles.serviceGroup}>
+          <button
+            className={`${styles.pill} ${property.socialMediaPresentedVideo ? styles.active : ""}`}
+            onClick={toggleSocialMediaPresentedVideo}
+            type="button"
+          >
+            Social Media Video (Presented)
+          </button>
+        </div>
+
+        {/* Floor Plan */}
+        <div className={styles.serviceGroup}>
+          <button
+            className={`${styles.pill} ${property.floorPlan ? styles.active : ""}`}
+            onClick={toggleFloorPlan}
+            type="button"
+          >
+            Floor Plan
+          </button>
+        </div>
+
+        {/* Floor Plan + Virtual Tour */}
+        <div className={styles.serviceGroup}>
+          <button
+            className={`${styles.pill} ${property.floorPlanVirtualTour ? styles.active : ""}`}
+            onClick={toggleFloorPlanVirtualTour}
+            type="button"
+          >
+            Floor Plan + Virtual Tour
+          </button>
         </div>
       </div>
 

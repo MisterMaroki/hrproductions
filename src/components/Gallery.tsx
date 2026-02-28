@@ -15,31 +15,6 @@ interface PhotoEntry {
   src: string;
 }
 
-// Auto layout pattern — repeats every 8 photos
-const LAYOUT_PATTERN = [
-  { span: 12, aspect: "16/9" },  // hero
-  { span: 6, aspect: "4/5" },    // half
-  { span: 6, aspect: "4/5" },    // half
-  { span: 4, aspect: "1/1" },    // third
-  { span: 4, aspect: "1/1" },    // third
-  { span: 4, aspect: "1/1" },    // third
-  { span: 6, aspect: "4/5" },    // half
-  { span: 6, aspect: "4/5" },    // half
-];
-
-function getLayoutForIndex(i: number) {
-  const pattern = LAYOUT_PATTERN[i % LAYOUT_PATTERN.length];
-  const groupStart = Math.floor(i / LAYOUT_PATTERN.length) * LAYOUT_PATTERN.length;
-  const posInGroup = i - groupStart;
-  // Stagger delay within each row group
-  let delay = 0;
-  if (posInGroup === 2) delay = 0.12;
-  if (posInGroup === 4) delay = 0.1;
-  if (posInGroup === 5) delay = 0.2;
-  if (posInGroup === 7) delay = 0.12;
-  return { ...pattern, delay };
-}
-
 interface VideoEntry {
   id: string;
   title: string;
@@ -49,14 +24,14 @@ interface VideoEntry {
 
 /* ─── Scroll reveal hook ───────────────────────────────── */
 
-function useGridReveal(dep: unknown) {
+function useReveal(dep: unknown) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const grid = ref.current;
-    if (!grid) return;
+    const el = ref.current;
+    if (!el) return;
 
-    const items = grid.querySelectorAll<HTMLElement>(`.${styles.gridItem}`);
+    const items = el.querySelectorAll<HTMLElement>(`.${styles.albumCard}`);
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -72,8 +47,6 @@ function useGridReveal(dep: unknown) {
 
     items.forEach((item) => observer.observe(item));
 
-    // Fallback: reveal all items after 2.5s in case IntersectionObserver
-    // fails silently (known issue on mobile Safari with button elements)
     const fallback = setTimeout(() => {
       items.forEach((item) => {
         if (!item.classList.contains(styles.revealed)) {
@@ -119,107 +92,95 @@ export default function Gallery() {
     index: number;
   } | null>(null);
 
-  const photoGridRef = useGridReveal(photoEntries);
-  const videoGridRef = useGridReveal(videoEntries);
+  const loaded = photoEntries.length > 0 || videoEntries.length > 0;
+  const albumsRef = useReveal(loaded);
 
   /* ── Open helpers ── */
 
-  const openPhoto = (i: number) => {
+  const openPhotos = () => {
     const items: LightboxItem[] = photoEntries.map((p) => ({
       type: "image",
       src: p.src,
       alt: p.title,
     }));
-    setLightbox({ items, index: i });
+    setLightbox({ items, index: 0 });
   };
 
-  const openVideo = (i: number) => {
+  const openVideos = () => {
     const items: LightboxItem[] = videoEntries.map((v) => ({
       type: "video",
       src: v.src,
       alt: v.title,
     }));
-    setLightbox({ items, index: i });
+    setLightbox({ items, index: 0 });
   };
 
   return (
     <section ref={sectionRef} className={`${styles.section} fade-in`}>
       <div className={styles.container}>
+        <SectionHeader title="Our Work" id="work" />
 
-        {/* ── Photography ── */}
-        <SectionHeader title="Photography" id="work" />
-        {photoEntries.length > 0 ? (
-          <div ref={photoGridRef} className={styles.grid}>
-            {photoEntries.map((item, i) => {
-              const layout = getLayoutForIndex(i);
-              const isHero = layout.span === 12;
-              return (
-                <button
-                  key={item.id}
-                  className={`${styles.gridItem} ${styles.imageItem} ${isHero ? styles.heroItem : ""}`}
-                  style={{
-                    "--delay": `${layout.delay}s`,
-                    "--span": `${layout.span}`,
-                    "--aspect": layout.aspect,
-                  } as React.CSSProperties}
-                  onClick={() => openPhoto(i)}
-                >
-                  <Image
-                    src={item.src}
-                    alt={item.title}
-                    fill
-                    sizes={
-                      layout.span === 12
-                        ? "100vw"
-                        : layout.span >= 7
-                          ? "(max-width: 900px) 100vw, 66vw"
-                          : "(max-width: 900px) 50vw, 33vw"
-                    }
-                    style={{ objectFit: "cover" }}
-                    {...(i === 0 ? { priority: true } : {})}
-                  />
-                </button>
-              );
-            })}
-          </div>
-        ) : (
-          <div className={styles.placeholder}>
-            <p className={styles.placeholderText}>Coming soon</p>
-          </div>
-        )}
+        <div ref={albumsRef} className={styles.albumGrid}>
+          {/* ── Photography Album ── */}
+          {photoEntries.length > 0 ? (
+            <button
+              className={styles.albumCard}
+              style={{ "--delay": "0s" } as React.CSSProperties}
+              onClick={openPhotos}
+            >
+              <Image
+                src={photoEntries[0].src}
+                alt="Photography"
+                fill
+                sizes="(max-width: 600px) 100vw, 50vw"
+                style={{ objectFit: "cover" }}
+                priority
+              />
+              <div className={styles.albumOverlay}>
+                <h3 className={styles.albumTitle}>Photography</h3>
+                <span className={styles.albumCount}>
+                  {photoEntries.length} {photoEntries.length === 1 ? "photo" : "photos"}
+                </span>
+              </div>
+            </button>
+          ) : (
+            <div className={styles.albumPlaceholder}>
+              <p className={styles.placeholderText}>Photography — Coming soon</p>
+            </div>
+          )}
 
-        {/* ── Videos ── */}
-        <div className={styles.sectionSpacer} />
-        <SectionHeader title="Video" id="video" />
-        {videoEntries.length > 0 ? (
-          <div ref={videoGridRef} className={`${styles.grid} ${styles.videoGrid}`}>
-            {videoEntries.map((item, i) => (
-              <button
-                key={item.src}
-                className={`${styles.gridItem} ${styles.videoItem}`}
-                style={{ "--delay": `${i * 0.1}s` } as React.CSSProperties}
-                onClick={() => openVideo(i)}
-              >
-                <Image
-                  src={item.thumbnail}
-                  alt={item.title}
-                  fill
-                  sizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 33vw"
-                  style={{ objectFit: "cover" }}
-                />
-                <div className={styles.playOverlay}>
-                  <svg className={styles.playIcon} viewBox="0 0 24 24" fill="currentColor">
+          {/* ── Video Album ── */}
+          {videoEntries.length > 0 ? (
+            <button
+              className={styles.albumCard}
+              style={{ "--delay": "0.15s" } as React.CSSProperties}
+              onClick={openVideos}
+            >
+              <Image
+                src={videoEntries[0].thumbnail}
+                alt="Video"
+                fill
+                sizes="(max-width: 600px) 100vw, 50vw"
+                style={{ objectFit: "cover" }}
+              />
+              <div className={styles.albumOverlay}>
+                <div className={styles.playBadge}>
+                  <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
                     <path d="M8 5v14l11-7z" />
                   </svg>
                 </div>
-              </button>
-            ))}
-          </div>
-        ) : (
-          <div className={styles.placeholder}>
-            <p className={styles.placeholderText}>Coming soon</p>
-          </div>
-        )}
+                <h3 className={styles.albumTitle}>Video</h3>
+                <span className={styles.albumCount}>
+                  {videoEntries.length} {videoEntries.length === 1 ? "video" : "videos"}
+                </span>
+              </div>
+            </button>
+          ) : (
+            <div className={styles.albumPlaceholder}>
+              <p className={styles.placeholderText}>Video — Coming soon</p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ── Lightbox ── */}

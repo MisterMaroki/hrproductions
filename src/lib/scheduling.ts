@@ -17,6 +17,10 @@ export interface BookingServices {
   standardVideoDrone: boolean;
   agentPresentedVideo: boolean;
   agentPresentedVideoDrone: boolean;
+  socialMediaVideo: boolean;
+  socialMediaPresentedVideo: boolean;
+  floorPlan: boolean;
+  floorPlanVirtualTour: boolean;
   bedrooms: number;
 }
 
@@ -53,6 +57,22 @@ export function calcShootMinutes(services: BookingServices): number {
     if (services.standardVideoDrone) {
       mins += DRONE_EXTRA_MINS;
     }
+  }
+
+  if (services.socialMediaPresentedVideo) {
+    const extraBeds = Math.max(0, services.bedrooms - 2);
+    mins += 60 + extraBeds * 10;
+  } else if (services.socialMediaVideo) {
+    const extraBeds = Math.max(0, services.bedrooms - 2);
+    mins += 25 + extraBeds * 5;
+  }
+
+  if (services.floorPlanVirtualTour) {
+    const extraBeds = Math.max(0, services.bedrooms - 2);
+    mins += 45 + extraBeds * 10;
+  } else if (services.floorPlan) {
+    const extraBeds = Math.max(0, services.bedrooms - 2);
+    mins += 25 + extraBeds * 5;
   }
 
   return mins;
