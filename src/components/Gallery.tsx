@@ -71,19 +71,23 @@ export default function Gallery() {
 
   const [photoEntries, setPhotoEntries] = useState<PhotoEntry[]>([]);
   const [videoEntries, setVideoEntries] = useState<VideoEntry[]>([]);
+  const [photosLoaded, setPhotosLoaded] = useState(false);
+  const [videosLoaded, setVideosLoaded] = useState(false);
 
   useEffect(() => {
     fetch("/api/photos")
       .then((res) => res.json())
       .then((data) => setPhotoEntries(data))
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setPhotosLoaded(true));
   }, []);
 
   useEffect(() => {
     fetch("/api/videos")
       .then((res) => res.json())
       .then((data) => setVideoEntries(data))
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setVideosLoaded(true));
   }, []);
 
   // Lightbox state
@@ -92,12 +96,12 @@ export default function Gallery() {
     index: number;
   } | null>(null);
 
-  const loaded = photoEntries.length > 0 || videoEntries.length > 0;
-  const albumsRef = useReveal(loaded);
+  const albumsRef = useReveal(true);
 
   /* ── Open helpers ── */
 
   const openPhotos = () => {
+    if (photoEntries.length === 0) return;
     const items: LightboxItem[] = photoEntries.map((p) => ({
       type: "image",
       src: p.src,
@@ -107,6 +111,7 @@ export default function Gallery() {
   };
 
   const openVideos = () => {
+    if (videoEntries.length === 0) return;
     const items: LightboxItem[] = videoEntries.map((v) => ({
       type: "video",
       src: v.src,
@@ -122,12 +127,12 @@ export default function Gallery() {
 
         <div ref={albumsRef} className={styles.albumGrid}>
           {/* ── Photography Album ── */}
-          {photoEntries.length > 0 ? (
-            <button
-              className={styles.albumCard}
-              style={{ "--delay": "0s" } as React.CSSProperties}
-              onClick={openPhotos}
-            >
+          <button
+            className={styles.albumCard}
+            style={{ "--delay": "0s" } as React.CSSProperties}
+            onClick={openPhotos}
+          >
+            {photoEntries.length > 0 && (
               <Image
                 src={photoEntries[0].src}
                 alt="Photography"
@@ -136,50 +141,47 @@ export default function Gallery() {
                 style={{ objectFit: "cover" }}
                 priority
               />
-              <div className={styles.albumOverlay}>
-                <h3 className={styles.albumTitle}>Photography</h3>
+            )}
+            <div className={styles.albumOverlay}>
+              <h3 className={styles.albumTitle}>Photography</h3>
+              {photosLoaded && photoEntries.length > 0 && (
                 <span className={styles.albumCount}>
                   {photoEntries.length} {photoEntries.length === 1 ? "photo" : "photos"}
                 </span>
-              </div>
-            </button>
-          ) : (
-            <div className={styles.albumPlaceholder}>
-              <p className={styles.placeholderText}>Photography — Coming soon</p>
+              )}
             </div>
-          )}
+          </button>
 
           {/* ── Video Album ── */}
-          {videoEntries.length > 0 ? (
-            <button
-              className={styles.albumCard}
-              style={{ "--delay": "0.15s" } as React.CSSProperties}
-              onClick={openVideos}
-            >
+          <button
+            className={styles.albumCard}
+            style={{ "--delay": "0.15s" } as React.CSSProperties}
+            onClick={openVideos}
+          >
+            {videoEntries.length > 0 && (
               <Image
                 src={videoEntries[0].thumbnail}
                 alt="Video"
                 fill
                 sizes="(max-width: 600px) 100vw, 50vw"
                 style={{ objectFit: "cover" }}
+                unoptimized
               />
-              <div className={styles.albumOverlay}>
-                <div className={styles.playBadge}>
-                  <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
-                </div>
-                <h3 className={styles.albumTitle}>Video</h3>
+            )}
+            <div className={styles.albumOverlay}>
+              <div className={styles.playBadge}>
+                <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              </div>
+              <h3 className={styles.albumTitle}>Video</h3>
+              {videosLoaded && videoEntries.length > 0 && (
                 <span className={styles.albumCount}>
                   {videoEntries.length} {videoEntries.length === 1 ? "video" : "videos"}
                 </span>
-              </div>
-            </button>
-          ) : (
-            <div className={styles.albumPlaceholder}>
-              <p className={styles.placeholderText}>Video — Coming soon</p>
+              )}
             </div>
-          )}
+          </button>
         </div>
       </div>
 
