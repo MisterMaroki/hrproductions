@@ -37,6 +37,16 @@
   line-height: 1.1;
 }
 
+.contactPrompt {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 var(--content-padding);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  color: var(--color-muted);
+  text-align: center;
+}
+
 @keyframes pageEnter {
   from {
     opacity: 0;

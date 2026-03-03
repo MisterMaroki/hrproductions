@@ -1,5 +1,6 @@
 import Nav from "@/components/Nav";
 import BookingSection from "@/components/BookingSection";
+import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
 import styles from "./page.module.css";
 
@@ -25,6 +26,10 @@ export default function BookPage() {
           </div>
         </div>
         <BookingSection />
+        <p className={styles.contactPrompt}>
+          Want to discuss a project? Get in touch below.
+        </p>
+        <Contact />
       </main>
       <Footer />
     </>

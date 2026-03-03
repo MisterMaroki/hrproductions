@@ -14,7 +14,7 @@ export default function Footer() {
           </div>
         </div>
         <span className={styles.contact}>
-          <a href="mailto:hello@harrisonross.co.uk">hello@harrisonross.co.uk</a>
+          <a href="mailto:thepropertyroomco@gmail.com">thepropertyroomco@gmail.com</a>
         </span>
       </div>
     </footer>
