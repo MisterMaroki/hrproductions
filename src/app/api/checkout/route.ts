@@ -326,25 +326,28 @@ export async function POST(request: Request) {
 
     for (let i = 0; i < properties.length; i++) {
       const p = properties[i];
-      metadata[`property_${i}`] = JSON.stringify({
-        address: p.address,
-        postcode: p.postcode,
-        bedrooms: p.bedrooms,
-        preferredDate: p.preferredDate,
-        timeSlot: p.timeSlot,
-        notes: p.notes,
-        photography: p.photography,
-        photoCount: p.photoCount,
-        dronePhotography: p.dronePhotography,
-        dronePhotoCount: p.dronePhotoCount,
-        standardVideo: p.standardVideo,
-        standardVideoDrone: p.standardVideoDrone,
-        agentPresentedVideo: p.agentPresentedVideo,
-        agentPresentedVideoDrone: p.agentPresentedVideoDrone,
-        socialMediaVideo: p.socialMediaVideo,
-        socialMediaPresentedVideo: p.socialMediaPresentedVideo,
-        floorPlan: p.floorPlan,
-        floorPlanVirtualTour: p.floorPlanVirtualTour,
+      // Split each property across two metadata keys to stay under Stripe's 500-char limit
+      metadata[`prop_${i}_info`] = JSON.stringify({
+        a: p.address,
+        pc: p.postcode,
+        b: p.bedrooms,
+        d: p.preferredDate,
+        t: p.timeSlot,
+        n: (p.notes || "").slice(0, 100),
+      });
+      metadata[`prop_${i}_svc`] = JSON.stringify({
+        ph: p.photography,
+        phc: p.photoCount,
+        dr: p.dronePhotography,
+        drc: p.dronePhotoCount,
+        sv: p.standardVideo,
+        svd: p.standardVideoDrone,
+        av: p.agentPresentedVideo,
+        avd: p.agentPresentedVideoDrone,
+        sm: p.socialMediaVideo,
+        smp: p.socialMediaPresentedVideo,
+        fp: p.floorPlan,
+        fpvt: p.floorPlanVirtualTour,
       });
     }
 

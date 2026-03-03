@@ -54,8 +54,38 @@ export async function POST(request: Request) {
       const propertyCount = Number(meta.property_count || 0);
       const properties = [];
       for (let i = 0; i < propertyCount; i++) {
+        // Support both old single-key and new split-key metadata formats
         const raw = meta[`property_${i}`];
-        if (raw) properties.push(JSON.parse(raw));
+        if (raw) {
+          properties.push(JSON.parse(raw));
+        } else {
+          const infoRaw = meta[`prop_${i}_info`];
+          const svcRaw = meta[`prop_${i}_svc`];
+          if (infoRaw && svcRaw) {
+            const info = JSON.parse(infoRaw);
+            const svc = JSON.parse(svcRaw);
+            properties.push({
+              address: info.a,
+              postcode: info.pc,
+              bedrooms: info.b,
+              preferredDate: info.d,
+              timeSlot: info.t,
+              notes: info.n,
+              photography: svc.ph,
+              photoCount: svc.phc,
+              dronePhotography: svc.dr,
+              dronePhotoCount: svc.drc,
+              standardVideo: svc.sv,
+              standardVideoDrone: svc.svd,
+              agentPresentedVideo: svc.av,
+              agentPresentedVideoDrone: svc.avd,
+              socialMediaVideo: svc.sm,
+              socialMediaPresentedVideo: svc.smp,
+              floorPlan: svc.fp,
+              floorPlanVirtualTour: svc.fpvt,
+            });
+          }
+        }
       }
       const discountCode = meta.discount_code || null;
       const discountPercentage = Number(meta.discount_percentage || 0);
