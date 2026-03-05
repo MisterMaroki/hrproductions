@@ -46,15 +46,15 @@ describe("calcStandardVideo", () => {
 
 describe("calcAgentPresentedVideo", () => {
   it("calculates 2-bed price", () => {
-    expect(calcAgentPresentedVideo(2)).toBe(150);
+    expect(calcAgentPresentedVideo(2)).toBe(225);
   });
 
   it("calculates 3-bed price", () => {
-    expect(calcAgentPresentedVideo(3)).toBe(175);
+    expect(calcAgentPresentedVideo(3)).toBe(270);
   });
 
   it("calculates 5-bed price", () => {
-    expect(calcAgentPresentedVideo(5)).toBe(225);
+    expect(calcAgentPresentedVideo(5)).toBe(360);
   });
 });
 
@@ -151,11 +151,11 @@ describe("calcPropertyTotal", () => {
       agentPresentedVideo: true,
       agentPresentedVideoDrone: true,
     });
-    // 4 bed agent presented = 150 + 2*25 = 200
+    // 4 bed agent presented = 225 + 2*45 = 315
     // video drone = 65
     // photography = 30 * 6.5 = 195
-    // total = 200 + 65 + 195 = 460
-    expect(total).toBe(460);
+    // total = 315 + 65 + 195 = 575
+    expect(total).toBe(575);
   });
 
   it("video drone ignored when no video selected", () => {

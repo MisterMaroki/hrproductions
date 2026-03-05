@@ -4,18 +4,20 @@ const PHOTO_BULK_THRESHOLD = 100;
 const PHOTO_BULK_DISCOUNT = 0.1;
 
 const UNPRESENTED_VIDEO_BASE = 100;
-const PRESENTED_VIDEO_BASE = 150;
+const PRESENTED_VIDEO_BASE = 225;
+const PRESENTED_VIDEO_PER_BEDROOM = 45;
 const VIDEO_PER_BEDROOM = 25;
 const VIDEO_BASE_BEDROOMS = 2;
 
 const SOCIAL_MEDIA_UNPRESENTED_BASE = 100;
-const SOCIAL_MEDIA_PRESENTED_BASE = 150;
+const SOCIAL_MEDIA_PRESENTED_BASE = 200;
+const SOCIAL_MEDIA_PRESENTED_PER_BEDROOM = 30;
 const SOCIAL_MEDIA_PER_BEDROOM = 25;
 const SOCIAL_MEDIA_BASE_BEDROOMS = 2;
 
-const FLOOR_PLAN_BASE = 60;
+const FLOOR_PLAN_BASE = 70;
 const FLOOR_PLAN_PER_BEDROOM = 15;
-const FLOOR_PLAN_TOUR_BASE = 140;
+const FLOOR_PLAN_TOUR_BASE = 160;
 const FLOOR_PLAN_TOUR_PER_BEDROOM = 20;
 const FLOOR_PLAN_BASE_BEDROOMS = 2;
 
@@ -39,7 +41,7 @@ export function calcStandardVideo(bedrooms: number): number {
 }
 
 export function calcAgentPresentedVideo(bedrooms: number): number {
-  return PRESENTED_VIDEO_BASE + Math.max(0, bedrooms - VIDEO_BASE_BEDROOMS) * VIDEO_PER_BEDROOM;
+  return PRESENTED_VIDEO_BASE + Math.max(0, bedrooms - VIDEO_BASE_BEDROOMS) * PRESENTED_VIDEO_PER_BEDROOM;
 }
 
 export function calcDronePhotography(count: 8 | 20): number {
@@ -55,7 +57,7 @@ export function calcSocialMediaVideo(bedrooms: number): number {
 }
 
 export function calcSocialMediaPresentedVideo(bedrooms: number): number {
-  return SOCIAL_MEDIA_PRESENTED_BASE + Math.max(0, bedrooms - SOCIAL_MEDIA_BASE_BEDROOMS) * SOCIAL_MEDIA_PER_BEDROOM;
+  return SOCIAL_MEDIA_PRESENTED_BASE + Math.max(0, bedrooms - SOCIAL_MEDIA_BASE_BEDROOMS) * SOCIAL_MEDIA_PRESENTED_PER_BEDROOM;
 }
 
 export function calcFloorPlan(bedrooms: number): number {

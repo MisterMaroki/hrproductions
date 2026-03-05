@@ -23,10 +23,10 @@ const services = [
   },
   {
     name: "Agent Presented Video",
-    price: "From £150",
+    price: "From £225",
     details: [
       "Guided tour with your agent on camera",
-      "Directed by Harrison · +£25 per extra bedroom",
+      "Directed by Harrison · +£45 per extra bedroom",
     ],
   },
 ];
