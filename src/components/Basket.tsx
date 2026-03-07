@@ -11,7 +11,6 @@ import {
   calcSocialMediaVideo,
   calcSocialMediaPresentedVideo,
   calcFloorPlan,
-  calcFloorPlanVirtualTour,
   calcPropertyTotal,
   calcMultiPropertyDiscount,
 } from "@/lib/pricing";
@@ -74,12 +73,7 @@ function getLineItems(property: PropertyBooking) {
     });
   }
 
-  if (property.floorPlanVirtualTour) {
-    items.push({
-      label: `Floor Plan + Virtual Tour (${property.bedrooms}-bed)`,
-      price: calcFloorPlanVirtualTour(property.bedrooms),
-    });
-  } else if (property.floorPlan) {
+  if (property.floorPlan) {
     items.push({
       label: `Floor Plan (${property.bedrooms}-bed)`,
       price: calcFloorPlan(property.bedrooms),

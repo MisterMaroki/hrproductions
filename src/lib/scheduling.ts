@@ -20,7 +20,6 @@ export interface BookingServices {
   socialMediaVideo: boolean;
   socialMediaPresentedVideo: boolean;
   floorPlan: boolean;
-  floorPlanVirtualTour: boolean;
   bedrooms: number;
 }
 
@@ -67,10 +66,7 @@ export function calcShootMinutes(services: BookingServices): number {
     mins += 25 + extraBeds * 5;
   }
 
-  if (services.floorPlanVirtualTour) {
-    const extraBeds = Math.max(0, services.bedrooms - 2);
-    mins += 45 + extraBeds * 10;
-  } else if (services.floorPlan) {
+  if (services.floorPlan) {
     const extraBeds = Math.max(0, services.bedrooms - 2);
     mins += 25 + extraBeds * 5;
   }

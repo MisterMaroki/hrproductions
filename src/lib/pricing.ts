@@ -17,8 +17,6 @@ const SOCIAL_MEDIA_BASE_BEDROOMS = 2;
 
 const FLOOR_PLAN_BASE = 70;
 const FLOOR_PLAN_PER_BEDROOM = 15;
-const FLOOR_PLAN_TOUR_BASE = 160;
-const FLOOR_PLAN_TOUR_PER_BEDROOM = 20;
 const FLOOR_PLAN_BASE_BEDROOMS = 2;
 
 const DRONE_PHOTO_8_PRICE = 75;
@@ -64,10 +62,6 @@ export function calcFloorPlan(bedrooms: number): number {
   return FLOOR_PLAN_BASE + Math.max(0, bedrooms - FLOOR_PLAN_BASE_BEDROOMS) * FLOOR_PLAN_PER_BEDROOM;
 }
 
-export function calcFloorPlanVirtualTour(bedrooms: number): number {
-  return FLOOR_PLAN_TOUR_BASE + Math.max(0, bedrooms - FLOOR_PLAN_BASE_BEDROOMS) * FLOOR_PLAN_TOUR_PER_BEDROOM;
-}
-
 export function calcMultiPropertyDiscount(propertyCount: number): number {
   if (propertyCount <= 1) return 0;
   return (propertyCount - 1) * MULTI_PROPERTY_DISCOUNT;
@@ -86,7 +80,6 @@ export interface PropertyServices {
   socialMediaVideo: boolean;
   socialMediaPresentedVideo: boolean;
   floorPlan: boolean;
-  floorPlanVirtualTour: boolean;
 }
 
 export function calcPropertyTotal(services: PropertyServices): number {
@@ -118,9 +111,7 @@ export function calcPropertyTotal(services: PropertyServices): number {
     total += calcSocialMediaVideo(services.bedrooms);
   }
 
-  if (services.floorPlanVirtualTour) {
-    total += calcFloorPlanVirtualTour(services.bedrooms);
-  } else if (services.floorPlan) {
+  if (services.floorPlan) {
     total += calcFloorPlan(services.bedrooms);
   }
 

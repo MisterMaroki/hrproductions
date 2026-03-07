@@ -9,7 +9,6 @@ import {
   calcSocialMediaVideo,
   calcSocialMediaPresentedVideo,
   calcFloorPlan,
-  calcFloorPlanVirtualTour,
   calcMultiPropertyDiscount,
   type PropertyServices,
 } from "@/lib/pricing";
@@ -89,9 +88,7 @@ function calcShootMinsForLabel(p: PropertyPayload): number {
   } else if (p.socialMediaVideo) {
     mins += 25 + Math.max(0, p.bedrooms - 2) * 5;
   }
-  if (p.floorPlanVirtualTour) {
-    mins += 45 + Math.max(0, p.bedrooms - 2) * 10;
-  } else if (p.floorPlan) {
+  if (p.floorPlan) {
     mins += 25 + Math.max(0, p.bedrooms - 2) * 5;
   }
   return mins;
@@ -216,19 +213,7 @@ function buildLineItems(
       });
     }
 
-    if (p.floorPlanVirtualTour) {
-      items.push({
-        price_data: {
-          currency: "gbp",
-          product_data: {
-            name: `Floor Plan + Virtual Tour (${p.bedrooms}-bed)`,
-            description: label,
-          },
-          unit_amount: Math.round(calcFloorPlanVirtualTour(p.bedrooms) * 100),
-        },
-        quantity: 1,
-      });
-    } else if (p.floorPlan) {
+    if (p.floorPlan) {
       items.push({
         price_data: {
           currency: "gbp",
@@ -347,7 +332,6 @@ export async function POST(request: Request) {
         sm: p.socialMediaVideo,
         smp: p.socialMediaPresentedVideo,
         fp: p.floorPlan,
-        fpvt: p.floorPlanVirtualTour,
       });
     }
 

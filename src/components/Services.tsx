@@ -29,6 +29,16 @@ const services = [
       "Directed by Harrison · +£45 per extra bedroom",
     ],
   },
+  {
+    name: "Social Media Video",
+    price: "From £100",
+    details: ["Unpresented: from £100 · Presented: from £200", "2-bed base · +£25/+£30 per extra bedroom"],
+  },
+  {
+    name: "Floor Plan",
+    price: "From £70",
+    details: ["2-bed base · +£15 per extra bedroom"],
+  },
 ];
 
 export default function Services() {

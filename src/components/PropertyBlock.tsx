@@ -75,18 +75,8 @@ export default function PropertyBlock({
   };
 
   const toggleFloorPlan = () => {
-    const next = !property.floorPlan;
     onChange({
-      floorPlan: next,
-      floorPlanVirtualTour: false,
-    });
-  };
-
-  const toggleFloorPlanVirtualTour = () => {
-    const next = !property.floorPlanVirtualTour;
-    onChange({
-      floorPlanVirtualTour: next,
-      floorPlan: false,
+      floorPlan: !property.floorPlan,
     });
   };
 
@@ -466,17 +456,6 @@ export default function PropertyBlock({
             type="button"
           >
             Floor Plan
-          </button>
-        </div>
-
-        {/* Floor Plan + Virtual Tour */}
-        <div className={styles.serviceGroup}>
-          <button
-            className={`${styles.pill} ${property.floorPlanVirtualTour ? styles.active : ""}`}
-            onClick={toggleFloorPlanVirtualTour}
-            type="button"
-          >
-            Floor Plan + Virtual Tour
           </button>
         </div>
       </div>

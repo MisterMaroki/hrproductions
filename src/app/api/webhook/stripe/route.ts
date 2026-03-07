@@ -14,7 +14,6 @@ import {
   calcSocialMediaVideo,
   calcSocialMediaPresentedVideo,
   calcFloorPlan,
-  calcFloorPlanVirtualTour,
   type PropertyServices,
 } from "@/lib/pricing";
 import { sendBookingEmails } from "@/lib/email";
@@ -82,7 +81,6 @@ export async function POST(request: Request) {
               socialMediaVideo: svc.sm,
               socialMediaPresentedVideo: svc.smp,
               floorPlan: svc.fp,
-              floorPlanVirtualTour: svc.fpvt,
             });
           }
         }
@@ -104,7 +102,6 @@ export async function POST(request: Request) {
           socialMediaVideo: p.socialMediaVideo || false,
           socialMediaPresentedVideo: p.socialMediaPresentedVideo || false,
           floorPlan: p.floorPlan || false,
-          floorPlanVirtualTour: p.floorPlanVirtualTour || false,
         };
 
         const subtotal = Math.round(calcPropertyTotal(services) * 100);
@@ -124,7 +121,6 @@ export async function POST(request: Request) {
           socialMediaVideo: p.socialMediaVideo || false,
           socialMediaPresentedVideo: p.socialMediaPresentedVideo || false,
           floorPlan: p.floorPlan || false,
-          floorPlanVirtualTour: p.floorPlanVirtualTour || false,
           bedrooms: p.bedrooms,
         });
 
@@ -229,13 +225,7 @@ export async function POST(request: Request) {
             });
           }
 
-          if (p.floorPlanVirtualTour) {
-            const beds = (p.bedrooms as number) || 2;
-            services.push({
-              name: `Floor Plan + Virtual Tour (${beds}-bed)`,
-              amount: Math.round(calcFloorPlanVirtualTour(beds) * 100),
-            });
-          } else if (p.floorPlan) {
+          if (p.floorPlan) {
             const beds = (p.bedrooms as number) || 2;
             services.push({
               name: `Floor Plan (${beds}-bed)`,
@@ -267,7 +257,6 @@ export async function POST(request: Request) {
                 socialMediaVideo: !!p.socialMediaVideo,
                 socialMediaPresentedVideo: !!p.socialMediaPresentedVideo,
                 floorPlan: !!p.floorPlan,
-                floorPlanVirtualTour: !!p.floorPlanVirtualTour,
               };
               const wh = calcWorkHours(svc);
               const [h, m] = slot.split(":").map(Number);
