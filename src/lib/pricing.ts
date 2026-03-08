@@ -15,9 +15,10 @@ const SOCIAL_MEDIA_PRESENTED_PER_BEDROOM = 30;
 const SOCIAL_MEDIA_PER_BEDROOM = 25;
 const SOCIAL_MEDIA_BASE_BEDROOMS = 2;
 
-const FLOOR_PLAN_BASE = 70;
-const FLOOR_PLAN_PER_BEDROOM = 15;
-const FLOOR_PLAN_BASE_BEDROOMS = 2;
+const STANDARD_FLOOR_PLAN_BASE = 60;
+const PREMIUM_FLOOR_PLAN_BASE = 80;
+const FLOOR_PLAN_3D_BASE = 150;
+const FLOOR_PLAN_PER_BEDROOM = 20;
 
 const DRONE_PHOTO_8_PRICE = 75;
 const DRONE_PHOTO_20_PRICE = 140;
@@ -58,8 +59,16 @@ export function calcSocialMediaPresentedVideo(bedrooms: number): number {
   return SOCIAL_MEDIA_PRESENTED_BASE + Math.max(0, bedrooms - SOCIAL_MEDIA_BASE_BEDROOMS) * SOCIAL_MEDIA_PRESENTED_PER_BEDROOM;
 }
 
-export function calcFloorPlan(bedrooms: number): number {
-  return FLOOR_PLAN_BASE + Math.max(0, bedrooms - FLOOR_PLAN_BASE_BEDROOMS) * FLOOR_PLAN_PER_BEDROOM;
+export function calcStandardFloorPlan(bedrooms: number): number {
+  return STANDARD_FLOOR_PLAN_BASE + Math.max(0, bedrooms - 2) * FLOOR_PLAN_PER_BEDROOM;
+}
+
+export function calcPremiumFloorPlan(bedrooms: number): number {
+  return PREMIUM_FLOOR_PLAN_BASE + Math.max(0, bedrooms - 2) * FLOOR_PLAN_PER_BEDROOM;
+}
+
+export function calcFloorPlan3D(bedrooms: number): number {
+  return FLOOR_PLAN_3D_BASE + Math.max(0, bedrooms - 2) * FLOOR_PLAN_PER_BEDROOM;
 }
 
 export function calcMultiPropertyDiscount(propertyCount: number): number {
@@ -79,7 +88,9 @@ export interface PropertyServices {
   agentPresentedVideoDrone: boolean;
   socialMediaVideo: boolean;
   socialMediaPresentedVideo: boolean;
-  floorPlan: boolean;
+  standardFloorPlan: boolean;
+  premiumFloorPlan: boolean;
+  floorPlan3D: boolean;
 }
 
 export function calcPropertyTotal(services: PropertyServices): number {
@@ -111,8 +122,12 @@ export function calcPropertyTotal(services: PropertyServices): number {
     total += calcSocialMediaVideo(services.bedrooms);
   }
 
-  if (services.floorPlan) {
-    total += calcFloorPlan(services.bedrooms);
+  if (services.floorPlan3D) {
+    total += calcFloorPlan3D(services.bedrooms);
+  } else if (services.premiumFloorPlan) {
+    total += calcPremiumFloorPlan(services.bedrooms);
+  } else if (services.standardFloorPlan) {
+    total += calcStandardFloorPlan(services.bedrooms);
   }
 
   return total;

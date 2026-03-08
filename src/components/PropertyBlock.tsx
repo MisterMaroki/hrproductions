@@ -74,9 +74,30 @@ export default function PropertyBlock({
     });
   };
 
-  const toggleFloorPlan = () => {
+  const toggleStandardFloorPlan = () => {
+    const next = !property.standardFloorPlan;
     onChange({
-      floorPlan: !property.floorPlan,
+      standardFloorPlan: next,
+      premiumFloorPlan: false,
+      floorPlan3D: false,
+    });
+  };
+
+  const togglePremiumFloorPlan = () => {
+    const next = !property.premiumFloorPlan;
+    onChange({
+      standardFloorPlan: false,
+      premiumFloorPlan: next,
+      floorPlan3D: false,
+    });
+  };
+
+  const toggleFloorPlan3D = () => {
+    const next = !property.floorPlan3D;
+    onChange({
+      standardFloorPlan: false,
+      premiumFloorPlan: false,
+      floorPlan3D: next,
     });
   };
 
@@ -448,14 +469,34 @@ export default function PropertyBlock({
           </button>
         </div>
 
-        {/* Floor Plan */}
+        {/* Floor Plans */}
         <div className={styles.serviceGroup}>
           <button
-            className={`${styles.pill} ${property.floorPlan ? styles.active : ""}`}
-            onClick={toggleFloorPlan}
+            className={`${styles.pill} ${property.standardFloorPlan ? styles.active : ""}`}
+            onClick={toggleStandardFloorPlan}
             type="button"
           >
-            Floor Plan
+            Standard Floor Plan
+          </button>
+        </div>
+
+        <div className={styles.serviceGroup}>
+          <button
+            className={`${styles.pill} ${property.premiumFloorPlan ? styles.active : ""}`}
+            onClick={togglePremiumFloorPlan}
+            type="button"
+          >
+            Premium Floor Plan
+          </button>
+        </div>
+
+        <div className={styles.serviceGroup}>
+          <button
+            className={`${styles.pill} ${property.floorPlan3D ? styles.active : ""}`}
+            onClick={toggleFloorPlan3D}
+            type="button"
+          >
+            3D Floor Plan
           </button>
         </div>
       </div>

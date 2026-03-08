@@ -10,7 +10,9 @@ import {
   calcVideoDrone,
   calcSocialMediaVideo,
   calcSocialMediaPresentedVideo,
-  calcFloorPlan,
+  calcStandardFloorPlan,
+  calcPremiumFloorPlan,
+  calcFloorPlan3D,
   calcPropertyTotal,
   calcMultiPropertyDiscount,
 } from "@/lib/pricing";
@@ -73,10 +75,20 @@ function getLineItems(property: PropertyBooking) {
     });
   }
 
-  if (property.floorPlan) {
+  if (property.floorPlan3D) {
     items.push({
-      label: `Floor Plan (${property.bedrooms}-bed)`,
-      price: calcFloorPlan(property.bedrooms),
+      label: `3D Floor Plan (${property.bedrooms}-bed)`,
+      price: calcFloorPlan3D(property.bedrooms),
+    });
+  } else if (property.premiumFloorPlan) {
+    items.push({
+      label: `Premium Floor Plan (${property.bedrooms}-bed)`,
+      price: calcPremiumFloorPlan(property.bedrooms),
+    });
+  } else if (property.standardFloorPlan) {
+    items.push({
+      label: `Standard Floor Plan (${property.bedrooms}-bed)`,
+      price: calcStandardFloorPlan(property.bedrooms),
     });
   }
 

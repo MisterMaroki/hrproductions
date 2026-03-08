@@ -35,7 +35,9 @@ export interface PropertyBooking {
   agentPresentedVideoDrone: boolean;
   socialMediaVideo: boolean;
   socialMediaPresentedVideo: boolean;
-  floorPlan: boolean;
+  standardFloorPlan: boolean;
+  premiumFloorPlan: boolean;
+  floorPlan3D: boolean;
 }
 
 export interface ValidationErrors {
@@ -62,7 +64,9 @@ function createProperty(): PropertyBooking {
     agentPresentedVideoDrone: false,
     socialMediaVideo: false,
     socialMediaPresentedVideo: false,
-    floorPlan: false,
+    standardFloorPlan: false,
+    premiumFloorPlan: false,
+    floorPlan3D: false,
   };
 }
 
@@ -128,7 +132,7 @@ export default function BookingSection() {
           pErr.preferredDate = "We only operate Monday – Saturday";
         }
       }
-      const hasServices = p.photography || p.dronePhotography || p.standardVideo || p.agentPresentedVideo || p.socialMediaVideo || p.socialMediaPresentedVideo || p.floorPlan;
+      const hasServices = p.photography || p.dronePhotography || p.standardVideo || p.agentPresentedVideo || p.socialMediaVideo || p.socialMediaPresentedVideo || p.standardFloorPlan || p.premiumFloorPlan || p.floorPlan3D;
       if (hasServices && !p.timeSlot) {
         pErr.timeSlot = "Please select a time slot";
       }

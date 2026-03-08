@@ -35,9 +35,19 @@ const services = [
     details: ["Unpresented: from £100 · Presented: from £200", "2-bed base · +£25/+£30 per extra bedroom"],
   },
   {
-    name: "Floor Plan",
-    price: "From £70",
-    details: ["2-bed base · +£15 per extra bedroom"],
+    name: "Standard Floor Plan",
+    price: "From £60",
+    details: ["2-bed base · +£20 per extra bedroom"],
+  },
+  {
+    name: "Premium Floor Plan",
+    price: "From £80",
+    details: ["2-bed base · +£20 per extra bedroom"],
+  },
+  {
+    name: "3D Floor Plan",
+    price: "From £150",
+    details: ["2-bed base · +£20 per extra bedroom"],
   },
 ];
 

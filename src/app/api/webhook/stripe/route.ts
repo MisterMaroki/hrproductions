@@ -13,7 +13,9 @@ import {
   calcVideoDrone,
   calcSocialMediaVideo,
   calcSocialMediaPresentedVideo,
-  calcFloorPlan,
+  calcStandardFloorPlan,
+  calcPremiumFloorPlan,
+  calcFloorPlan3D,
   type PropertyServices,
 } from "@/lib/pricing";
 import { sendBookingEmails } from "@/lib/email";
@@ -80,7 +82,9 @@ export async function POST(request: Request) {
               agentPresentedVideoDrone: svc.avd,
               socialMediaVideo: svc.sm,
               socialMediaPresentedVideo: svc.smp,
-              floorPlan: svc.fp,
+              standardFloorPlan: svc.sfp,
+              premiumFloorPlan: svc.pfp,
+              floorPlan3D: svc.fp3,
             });
           }
         }
@@ -101,7 +105,9 @@ export async function POST(request: Request) {
           agentPresentedVideoDrone: p.agentPresentedVideoDrone,
           socialMediaVideo: p.socialMediaVideo || false,
           socialMediaPresentedVideo: p.socialMediaPresentedVideo || false,
-          floorPlan: p.floorPlan || false,
+          standardFloorPlan: p.standardFloorPlan || false,
+          premiumFloorPlan: p.premiumFloorPlan || false,
+          floorPlan3D: p.floorPlan3D || false,
         };
 
         const subtotal = Math.round(calcPropertyTotal(services) * 100);
@@ -120,7 +126,9 @@ export async function POST(request: Request) {
           agentPresentedVideoDrone: p.agentPresentedVideoDrone || false,
           socialMediaVideo: p.socialMediaVideo || false,
           socialMediaPresentedVideo: p.socialMediaPresentedVideo || false,
-          floorPlan: p.floorPlan || false,
+          standardFloorPlan: p.standardFloorPlan || false,
+          premiumFloorPlan: p.premiumFloorPlan || false,
+          floorPlan3D: p.floorPlan3D || false,
           bedrooms: p.bedrooms,
         });
 
@@ -225,11 +233,23 @@ export async function POST(request: Request) {
             });
           }
 
-          if (p.floorPlan) {
+          if (p.floorPlan3D) {
             const beds = (p.bedrooms as number) || 2;
             services.push({
-              name: `Floor Plan (${beds}-bed)`,
-              amount: Math.round(calcFloorPlan(beds) * 100),
+              name: `3D Floor Plan (${beds}-bed)`,
+              amount: Math.round(calcFloorPlan3D(beds) * 100),
+            });
+          } else if (p.premiumFloorPlan) {
+            const beds = (p.bedrooms as number) || 2;
+            services.push({
+              name: `Premium Floor Plan (${beds}-bed)`,
+              amount: Math.round(calcPremiumFloorPlan(beds) * 100),
+            });
+          } else if (p.standardFloorPlan) {
+            const beds = (p.bedrooms as number) || 2;
+            services.push({
+              name: `Standard Floor Plan (${beds}-bed)`,
+              amount: Math.round(calcStandardFloorPlan(beds) * 100),
             });
           }
 
@@ -256,7 +276,9 @@ export async function POST(request: Request) {
                 agentPresentedVideoDrone: !!p.agentPresentedVideoDrone,
                 socialMediaVideo: !!p.socialMediaVideo,
                 socialMediaPresentedVideo: !!p.socialMediaPresentedVideo,
-                floorPlan: !!p.floorPlan,
+                standardFloorPlan: !!p.standardFloorPlan,
+                premiumFloorPlan: !!p.premiumFloorPlan,
+                floorPlan3D: !!p.floorPlan3D,
               };
               const wh = calcWorkHours(svc);
               const [h, m] = slot.split(":").map(Number);

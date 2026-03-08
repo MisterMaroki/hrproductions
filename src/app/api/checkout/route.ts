@@ -8,7 +8,9 @@ import {
   calcVideoDrone,
   calcSocialMediaVideo,
   calcSocialMediaPresentedVideo,
-  calcFloorPlan,
+  calcStandardFloorPlan,
+  calcPremiumFloorPlan,
+  calcFloorPlan3D,
   calcMultiPropertyDiscount,
   type PropertyServices,
 } from "@/lib/pricing";
@@ -88,7 +90,7 @@ function calcShootMinsForLabel(p: PropertyPayload): number {
   } else if (p.socialMediaVideo) {
     mins += 25 + Math.max(0, p.bedrooms - 2) * 5;
   }
-  if (p.floorPlan) {
+  if (p.standardFloorPlan || p.premiumFloorPlan || p.floorPlan3D) {
     mins += 25 + Math.max(0, p.bedrooms - 2) * 5;
   }
   return mins;
@@ -213,15 +215,39 @@ function buildLineItems(
       });
     }
 
-    if (p.floorPlan) {
+    if (p.floorPlan3D) {
       items.push({
         price_data: {
           currency: "gbp",
           product_data: {
-            name: `Floor Plan (${p.bedrooms}-bed)`,
+            name: `3D Floor Plan (${p.bedrooms}-bed)`,
             description: label,
           },
-          unit_amount: Math.round(calcFloorPlan(p.bedrooms) * 100),
+          unit_amount: Math.round(calcFloorPlan3D(p.bedrooms) * 100),
+        },
+        quantity: 1,
+      });
+    } else if (p.premiumFloorPlan) {
+      items.push({
+        price_data: {
+          currency: "gbp",
+          product_data: {
+            name: `Premium Floor Plan (${p.bedrooms}-bed)`,
+            description: label,
+          },
+          unit_amount: Math.round(calcPremiumFloorPlan(p.bedrooms) * 100),
+        },
+        quantity: 1,
+      });
+    } else if (p.standardFloorPlan) {
+      items.push({
+        price_data: {
+          currency: "gbp",
+          product_data: {
+            name: `Standard Floor Plan (${p.bedrooms}-bed)`,
+            description: label,
+          },
+          unit_amount: Math.round(calcStandardFloorPlan(p.bedrooms) * 100),
         },
         quantity: 1,
       });
@@ -331,7 +357,9 @@ export async function POST(request: Request) {
         avd: p.agentPresentedVideoDrone,
         sm: p.socialMediaVideo,
         smp: p.socialMediaPresentedVideo,
-        fp: p.floorPlan,
+        sfp: p.standardFloorPlan,
+        pfp: p.premiumFloorPlan,
+        fp3: p.floorPlan3D,
       });
     }
 
