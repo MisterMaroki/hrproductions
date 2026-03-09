@@ -5,7 +5,8 @@
   left: 0;
   right: 0;
   z-index: 200;
-  padding: 1.25rem var(--content-padding);
+  padding: calc(1.25rem + env(safe-area-inset-top, 0px)) var(--content-padding)
+    1.25rem;
   transition: background-color 0.4s ease, border-color 0.4s ease,
     padding 0.4s ease;
   background: rgba(255, 255, 255, 0.15);
@@ -27,7 +28,8 @@
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   border-bottom-color: var(--color-border);
-  padding: 0.75rem var(--content-padding);
+  padding: calc(0.75rem + env(safe-area-inset-top, 0px)) var(--content-padding)
+    0.75rem;
 }
 
 .open {

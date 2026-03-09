@@ -15,6 +15,10 @@ const dmSans = DM_Sans({
   display: "swap",
 });
 
+export const viewport = {
+  viewportFit: "cover" as const,
+};
+
 export const metadata = {
   title: "The Property Room — Property Marketing & Visual Media",
   description:
