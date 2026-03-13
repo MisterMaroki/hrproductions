@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { generateInvoicePdf } from "./invoice-pdf";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -54,17 +55,32 @@ function formatTime(t: string): string {
   return m === 0 ? `${hour}${period}` : `${hour}:${String(m).padStart(2, "0")}${period}`;
 }
 
+function generateInvoiceNumber(stripeSession: string): string {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  const suffix = stripeSession.replace(/[^a-zA-Z0-9]/g, "").slice(-4).toUpperCase();
+  return `TPR-${y}${m}${d}-${suffix}`;
+}
+
 function buildInvoiceHtml(data: InvoiceData): string {
+  const invoiceNo = generateInvoiceNumber(data.stripeSession);
+  const invoiceDate = new Date().toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
   const grandSubtotal = data.properties.reduce((s, p) => s + p.subtotal, 0);
 
-  const propertyRows = data.properties
+  const propertyBlocks = data.properties
     .map((p) => {
       const serviceRows = p.services
         .map(
           (s) => `
             <tr>
-              <td style="padding:6px 0;color:#333;font-size:14px;">${s.name}</td>
-              <td style="padding:6px 0;color:#333;font-size:14px;text-align:right;">${pence(s.amount)}</td>
+              <td style="padding:8px 0;color:#0a0a0a;font-size:14px;border-bottom:1px solid #e8e4df;">${s.name}</td>
+              <td style="padding:8px 0;color:#0a0a0a;font-size:14px;text-align:right;border-bottom:1px solid #e8e4df;font-variant-numeric:tabular-nums;">${pence(s.amount)}</td>
             </tr>`
         )
         .join("");
@@ -77,13 +93,22 @@ function buildInvoiceHtml(data: InvoiceData): string {
             : "";
 
       return `
-        <div style="margin-bottom:24px;">
-          <h3 style="margin:0 0 4px;font-size:16px;color:#0a0a0a;">${p.address}${p.postcode ? `, ${p.postcode}` : ""}</h3>
-          <p style="margin:0 0 12px;font-size:13px;color:#8a8580;">
-            ${formatDate(p.preferredDate)}${timeStr ? ` · ${timeStr}` : ""} · ${p.bedrooms}-bed
-          </p>
-          <table style="width:100%;border-collapse:collapse;">
-            ${serviceRows}
+        <div style="margin-bottom:28px;">
+          <div style="background:#0a0a0a;padding:10px 14px;margin-bottom:0;">
+            <span style="color:#ffffff;font-size:14px;font-weight:700;letter-spacing:0.02em;">${p.address}${p.postcode ? `, ${p.postcode}` : ""}</span>
+            <span style="color:#8a8580;font-size:12px;float:right;">${p.bedrooms}-bed</span>
+          </div>
+          <div style="background:#f5f0eb;padding:8px 14px;border:2px solid #0a0a0a;border-top:none;">
+            <span style="font-size:12px;color:#8a8580;letter-spacing:0.03em;">${formatDate(p.preferredDate)}${timeStr ? ` · ${timeStr}` : ""}</span>
+          </div>
+          <table style="width:100%;border-collapse:collapse;border:2px solid #0a0a0a;border-top:none;">
+            <tbody>
+              ${serviceRows}
+              <tr>
+                <td style="padding:8px 0;color:#8a8580;font-size:12px;text-transform:uppercase;letter-spacing:0.05em;">Subtotal</td>
+                <td style="padding:8px 0;color:#0a0a0a;font-size:14px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;">${pence(p.subtotal)}</td>
+              </tr>
+            </tbody>
           </table>
         </div>`;
     })
@@ -92,8 +117,8 @@ function buildInvoiceHtml(data: InvoiceData): string {
   const discountRow =
     data.discountAmount > 0
       ? `<tr>
-          <td style="padding:6px 0;color:#333;font-size:14px;">Discount${data.discountCode ? ` (${data.discountCode})` : ""}</td>
-          <td style="padding:6px 0;color:#2a9d2a;font-size:14px;text-align:right;">-${pence(data.discountAmount)}</td>
+          <td style="padding:8px 0;color:#8a8580;font-size:12px;text-transform:uppercase;letter-spacing:0.05em;">Discount${data.discountCode ? ` (${data.discountCode})` : ""}</td>
+          <td style="padding:8px 0;color:#1a7a1a;font-size:14px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;">-${pence(data.discountAmount)}</td>
         </tr>`
       : "";
 
@@ -101,45 +126,74 @@ function buildInvoiceHtml(data: InvoiceData): string {
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8" /></head>
-<body style="margin:0;padding:0;background:#f5f0eb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-  <div style="max-width:560px;margin:0 auto;padding:40px 24px;">
+<body style="margin:0;padding:0;background:#f5f0eb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,sans-serif;">
+  <div style="max-width:560px;margin:0 auto;padding:40px 20px;">
 
-    <div style="text-align:center;margin-bottom:32px;">
-      <h1 style="margin:0;font-size:22px;font-weight:700;color:#0a0a0a;letter-spacing:-0.01em;">The Property Room</h1>
-      <p style="margin:4px 0 0;font-size:13px;color:#8a8580;letter-spacing:0.1em;text-transform:uppercase;">Booking Confirmation</p>
+    <!-- Header -->
+    <div style="background:#0a0a0a;padding:24px 28px;margin-bottom:0;">
+      <h1 style="margin:0;font-size:20px;font-weight:700;color:#ffffff;letter-spacing:0.04em;">THE PROPERTY ROOM</h1>
+      <p style="margin:4px 0 0;font-size:9px;color:#8a8580;letter-spacing:0.2em;text-transform:uppercase;">Property Marketing &amp; Visual Media</p>
     </div>
 
-    <div style="background:#ffffff;border-radius:6px;padding:28px 24px;border:1px solid #e8e4df;">
-
-      <p style="margin:0 0 20px;font-size:14px;color:#333;">Hi ${data.agentName},</p>
-      <p style="margin:0 0 24px;font-size:14px;color:#333;line-height:1.6;">
-        Thank you for your booking. Here's your confirmation and invoice.
-      </p>
-
-      <hr style="border:none;border-top:1px solid #e8e4df;margin:0 0 20px;" />
-
-      ${propertyRows}
-
-      <hr style="border:none;border-top:1px solid #e8e4df;margin:16px 0;" />
-
-      <table style="width:100%;border-collapse:collapse;">
+    <!-- Invoice label bar -->
+    <div style="background:#f5f0eb;border:2px solid #0a0a0a;border-top:none;padding:12px 28px;display:flex;">
+      <table style="width:100%;">
         <tr>
-          <td style="padding:6px 0;color:#8a8580;font-size:14px;">Subtotal</td>
-          <td style="padding:6px 0;color:#333;font-size:14px;text-align:right;">${pence(grandSubtotal)}</td>
+          <td style="font-size:11px;color:#8a8580;text-transform:uppercase;letter-spacing:0.1em;">Invoice</td>
+          <td style="text-align:right;font-size:11px;color:#0a0a0a;font-weight:700;">${invoiceNo}</td>
         </tr>
-        ${discountRow}
+      </table>
+    </div>
+
+    <!-- Body -->
+    <div style="background:#ffffff;padding:28px;border:2px solid #0a0a0a;border-top:none;">
+
+      <!-- Meta -->
+      <table style="width:100%;margin-bottom:24px;border-collapse:collapse;">
         <tr>
-          <td style="padding:10px 0 0;color:#0a0a0a;font-size:16px;font-weight:700;">Total Paid</td>
-          <td style="padding:10px 0 0;color:#0a0a0a;font-size:16px;font-weight:700;text-align:right;">${pence(data.total)}</td>
+          <td style="padding:3px 0;font-size:11px;color:#8a8580;text-transform:uppercase;letter-spacing:0.05em;width:100px;">Date</td>
+          <td style="padding:3px 0;font-size:13px;color:#0a0a0a;">${invoiceDate}</td>
         </tr>
       </table>
 
+      <!-- Bill to -->
+      <div style="margin-bottom:28px;">
+        <p style="margin:0 0 8px;font-size:9px;color:#8a8580;text-transform:uppercase;letter-spacing:0.15em;font-weight:700;">Bill To</p>
+        <p style="margin:0;font-size:14px;color:#0a0a0a;font-weight:700;">${data.agentName}</p>
+        ${data.agentCompany ? `<p style="margin:2px 0 0;font-size:13px;color:#0a0a0a;">${data.agentCompany}</p>` : ""}
+        <p style="margin:2px 0 0;font-size:13px;color:#8a8580;">${data.agentEmail}</p>
+        ${data.agentPhone ? `<p style="margin:2px 0 0;font-size:13px;color:#8a8580;">${data.agentPhone}</p>` : ""}
+      </div>
+
+      <!-- Properties -->
+      ${propertyBlocks}
+
+      <!-- Grand totals -->
+      <table style="width:100%;border-collapse:collapse;margin-top:8px;">
+        <tr>
+          <td style="padding:8px 0;color:#8a8580;font-size:12px;text-transform:uppercase;letter-spacing:0.05em;border-top:2px solid #0a0a0a;">Subtotal</td>
+          <td style="padding:8px 0;color:#0a0a0a;font-size:14px;text-align:right;border-top:2px solid #0a0a0a;font-variant-numeric:tabular-nums;">${pence(grandSubtotal)}</td>
+        </tr>
+        ${discountRow}
+      </table>
+
+      <!-- Total bar -->
+      <div style="background:#0a0a0a;padding:14px 16px;margin-top:4px;">
+        <table style="width:100%;">
+          <tr>
+            <td style="color:#ffffff;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;">Total Paid</td>
+            <td style="color:#ffffff;font-size:18px;font-weight:700;text-align:right;font-variant-numeric:tabular-nums;">${pence(data.total)}</td>
+          </tr>
+        </table>
+      </div>
+
     </div>
 
-    <div style="text-align:center;margin-top:28px;">
-      <p style="margin:0;font-size:13px;color:#8a8580;line-height:1.6;">
-        If you have any questions, just reply to this email.<br/>
-        We look forward to the shoot!
+    <!-- Footer -->
+    <div style="padding:20px 0;text-align:center;">
+      <p style="margin:0;font-size:12px;color:#8a8580;line-height:1.8;">
+        Your invoice is attached as a PDF.<br/>
+        Questions? Reply to this email.
       </p>
     </div>
 
@@ -177,16 +231,35 @@ function buildNotificationHtml(data: InvoiceData): string {
 }
 
 export async function sendBookingEmails(data: InvoiceData) {
+  const invoiceNo = generateInvoiceNumber(data.stripeSession);
   const invoiceHtml = buildInvoiceHtml(data);
   const notificationHtml = buildNotificationHtml(data);
+
+  // Generate PDF invoice
+  let pdfBuffer: Buffer | null = null;
+  try {
+    pdfBuffer = await generateInvoicePdf(data);
+  } catch (e) {
+    console.error("Failed to generate invoice PDF:", e);
+  }
 
   await Promise.allSettled([
     // Invoice to the customer
     resend.emails.send({
       from: FROM,
       to: data.agentEmail,
-      subject: `Booking Confirmed — The Property Room`,
+      subject: `Invoice ${invoiceNo} — The Property Room`,
       html: invoiceHtml,
+      ...(pdfBuffer
+        ? {
+            attachments: [
+              {
+                filename: `${invoiceNo}.pdf`,
+                content: pdfBuffer,
+              },
+            ],
+          }
+        : {}),
     }),
 
     // Notification to Harrison
