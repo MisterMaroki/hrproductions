@@ -1,0 +1,460 @@
+.main {
+  padding: 2rem;
+}
+
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.title {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+}
+
+/* ─── Filters ─── */
+
+.filters {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text);
+}
+
+.searchInput::placeholder {
+  color: var(--color-muted);
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: var(--color-text);
+}
+
+.dateRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.dateInputs {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.dateLabel {
+  font-family: var(--font-body);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.dateInput {
+  padding: 0.55rem 0.7rem;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text);
+  color-scheme: light;
+}
+
+.dateInput:focus {
+  outline: none;
+  border-color: var(--color-text);
+}
+
+.quickFilters {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.quickBtn {
+  padding: 0.55rem 0.75rem;
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.quickBtn:hover {
+  border-color: var(--color-text);
+  color: var(--color-text);
+}
+
+/* ─── Status tabs ─── */
+
+.statusTabs {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+}
+
+.statusTab {
+  flex: 1;
+  padding: 0.6rem 0.5rem;
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: none;
+  border-right: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.statusTab:last-child {
+  border-right: none;
+}
+
+.statusTab:hover {
+  color: var(--color-text);
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.statusTabActive {
+  background-color: var(--color-text);
+  color: var(--color-white);
+}
+
+.statusTabActive:hover {
+  background-color: var(--color-text);
+  color: var(--color-white);
+}
+
+.statusCount {
+  font-size: 0.65rem;
+  opacity: 0.7;
+}
+
+/* ─── Results ─── */
+
+.results {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.resultCount {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  margin-bottom: 1rem;
+  letter-spacing: 0.05em;
+}
+
+.emptyMsg {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+  text-align: center;
+  padding: 3rem 0;
+}
+
+/* ─── Date groups ─── */
+
+.dateGroup {
+  margin-bottom: 0.5rem;
+}
+
+.dateHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0;
+  border-bottom: 2px solid var(--color-text);
+  margin-bottom: 0;
+}
+
+.dateHeaderText {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dateHeaderCount {
+  font-size: 0.7rem;
+  color: var(--color-muted);
+  font-weight: 500;
+}
+
+/* ─── Booking cards ─── */
+
+.card {
+  border: 1px solid var(--color-border);
+  border-top: none;
+}
+
+.cardPending {
+  border-color: #e67e22;
+  background-color: rgba(230, 126, 34, 0.03);
+}
+
+.cardCancelled {
+  opacity: 0.5;
+}
+
+.cardHeader {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  gap: 1rem;
+  transition: background-color 0.1s ease;
+}
+
+.cardHeader:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.cardLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.cardAddress {
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cardAgent {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+}
+
+.cardRight {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.cardTotal {
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.cardStatus {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid;
+}
+
+.status_confirmed {
+  color: #2d7a3a;
+  border-color: #2d7a3a;
+}
+
+.status_pending {
+  color: #e67e22;
+  border-color: #e67e22;
+}
+
+.status_completed {
+  color: var(--color-text);
+  border-color: var(--color-text);
+  background-color: var(--color-text);
+  color: var(--color-white);
+}
+
+.status_cancelled {
+  color: #c0392b;
+  border-color: #c0392b;
+}
+
+/* ─── Expanded card body ─── */
+
+.cardBody {
+  padding: 0 1rem 1rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.detailGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  padding-top: 1rem;
+}
+
+.detailSection {
+  margin-bottom: 1rem;
+}
+
+.detailLabel {
+  font-family: var(--font-body);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  margin-bottom: 0.35rem;
+}
+
+.detailValue {
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.detailValueSub {
+  font-size: 0.8rem;
+  color: var(--color-muted);
+  line-height: 1.5;
+}
+
+/* ─── Card actions ─── */
+
+.cardActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
+  margin-top: 0.5rem;
+  gap: 1rem;
+}
+
+.statusBtns {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.statusBtn {
+  padding: 0.4rem 0.7rem;
+  font-family: var(--font-body);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.statusBtn:hover {
+  border-color: var(--color-text);
+  color: var(--color-text);
+}
+
+.statusActive {
+  background-color: var(--color-text);
+  color: var(--color-white);
+  border-color: var(--color-text);
+}
+
+.cancelBtn:hover {
+  border-color: #c0392b;
+  color: #c0392b;
+}
+
+.cancelBtn.statusActive {
+  background-color: #c0392b;
+  border-color: #c0392b;
+}
+
+.stripeRef {
+  font-size: 0.65rem;
+  color: var(--color-muted);
+  font-family: monospace;
+}
+
+/* ─── Mobile ─── */
+
+@media (max-width: 700px) {
+  .main {
+    padding: 1.25rem;
+  }
+
+  .dateRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dateInputs {
+    flex-direction: column;
+  }
+
+  .quickFilters {
+    flex-wrap: wrap;
+  }
+
+  .statusTabs {
+    flex-wrap: wrap;
+  }
+
+  .statusTab {
+    flex: unset;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .detailGrid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .cardHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .cardRight {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .cardActions {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

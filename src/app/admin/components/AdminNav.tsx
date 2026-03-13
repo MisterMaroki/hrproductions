@@ -19,6 +19,12 @@ export default function AdminNav() {
 				<Link href="/" className={styles.brand}>PropertyRoom Admin</Link>
 				<div className={styles.links}>
 					<Link
+						href="/admin/bookings"
+						className={`${styles.link} ${pathname === '/admin/bookings' ? styles.active : ''}`}
+					>
+						Bookings
+					</Link>
+					<Link
 						href="/admin/calendar"
 						className={`${styles.link} ${pathname === '/admin/calendar' ? styles.active : ''}`}
 					>
