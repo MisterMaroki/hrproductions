@@ -370,9 +370,14 @@ export default function BookingsPage() {
                                 </button>
                               </div>
                               {b.stripeSession && (
-                                <span className={styles.stripeRef}>
-                                  {b.stripeSession.slice(0, 24)}...
-                                </span>
+                                <a
+                                  href={`https://dashboard.stripe.com/checkout/sessions/${b.stripeSession}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={styles.stripeLink}
+                                >
+                                  View in Stripe &rarr;
+                                </a>
                               )}
                             </div>
                           </div>
