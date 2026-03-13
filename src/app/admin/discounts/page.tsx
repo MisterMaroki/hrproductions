@@ -22,6 +22,14 @@ export default function DiscountsPage() {
   const [newMaxUses, setNewMaxUses] = useState("");
   const [newExpiry, setNewExpiry] = useState("");
   const [creating, setCreating] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editFields, setEditFields] = useState<{
+    percentage: string;
+    maxUses: string;
+    timesUsed: string;
+    expiresAt: string;
+  }>({ percentage: "", maxUses: "", timesUsed: "", expiresAt: "" });
+  const [saving, setSaving] = useState(false);
 
   const fetchCodes = useCallback(async () => {
     const res = await fetch("/api/admin/discounts");
@@ -69,6 +77,47 @@ export default function DiscountsPage() {
       body: JSON.stringify({ id, active: currentActive ? 0 : 1 }),
     });
     fetchCodes();
+  };
+
+  const startEditing = (c: DiscountCode) => {
+    setEditingId(c.id);
+    setEditFields({
+      percentage: String(c.percentage),
+      maxUses: c.maxUses !== null ? String(c.maxUses) : "",
+      timesUsed: String(c.timesUsed),
+      expiresAt: c.expiresAt || "",
+    });
+  };
+
+  const cancelEditing = () => {
+    setEditingId(null);
+  };
+
+  const handleSave = async () => {
+    if (!editingId) return;
+    setSaving(true);
+    try {
+      const res = await fetch("/api/admin/discounts", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: editingId,
+          percentage: Number(editFields.percentage),
+          maxUses: editFields.maxUses ? Number(editFields.maxUses) : null,
+          timesUsed: Number(editFields.timesUsed),
+          expiresAt: editFields.expiresAt || null,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || "Failed to update code");
+        return;
+      }
+      setEditingId(null);
+      fetchCodes();
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -124,24 +173,95 @@ export default function DiscountsPage() {
               <span>Uses</span>
               <span>Expires</span>
               <span>Status</span>
+              <span></span>
             </div>
             {codes.map((c) => (
-              <div
-                key={c.id}
-                className={`${styles.tableRow} ${!c.active ? styles.inactive : ""}`}
-              >
-                <span className={styles.codeCell}>{c.code}</span>
-                <span>{c.percentage}%</span>
-                <span>
-                  {c.timesUsed}{c.maxUses ? ` / ${c.maxUses}` : ""}
-                </span>
-                <span>{c.expiresAt || "—"}</span>
-                <button
-                  className={`${styles.toggleBtn} ${c.active ? styles.toggleActive : styles.toggleInactive}`}
-                  onClick={() => toggleActive(c.id, c.active!)}
+              <div key={c.id}>
+                <div
+                  className={`${styles.tableRow} ${!c.active ? styles.inactive : ""}`}
                 >
-                  {c.active ? "Active" : "Disabled"}
-                </button>
+                  <span className={styles.codeCell}>{c.code}</span>
+                  <span>{c.percentage}%</span>
+                  <span>
+                    {c.timesUsed}{c.maxUses ? ` / ${c.maxUses}` : ""}
+                  </span>
+                  <span>{c.expiresAt || "—"}</span>
+                  <button
+                    className={`${styles.toggleBtn} ${c.active ? styles.toggleActive : styles.toggleInactive}`}
+                    onClick={() => toggleActive(c.id, c.active!)}
+                  >
+                    {c.active ? "Active" : "Disabled"}
+                  </button>
+                  <button
+                    className={styles.editBtn}
+                    onClick={() => editingId === c.id ? cancelEditing() : startEditing(c)}
+                  >
+                    {editingId === c.id ? "Cancel" : "Edit"}
+                  </button>
+                </div>
+                {editingId === c.id && (
+                  <div className={styles.editPanel}>
+                    <div className={styles.editFields}>
+                      <label className={styles.editLabel}>
+                        <span>Discount %</span>
+                        <input
+                          className={styles.editInput}
+                          type="number"
+                          min="1"
+                          max="100"
+                          value={editFields.percentage}
+                          onChange={(e) => setEditFields({ ...editFields, percentage: e.target.value })}
+                        />
+                      </label>
+                      <label className={styles.editLabel}>
+                        <span>Max Uses</span>
+                        <input
+                          className={styles.editInput}
+                          type="number"
+                          min="0"
+                          placeholder="Unlimited"
+                          value={editFields.maxUses}
+                          onChange={(e) => setEditFields({ ...editFields, maxUses: e.target.value })}
+                        />
+                      </label>
+                      <label className={styles.editLabel}>
+                        <span>Times Used</span>
+                        <div className={styles.usesRow}>
+                          <input
+                            className={styles.editInput}
+                            type="number"
+                            min="0"
+                            value={editFields.timesUsed}
+                            onChange={(e) => setEditFields({ ...editFields, timesUsed: e.target.value })}
+                          />
+                          <button
+                            type="button"
+                            className={styles.resetBtn}
+                            onClick={() => setEditFields({ ...editFields, timesUsed: "0" })}
+                          >
+                            Reset
+                          </button>
+                        </div>
+                      </label>
+                      <label className={styles.editLabel}>
+                        <span>Expires</span>
+                        <input
+                          className={styles.editInput}
+                          type="date"
+                          value={editFields.expiresAt}
+                          onChange={(e) => setEditFields({ ...editFields, expiresAt: e.target.value })}
+                        />
+                      </label>
+                    </div>
+                    <button
+                      className={styles.saveBtn}
+                      onClick={handleSave}
+                      disabled={saving}
+                    >
+                      {saving ? "Saving…" : "Save Changes"}
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
             {codes.length === 0 && (

@@ -65,6 +65,7 @@ export async function PATCH(request: Request) {
     if (updates.active !== undefined) allowed.active = updates.active;
     if (updates.maxUses !== undefined) allowed.maxUses = updates.maxUses;
     if (updates.expiresAt !== undefined) allowed.expiresAt = updates.expiresAt;
+    if (updates.timesUsed !== undefined) allowed.timesUsed = updates.timesUsed;
 
     await db.update(discountCodes).set(allowed).where(eq(discountCodes.id, id));
 
