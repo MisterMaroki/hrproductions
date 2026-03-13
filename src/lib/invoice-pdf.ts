@@ -1,4 +1,6 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { readFile } from "fs/promises";
+import { join } from "path";
 
 interface ServiceLine {
   name: string;
@@ -83,46 +85,37 @@ export async function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
     year: "numeric",
   });
 
-  // ─── Black header bar ───
-  const headerH = 70;
-  page.drawRectangle({
-    x: 0,
-    y: height - headerH,
-    width,
-    height: headerH,
-    color: black,
-  });
+  // ─── Logo ───
+  const logoPath = join(process.cwd(), "public", "logo.png");
+  const logoBytes = await readFile(logoPath);
+  const logoImage = await doc.embedPng(logoBytes);
+  const logoAspect = logoImage.width / logoImage.height;
+  const logoDisplayH = 28;
+  const logoDisplayW = logoDisplayH * logoAspect;
 
-  // Brand name in header
-  page.drawText("THE PROPERTY ROOM", {
+  page.drawImage(logoImage, {
     x: ml,
-    y: height - 38,
-    size: 18,
-    font: bold,
-    color: white,
+    y: height - 50 - logoDisplayH,
+    width: logoDisplayW,
+    height: logoDisplayH,
   });
 
-  // Subtitle
-  page.drawText("PROPERTY MARKETING & VISUAL MEDIA", {
-    x: ml,
-    y: height - 55,
-    size: 7,
-    font,
-    color: rgb(0.6, 0.6, 0.6),
-  });
-
-  // "INVOICE" right-aligned in header
+  // "INVOICE" right-aligned next to logo
   const invoiceLabel = "INVOICE";
   const invoiceLabelW = bold.widthOfTextAtSize(invoiceLabel, 18);
   page.drawText(invoiceLabel, {
     x: width - mr - invoiceLabelW,
-    y: height - 38,
+    y: height - 50 - logoDisplayH + 8,
     size: 18,
     font: bold,
-    color: white,
+    color: black,
   });
 
-  y = height - headerH - 30;
+  // Thin rule under logo
+  y = height - 50 - logoDisplayH - 16;
+  page.drawRectangle({ x: ml, y, width: cw, height: 2, color: black });
+
+  y -= 24;
 
   // ─── Invoice meta ───
   const metaLeft = [
@@ -274,8 +267,8 @@ export async function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
     }
 
     // Property subtotal
-    page.drawRectangle({ x: ml, y: y + 2, width: cw, height: 0.5, color: muted });
-    y -= 4;
+    page.drawRectangle({ x: ml, y: y + 6, width: cw, height: 0.5, color: muted });
+    y -= 8;
 
     const subLabel = "Subtotal";
     page.drawText(subLabel, {
@@ -349,11 +342,11 @@ export async function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
   }
 
   // Total bar
-  y -= 4;
+  y -= 12;
   const totalBarH = 32;
   page.drawRectangle({
     x: ml,
-    y: y - 6,
+    y: y - 8,
     width: cw,
     height: totalBarH,
     color: black,
@@ -361,7 +354,7 @@ export async function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
 
   page.drawText("TOTAL PAID", {
     x: ml + 10,
-    y: y + 4,
+    y: y + 2,
     size: 10,
     font: bold,
     color: white,
@@ -371,7 +364,7 @@ export async function generateInvoicePdf(data: InvoiceData): Promise<Buffer> {
   const totalW = bold.widthOfTextAtSize(totalStr, 14);
   page.drawText(totalStr, {
     x: width - mr - 10 - totalW,
-    y: y + 2,
+    y: y,
     size: 14,
     font: bold,
     color: white,
