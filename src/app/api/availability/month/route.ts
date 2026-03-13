@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { bookings, blockedDays } from "@/lib/schema";
-import { eq, and, gte, lte } from "drizzle-orm";
+import { and, gte, lte, inArray } from "drizzle-orm";
 import { DAY_START, DAY_END } from "@/lib/scheduling";
 
 /**
@@ -47,7 +47,7 @@ export async function GET(request: Request) {
         and(
           gte(bookings.preferredDate, firstDay),
           lte(bookings.preferredDate, lastDay),
-          eq(bookings.status, "confirmed")
+          inArray(bookings.status, ["confirmed", "pending"])
         )
       );
 

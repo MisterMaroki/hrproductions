@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { bookings, blockedDays } from "@/lib/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import {
   getAvailableSlots,
   isWorkingDay,
@@ -54,7 +54,7 @@ export async function GET(request: Request) {
       .where(
         and(
           eq(bookings.preferredDate, date),
-          eq(bookings.status, "confirmed")
+          inArray(bookings.status, ["confirmed", "pending"])
         )
       );
 

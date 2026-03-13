@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
+import { db } from "@/lib/db";
+import { bookings } from "@/lib/schema";
+import { calcWorkHours } from "@/lib/scheduling";
 import {
   calcPhotography,
   calcDronePhotography,
@@ -12,6 +15,7 @@ import {
   calcPremiumFloorPlan,
   calcFloorPlan3D,
   calcMultiPropertyDiscount,
+  calcPropertyTotal,
   type PropertyServices,
 } from "@/lib/pricing";
 
@@ -372,6 +376,82 @@ export async function POST(request: Request) {
       cancel_url: `${origin}/book`,
       metadata,
     });
+
+    // ── Save pending bookings BEFORE redirecting to Stripe ──
+    const discountPct = discountPercentage || 0;
+    for (const p of properties) {
+      const services: PropertyServices = {
+        bedrooms: p.bedrooms,
+        photography: p.photography,
+        photoCount: p.photoCount,
+        dronePhotography: p.dronePhotography,
+        dronePhotoCount: p.dronePhotoCount,
+        standardVideo: p.standardVideo,
+        standardVideoDrone: p.standardVideoDrone,
+        agentPresentedVideo: p.agentPresentedVideo,
+        agentPresentedVideoDrone: p.agentPresentedVideoDrone,
+        socialMediaVideo: p.socialMediaVideo || false,
+        socialMediaPresentedVideo: p.socialMediaPresentedVideo || false,
+        standardFloorPlan: p.standardFloorPlan || false,
+        premiumFloorPlan: p.premiumFloorPlan || false,
+        floorPlan3D: p.floorPlan3D || false,
+      };
+
+      const subtotal = Math.round(calcPropertyTotal(services) * 100);
+      const propDiscount = discountPct
+        ? Math.round(subtotal * (discountPct / 100))
+        : 0;
+      const total = subtotal - propDiscount;
+
+      const workHours = calcWorkHours({
+        photography: p.photography,
+        photoCount: p.photoCount || 20,
+        dronePhotography: p.dronePhotography,
+        standardVideo: p.standardVideo,
+        standardVideoDrone: p.standardVideoDrone || false,
+        agentPresentedVideo: p.agentPresentedVideo,
+        agentPresentedVideoDrone: p.agentPresentedVideoDrone || false,
+        socialMediaVideo: p.socialMediaVideo || false,
+        socialMediaPresentedVideo: p.socialMediaPresentedVideo || false,
+        standardFloorPlan: p.standardFloorPlan || false,
+        premiumFloorPlan: p.premiumFloorPlan || false,
+        floorPlan3D: p.floorPlan3D || false,
+        bedrooms: p.bedrooms,
+      });
+
+      let startTime: string | null = p.timeSlot || null;
+      let endTime: string | null = null;
+      if (startTime) {
+        const [h, m] = startTime.split(":").map(Number);
+        const endMins = h * 60 + m + Math.round(workHours * 60);
+        const endH = Math.floor(endMins / 60);
+        const endM = endMins % 60;
+        endTime = `${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}`;
+      }
+
+      await db.insert(bookings).values({
+        id: crypto.randomUUID(),
+        address: p.address,
+        postcode: p.postcode || null,
+        bedrooms: p.bedrooms,
+        preferredDate: p.preferredDate,
+        startTime,
+        endTime,
+        notes: p.notes || null,
+        agentName: agent.name,
+        agentCompany: agent.company || null,
+        agentEmail: agent.email,
+        agentPhone: agent.phone || null,
+        services: JSON.stringify(services),
+        workHours,
+        subtotal,
+        discountCode: discountCode || null,
+        discountAmount: propDiscount,
+        total,
+        stripeSession: session.id,
+        status: "pending",
+      });
+    }
 
     return NextResponse.json({ url: session.url });
   } catch (err) {

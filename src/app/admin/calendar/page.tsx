@@ -70,7 +70,7 @@ export default function CalendarPage() {
   };
 
   const bookingsForDate = (date: string) =>
-    bookings.filter((b) => b.preferredDate === date && b.status === "confirmed");
+    bookings.filter((b) => b.preferredDate === date && (b.status === "confirmed" || b.status === "pending"));
 
   const hoursForDate = (date: string) =>
     bookingsForDate(date).reduce((sum, b) => sum + b.workHours, 0);
@@ -165,6 +165,9 @@ export default function CalendarPage() {
                   {hours > 0 && (
                     <span className={styles.hoursLabel}>{hours}h</span>
                   )}
+                  {bookingsForDate(dateStr).some((b) => b.status === "pending") && (
+                    <span className={styles.pendingLabel}>Pending</span>
+                  )}
                   {blocked && <span className={styles.blockedLabel}>Blocked</span>}
                 </button>
               );
@@ -206,8 +209,13 @@ export default function CalendarPage() {
                     Bookings ({hoursForDate(selectedDate)}h / {MAX_DAILY_HOURS}h)
                   </h4>
                   {selectedBookings.map((b) => (
-                    <div key={b.id} className={styles.bookingCard}>
-                      <p className={styles.bookingAddress}>{b.address}</p>
+                    <div key={b.id} className={`${styles.bookingCard}${b.status === "pending" ? ` ${styles.bookingPending}` : ""}`}>
+                      <div className={styles.bookingHeader}>
+                        <p className={styles.bookingAddress}>{b.address}</p>
+                        {b.status === "pending" && (
+                          <span className={styles.pendingBadge}>Pending Payment</span>
+                        )}
+                      </div>
                       <p className={styles.bookingAgent}>{b.agentName} — {b.agentEmail}</p>
                       <p className={styles.bookingMeta}>
                         {b.workHours}h · {b.bedrooms}-bed · £{(b.total / 100).toFixed(2)}

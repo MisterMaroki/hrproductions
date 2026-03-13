@@ -3,9 +3,7 @@ import Stripe from "stripe";
 import { db } from "@/lib/db";
 import { bookings, discountCodes } from "@/lib/schema";
 import { eq, sql } from "drizzle-orm";
-import { calcWorkHours } from "@/lib/scheduling";
 import {
-  calcPropertyTotal,
   calcPhotography,
   calcDronePhotography,
   calcStandardVideo,
@@ -18,6 +16,7 @@ import {
   calcFloorPlan3D,
   type PropertyServices,
 } from "@/lib/pricing";
+import { calcWorkHours } from "@/lib/scheduling";
 import { sendBookingEmails } from "@/lib/email";
 
 let _stripe: Stripe;
@@ -92,80 +91,11 @@ export async function POST(request: Request) {
       const discountCode = meta.discount_code || null;
       const discountPercentage = Number(meta.discount_percentage || 0);
 
-      for (const p of properties) {
-        const services: PropertyServices = {
-          bedrooms: p.bedrooms,
-          photography: p.photography,
-          photoCount: p.photoCount,
-          dronePhotography: p.dronePhotography,
-          dronePhotoCount: p.dronePhotoCount,
-          standardVideo: p.standardVideo,
-          standardVideoDrone: p.standardVideoDrone,
-          agentPresentedVideo: p.agentPresentedVideo,
-          agentPresentedVideoDrone: p.agentPresentedVideoDrone,
-          socialMediaVideo: p.socialMediaVideo || false,
-          socialMediaPresentedVideo: p.socialMediaPresentedVideo || false,
-          standardFloorPlan: p.standardFloorPlan || false,
-          premiumFloorPlan: p.premiumFloorPlan || false,
-          floorPlan3D: p.floorPlan3D || false,
-        };
-
-        const subtotal = Math.round(calcPropertyTotal(services) * 100);
-        const discountAmount = discountPercentage
-          ? Math.round(subtotal * (discountPercentage / 100))
-          : 0;
-        const total = subtotal - discountAmount;
-
-        const workHours = calcWorkHours({
-          photography: p.photography,
-          photoCount: p.photoCount || 20,
-          dronePhotography: p.dronePhotography,
-          standardVideo: p.standardVideo,
-          standardVideoDrone: p.standardVideoDrone || false,
-          agentPresentedVideo: p.agentPresentedVideo,
-          agentPresentedVideoDrone: p.agentPresentedVideoDrone || false,
-          socialMediaVideo: p.socialMediaVideo || false,
-          socialMediaPresentedVideo: p.socialMediaPresentedVideo || false,
-          standardFloorPlan: p.standardFloorPlan || false,
-          premiumFloorPlan: p.premiumFloorPlan || false,
-          floorPlan3D: p.floorPlan3D || false,
-          bedrooms: p.bedrooms,
-        });
-
-        // Calculate end time from start time + shoot duration
-        let startTime: string | null = p.timeSlot || null;
-        let endTime: string | null = null;
-        if (startTime) {
-          const [h, m] = startTime.split(":").map(Number);
-          const endMins = h * 60 + m + Math.round(workHours * 60);
-          const endH = Math.floor(endMins / 60);
-          const endM = endMins % 60;
-          endTime = `${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}`;
-        }
-
-        await db.insert(bookings).values({
-          id: crypto.randomUUID(),
-          address: p.address,
-          postcode: p.postcode || null,
-          bedrooms: p.bedrooms,
-          preferredDate: p.preferredDate,
-          startTime,
-          endTime,
-          notes: p.notes || null,
-          agentName: meta.agent_name,
-          agentCompany: meta.agent_company || null,
-          agentEmail: meta.agent_email,
-          agentPhone: meta.agent_phone || null,
-          services: JSON.stringify(services),
-          workHours,
-          subtotal,
-          discountCode,
-          discountAmount,
-          total,
-          stripeSession: session.id,
-          status: "confirmed",
-        });
-      }
+      // Confirm pending bookings created at checkout time
+      await db
+        .update(bookings)
+        .set({ status: "confirmed" })
+        .where(eq(bookings.stripeSession, session.id));
 
       if (discountCode) {
         await db
