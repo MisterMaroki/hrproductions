@@ -1,0 +1,174 @@
+.main {
+  min-height: 100vh;
+  background: #f5f0eb;
+  padding: 40px 20px;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #0a0a0a;
+}
+
+.newBtn {
+  padding: 10px 20px;
+  background: #0a0a0a;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  text-decoration: none;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.tab {
+  padding: 8px 14px;
+  background: #ffffff;
+  border: 2px solid #e8e4df;
+  font-size: 12px;
+  font-weight: 600;
+  color: #8a8580;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tabActive {
+  border-color: #0a0a0a;
+  color: #0a0a0a;
+}
+
+.tabCount {
+  font-size: 11px;
+  background: #f5f0eb;
+  padding: 1px 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.empty {
+  text-align: center;
+  color: #8a8580;
+  font-size: 14px;
+  padding: 40px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.card {
+  background: #ffffff;
+  border: 2px solid #0a0a0a;
+  padding: 16px 20px;
+}
+
+.cardTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.cardAddress {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0a0a0a;
+}
+
+.cardDate {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #8a8580;
+}
+
+.cardRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.cardTotal {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0a0a0a;
+  font-variant-numeric: tabular-nums;
+}
+
+.badge {
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 1px solid;
+}
+
+.badge_pending {
+  color: #ca8a04;
+  border-color: #ca8a04;
+  background: #fefce8;
+}
+
+.badge_completed {
+  color: #2563eb;
+  border-color: #2563eb;
+  background: #eff6ff;
+}
+
+.badge_invoiced {
+  color: #7c3aed;
+  border-color: #7c3aed;
+  background: #f5f3ff;
+}
+
+.badge_paid {
+  color: #16a34a;
+  border-color: #16a34a;
+  background: #f0fdf4;
+}
+
+.badge_cancelled {
+  color: #dc2626;
+  border-color: #dc2626;
+  background: #fef2f2;
+}
+
+.badge_payment_failed {
+  color: #dc2626;
+  border-color: #dc2626;
+  background: #fef2f2;
+}
+
+.cardServices {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #8a8580;
+  border-top: 1px solid #e8e4df;
+  padding-top: 10px;
+}
