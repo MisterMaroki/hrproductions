@@ -20,7 +20,10 @@ export const viewport = {
 };
 
 export const metadata = {
-  title: "The Property Room — Property Marketing & Visual Media",
+  title:
+    process.env.NEXT_PUBLIC_BRAND_MODE === "whitelabel" || process.env.BRAND_MODE === "whitelabel"
+      ? "Property Media Bookings"
+      : "The Property Room — Property Marketing & Visual Media",
   description:
     "Professional property marketing and visual media for estate agents. Book online.",
 };
