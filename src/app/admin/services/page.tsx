@@ -425,7 +425,7 @@ export default function ServicesPage() {
 
   // Edit state
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
-  const [editTab, setEditTab] = useState<"default" | "main" | "whitelabel">("default");
+  const [editTab, setEditTab] = useState<"main" | "whitelabel">("main");
   const [editDraft, setEditDraft] = useState<Partial<Service> | null>(null);
   const [editOverrideDraft, setEditOverrideDraft] = useState<Partial<BrandOverride> | null>(null);
   const [saving, setSaving] = useState(false);
@@ -546,24 +546,23 @@ export default function ServicesPage() {
       return;
     }
     setEditingServiceId(svc.id);
-    setEditTab("default");
+    setEditTab("main");
     setEditDraft({ ...svc });
     setEditOverrideDraft(null);
   };
 
-  const selectTab = (tab: "default" | "main" | "whitelabel", svc: Service) => {
+  const selectTab = (tab: "main" | "whitelabel", svc: Service) => {
     setEditTab(tab);
-    if (tab === "default") {
+    if (tab === "main") {
       setEditOverrideDraft(null);
     } else {
-      const brandMode = tab === "main" ? "main" : "whitelabel";
-      const existing = svc.overrides.find((o) => o.brandMode === brandMode);
+      const existing = svc.overrides.find((o) => o.brandMode === "whitelabel");
       setEditOverrideDraft(
         existing
           ? { ...existing }
           : {
               id: "",
-              brandMode,
+              brandMode: "whitelabel",
               visible: 1,
               pricingRules: svc.pricingRules ? { ...svc.pricingRules } : defaultPricingRules(),
               durationRules: svc.durationRules ? { ...svc.durationRules } : defaultDurationRules(),
@@ -577,7 +576,7 @@ export default function ServicesPage() {
     if (!editingServiceId || !editDraft) return;
     setSaving(true);
     try {
-      if (editTab === "default") {
+      if (editTab === "main") {
         const res = await fetch(`/api/admin/services/${editingServiceId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -589,8 +588,8 @@ export default function ServicesPage() {
           return;
         }
       } else {
-        // Brand override
-        const brandMode = editTab === "main" ? "main" : "whitelabel";
+        // White label override
+        const brandMode = "whitelabel";
         const res = await fetch(`/api/admin/services/${editingServiceId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -685,18 +684,18 @@ export default function ServicesPage() {
                           <div className={styles.editPanel}>
                             {/* Brand tabs */}
                             <div className={styles.brandTabs}>
-                              {(["default", "main", "whitelabel"] as const).map((tab) => (
+                              {(["main", "whitelabel"] as const).map((tab) => (
                                 <button
                                   key={tab}
                                   className={`${styles.brandTab} ${editTab === tab ? styles.brandTabActive : ""}`}
                                   onClick={() => selectTab(tab, svc)}
                                 >
-                                  {tab === "default" ? "Default" : tab === "main" ? "Main Site" : "White Label"}
+                                  {tab === "main" ? "Main Site" : "White Label"}
                                 </button>
                               ))}
                             </div>
 
-                            {editTab === "default" && (
+                            {editTab === "main" && (
                               <div className={styles.editFields}>
                                 {/* Name */}
                                 <label className={styles.fieldGroup}>
@@ -812,7 +811,7 @@ export default function ServicesPage() {
                               </div>
                             )}
 
-                            {(editTab === "main" || editTab === "whitelabel") && editOverrideDraft && (
+                            {editTab === "whitelabel" && editOverrideDraft && (
                               <div className={styles.editFields}>
                                 {/* Pricing override */}
                                 <div className={styles.sectionBlock}>
