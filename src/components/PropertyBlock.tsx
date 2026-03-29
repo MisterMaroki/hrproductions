@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import type { PropertyBooking } from "./BookingSection";
 import { evaluatePrice, evaluateDuration } from "@/lib/pricing-engine";
 import { isWorkingDay, TRAVEL_BUFFER, type TimeSlot } from "@/lib/scheduling";
+import { isWhiteLabel } from "@/lib/brand";
 import DatePicker from "./DatePicker";
 import styles from "./PropertyBlock.module.css";
 
@@ -374,7 +375,7 @@ export default function PropertyBlock({
             value={property.notes}
             onChange={(e) => onChange({ notes: e.target.value })}
             className={`${styles.input} ${styles.textarea}`}
-            placeholder="Key/lockbox codes, parking info, access instructions..."
+            placeholder={isWhiteLabel() ? "Client contact info, access details..." : "Key/lockbox codes, parking info, access instructions..."}
             rows={3}
           />
         </label>

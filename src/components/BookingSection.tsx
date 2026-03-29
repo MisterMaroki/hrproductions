@@ -53,14 +53,19 @@ function createProperty(): PropertyBooking {
   };
 }
 
+const WL_AGENT: AgentInfo = {
+  name: process.env.NEXT_PUBLIC_WL_AGENT_NAME || "The Personal Agent",
+  company: process.env.NEXT_PUBLIC_WL_AGENT_COMPANY || "The Personal Agent",
+  email: process.env.NEXT_PUBLIC_WL_AGENT_EMAIL || "info@thepersonalagent.co.uk",
+  phone: process.env.NEXT_PUBLIC_WL_AGENT_PHONE || "",
+};
+
 export default function BookingSection() {
   const ref = useFadeIn<HTMLElement>();
-  const [agent, setAgent] = useState<AgentInfo>({
-    name: "",
-    company: "",
-    email: "",
-    phone: "",
-  });
+  const whiteLabel = isWhiteLabel();
+  const [agent, setAgent] = useState<AgentInfo>(
+    whiteLabel ? { ...WL_AGENT } : { name: "", company: "", email: "", phone: "" }
+  );
   const [properties, setProperties] = useState<PropertyBooking[]>([
     createProperty(),
   ]);
@@ -83,22 +88,21 @@ export default function BookingSection() {
     const agentErrors: ValidationErrors["agent"] = {};
     const propErrors: ValidationErrors["properties"] = {};
 
-    if (!agent.name.trim()) agentErrors.name = "Name is required";
-    if (!agent.company.trim()) agentErrors.company = "Company is required";
-    if (!agent.email.trim()) {
-      agentErrors.email = "Email is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(agent.email)) {
-      agentErrors.email = "Enter a valid email";
-    }
-    if (!agent.phone.trim()) {
-      agentErrors.phone = "Phone is required";
-    } else {
-      // Strip spaces, dashes, parens
-      const cleaned = agent.phone.replace(/[\s\-()]/g, "");
-      // UK mobile: 07xxx or +447xxx — 11 digits from 0, 12 from +44
-      // UK landline: 01x/02x/03x or +441/+442/+443 — 10-11 digits from 0
-      const isValid = /^(?:0[1-37]\d{8,9}|(?:\+44|0044)[1-37]\d{8,9})$/.test(cleaned);
-      if (!isValid) agentErrors.phone = "Enter a valid UK phone number";
+    if (!whiteLabel) {
+      if (!agent.name.trim()) agentErrors.name = "Name is required";
+      if (!agent.company.trim()) agentErrors.company = "Company is required";
+      if (!agent.email.trim()) {
+        agentErrors.email = "Email is required";
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(agent.email)) {
+        agentErrors.email = "Enter a valid email";
+      }
+      if (!agent.phone.trim()) {
+        agentErrors.phone = "Phone is required";
+      } else {
+        const cleaned = agent.phone.replace(/[\s\-()]/g, "");
+        const isValid = /^(?:0[1-37]\d{8,9}|(?:\+44|0044)[1-37]\d{8,9})$/.test(cleaned);
+        if (!isValid) agentErrors.phone = "Enter a valid UK phone number";
+      }
     }
 
     for (const p of properties) {
@@ -223,7 +227,9 @@ export default function BookingSection() {
 
         <div className={styles.layout}>
           <div className={styles.form}>
-            <AgentDetails agent={agent} onChange={setAgent} errors={errors.agent} onClearError={clearAgentError} />
+            {!whiteLabel && (
+              <AgentDetails agent={agent} onChange={setAgent} errors={errors.agent} onClearError={clearAgentError} />
+            )}
             {properties.map((property) => (
               <PropertyBlock
                 key={property.id}
@@ -252,61 +258,63 @@ export default function BookingSection() {
             </div>
           </div>
           <div className={styles.basket}>
-            <div className={styles.discountInput}>
-              <div className={styles.discountRow}>
-                <input
-                  className={styles.discountField}
-                  type="text"
-                  placeholder="Discount code"
-                  value={discountCode}
-                  onChange={(e) => setDiscountCode(e.target.value)}
-                  disabled={!!appliedCode}
-                />
-                {appliedCode ? (
-                  <button
-                    className={styles.discountRemove}
-                    onClick={() => {
-                      setAppliedCode("");
-                      setDiscountPercentage(0);
-                      setDiscountCode("");
-                    }}
-                  >
-                    Remove
-                  </button>
-                ) : (
-                  <button
-                    className={styles.discountApply}
-                    onClick={async () => {
-                      if (!discountCode.trim()) return;
-                      try {
-                        const res = await fetch("/api/discount/validate", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ code: discountCode }),
-                        });
-                        if (!res.ok) {
+            {!whiteLabel && (
+              <div className={styles.discountInput}>
+                <div className={styles.discountRow}>
+                  <input
+                    className={styles.discountField}
+                    type="text"
+                    placeholder="Discount code"
+                    value={discountCode}
+                    onChange={(e) => setDiscountCode(e.target.value)}
+                    disabled={!!appliedCode}
+                  />
+                  {appliedCode ? (
+                    <button
+                      className={styles.discountRemove}
+                      onClick={() => {
+                        setAppliedCode("");
+                        setDiscountPercentage(0);
+                        setDiscountCode("");
+                      }}
+                    >
+                      Remove
+                    </button>
+                  ) : (
+                    <button
+                      className={styles.discountApply}
+                      onClick={async () => {
+                        if (!discountCode.trim()) return;
+                        try {
+                          const res = await fetch("/api/discount/validate", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ code: discountCode }),
+                          });
+                          if (!res.ok) {
+                            const data = await res.json();
+                            alert(data.error || "Invalid code");
+                            return;
+                          }
                           const data = await res.json();
-                          alert(data.error || "Invalid code");
-                          return;
+                          setAppliedCode(data.code);
+                          setDiscountPercentage(data.percentage);
+                        } catch {
+                          alert("Failed to validate code");
                         }
-                        const data = await res.json();
-                        setAppliedCode(data.code);
-                        setDiscountPercentage(data.percentage);
-                      } catch {
-                        alert("Failed to validate code");
-                      }
-                    }}
-                  >
-                    Apply
-                  </button>
+                      }}
+                    >
+                      Apply
+                    </button>
+                  )}
+                </div>
+                {appliedCode && (
+                  <p className={styles.discountApplied}>
+                    {appliedCode}: {discountPercentage}% off applied
+                  </p>
                 )}
               </div>
-              {appliedCode && (
-                <p className={styles.discountApplied}>
-                  {appliedCode}: {discountPercentage}% off applied
-                </p>
-              )}
-            </div>
+            )}
             <Basket
               properties={properties}
               serviceCategories={serviceCategories}
