@@ -26,9 +26,11 @@ interface Booking {
   stripeSession: string | null;
   status: string;
   createdAt: string | null;
+  clientId: string | null;
+  clientCompanyName: string | null;
 }
 
-type StatusFilter = "all" | "confirmed" | "pending" | "completed" | "cancelled";
+type StatusFilter = "all" | "confirmed" | "pending" | "completed" | "cancelled" | "invoiced" | "paid" | "payment_failed";
 
 function formatDate(iso: string): string {
   const d = new Date(iso + "T12:00:00");
@@ -140,7 +142,7 @@ export default function BookingsPage() {
   }, [filtered]);
 
   const statusCounts = useMemo(() => {
-    const counts = { all: bookings.length, confirmed: 0, pending: 0, completed: 0, cancelled: 0 };
+    const counts = { all: bookings.length, confirmed: 0, pending: 0, completed: 0, cancelled: 0, invoiced: 0, paid: 0, payment_failed: 0 };
     for (const b of bookings) {
       if (b.status in counts) counts[b.status as keyof typeof counts]++;
     }
@@ -225,13 +227,13 @@ export default function BookingsPage() {
 
             {/* Status tabs */}
             <div className={styles.statusTabs}>
-              {(["all", "confirmed", "pending", "completed", "cancelled"] as StatusFilter[]).map((s) => (
+              {(["all", "confirmed", "pending", "completed", "cancelled", "invoiced", "paid", "payment_failed"] as StatusFilter[]).map((s) => (
                 <button
                   key={s}
                   className={`${styles.statusTab} ${statusFilter === s ? styles.statusTabActive : ""}`}
                   onClick={() => setStatusFilter(s)}
                 >
-                  {s.charAt(0).toUpperCase() + s.slice(1)}
+                  {s === "payment_failed" ? "Failed" : s.charAt(0).toUpperCase() + s.slice(1)}
                   <span className={styles.statusCount}>{statusCounts[s]}</span>
                 </button>
               ))}
@@ -282,6 +284,9 @@ export default function BookingsPage() {
                               {b.address}{b.postcode ? `, ${b.postcode}` : ""}
                             </span>
                             <span className={styles.cardAgent}>{b.agentName}{b.agentCompany ? ` · ${b.agentCompany}` : ""}</span>
+                            {b.clientCompanyName && (
+                              <span className={styles.clientBadge}>Account: {b.clientCompanyName}</span>
+                            )}
                           </div>
                           <div className={styles.cardRight}>
                             <span className={styles.cardTotal}>£{(b.total / 100).toFixed(2)}</span>
@@ -361,6 +366,18 @@ export default function BookingsPage() {
                                   onClick={() => handleUpdateStatus(b.id, "completed")}
                                 >
                                   Complete
+                                </button>
+                                <button
+                                  className={`${styles.statusBtn} ${b.status === "invoiced" ? styles.statusActive : ""}`}
+                                  onClick={() => handleUpdateStatus(b.id, "invoiced")}
+                                >
+                                  Invoiced
+                                </button>
+                                <button
+                                  className={`${styles.statusBtn} ${b.status === "paid" ? styles.statusActive : ""}`}
+                                  onClick={() => handleUpdateStatus(b.id, "paid")}
+                                >
+                                  Paid
                                 </button>
                                 <button
                                   className={`${styles.statusBtn} ${styles.cancelBtn} ${b.status === "cancelled" ? styles.statusActive : ""}`}

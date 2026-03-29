@@ -25,6 +25,12 @@ export default function AdminNav() {
 						Bookings
 					</Link>
 					<Link
+						href="/admin/clients"
+						className={`${styles.link} ${pathname?.startsWith('/admin/clients') ? styles.active : ''}`}
+					>
+						Clients
+					</Link>
+					<Link
 						href="/admin/calendar"
 						className={`${styles.link} ${pathname === '/admin/calendar' ? styles.active : ''}`}
 					>
