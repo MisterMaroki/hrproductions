@@ -1,0 +1,262 @@
+.main {
+  padding: 2rem;
+}
+
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.title {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+}
+
+/* ─── Filters ─── */
+
+.filters {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text);
+}
+
+.searchInput::placeholder {
+  color: var(--color-muted);
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: var(--color-text);
+}
+
+/* ─── Status tabs ─── */
+
+.statusTabs {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+}
+
+.statusTab {
+  flex: 1;
+  padding: 0.6rem 0.5rem;
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: none;
+  border-right: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.statusTab:last-child {
+  border-right: none;
+}
+
+.statusTab:hover {
+  color: var(--color-text);
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.statusTabActive {
+  background-color: #0a0a0a;
+  color: #f5f0eb;
+}
+
+.statusTabActive:hover {
+  background-color: #0a0a0a;
+  color: #f5f0eb;
+}
+
+.statusCount {
+  font-size: 0.65rem;
+  opacity: 0.7;
+}
+
+/* ─── Results ─── */
+
+.results {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.resultCount {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  margin-bottom: 1rem;
+  letter-spacing: 0.05em;
+}
+
+.emptyMsg {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+  text-align: center;
+  padding: 3rem 0;
+}
+
+/* ─── Client cards ─── */
+
+.cardLink {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.card {
+  border: 1px solid var(--color-border);
+  border-top: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1rem;
+  gap: 1rem;
+  transition: background-color 0.1s ease;
+  cursor: pointer;
+}
+
+.cardLink:first-child .card {
+  border-top: 1px solid var(--color-border);
+}
+
+.card:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.cardLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.cardCompany {
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cardContact {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cardRight {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.cardBalance {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.cardMandate {
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.45rem;
+  border: 1px solid;
+}
+
+.mandateActive {
+  color: #16a34a;
+  border-color: #16a34a;
+}
+
+.mandateNone {
+  color: #8a8580;
+  border-color: #8a8580;
+}
+
+.cardStatus {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid;
+}
+
+.status_pending_approval {
+  color: #ca8a04;
+  border-color: #ca8a04;
+}
+
+.status_active {
+  color: #16a34a;
+  border-color: #16a34a;
+}
+
+.status_suspended {
+  color: #dc2626;
+  border-color: #dc2626;
+}
+
+.status_deactivated {
+  color: #8a8580;
+  border-color: #8a8580;
+}
+
+/* ─── Mobile ─── */
+
+@media (max-width: 700px) {
+  .main {
+    padding: 1.25rem;
+  }
+
+  .statusTabs {
+    flex-wrap: wrap;
+  }
+
+  .statusTab {
+    flex: unset;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .cardRight {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+}

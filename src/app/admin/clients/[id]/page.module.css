@@ -1,0 +1,693 @@
+.main {
+  padding: 2rem;
+}
+
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+/* ─── Breadcrumb ─── */
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  margin-bottom: 1rem;
+}
+
+.breadcrumbLink {
+  color: var(--color-muted);
+  text-decoration: none;
+  border-bottom: 1px solid var(--color-muted);
+}
+
+.breadcrumbLink:hover {
+  color: var(--color-text);
+  border-color: var(--color-text);
+}
+
+.breadcrumbSep {
+  opacity: 0.4;
+}
+
+/* ─── Title ─── */
+
+.title {
+  font-family: var(--font-body);
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin-bottom: 2rem;
+}
+
+/* ─── Sections ─── */
+
+.section {
+  border: 2px solid #0a0a0a;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.sectionTitle {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.sectionMeta {
+  font-weight: 400;
+  color: var(--color-muted);
+  letter-spacing: 0.05em;
+  font-size: 0.8rem;
+}
+
+/* ─── Overview grid ─── */
+
+.overviewGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.overviewBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ─── Detail fields ─── */
+
+.detailSection {
+  margin-bottom: 1rem;
+}
+
+.detailLabel {
+  font-family: var(--font-body);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  margin-bottom: 0.35rem;
+}
+
+.detailValue {
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.detailValueSub {
+  font-size: 0.8rem;
+  color: var(--color-muted);
+  line-height: 1.5;
+}
+
+/* ─── Status badges ─── */
+
+.statusBadge {
+  display: inline-block;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid;
+}
+
+.clientStatus_pending_approval {
+  color: #ca8a04;
+  border-color: #ca8a04;
+}
+
+.clientStatus_active {
+  color: #16a34a;
+  border-color: #16a34a;
+}
+
+.clientStatus_suspended {
+  color: #dc2626;
+  border-color: #dc2626;
+}
+
+.clientStatus_deactivated {
+  color: #8a8580;
+  border-color: #8a8580;
+}
+
+.mandateActive {
+  color: #16a34a;
+  border-color: #16a34a;
+  font-size: 0.65rem;
+  letter-spacing: 0.03em;
+  text-transform: none;
+  font-weight: 600;
+}
+
+.mandateNone {
+  color: #8a8580;
+  border-color: #8a8580;
+}
+
+/* ─── Paused indicator ─── */
+
+.pausedRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.pausedBadge {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid #dc2626;
+  color: #dc2626;
+}
+
+/* ─── Action buttons ─── */
+
+.actionBtns {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.actionBtn {
+  padding: 0.45rem 0.9rem;
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.actionBtn:hover:not(:disabled) {
+  border-color: var(--color-text);
+  color: var(--color-text);
+}
+
+.actionBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.approveBtn {
+  border-color: #16a34a;
+  color: #16a34a;
+}
+
+.approveBtn:hover:not(:disabled) {
+  background-color: #16a34a;
+  color: #f5f0eb;
+}
+
+.suspendBtn {
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+.suspendBtn:hover:not(:disabled) {
+  background-color: #dc2626;
+  color: #f5f0eb;
+}
+
+.deactivateBtn {
+  border-color: #8a8580;
+  color: #8a8580;
+}
+
+.deactivateBtn:hover:not(:disabled) {
+  background-color: #8a8580;
+  color: #f5f0eb;
+}
+
+.reactivateBtn {
+  border-color: #16a34a;
+  color: #16a34a;
+}
+
+.reactivateBtn:hover:not(:disabled) {
+  background-color: #16a34a;
+  color: #f5f0eb;
+}
+
+/* ─── Running balance ─── */
+
+.balanceList {
+  border: 1px solid var(--color-border);
+  margin-bottom: 1rem;
+}
+
+.balanceRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--color-border);
+  cursor: pointer;
+  transition: background-color 0.1s ease;
+}
+
+.balanceRow:last-child {
+  border-bottom: none;
+}
+
+.balanceRow:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.checkbox {
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+  accent-color: #0a0a0a;
+}
+
+.balanceRowInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.balanceAddr {
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.balanceMeta {
+  font-size: 0.72rem;
+  color: var(--color-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.balanceAmount {
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.chargeRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 0.75rem;
+  border-top: 2px solid #0a0a0a;
+}
+
+.chargeTotalLabel {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+}
+
+.chargeTotal {
+  font-size: 1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.chargeCount {
+  font-size: 0.72rem;
+  color: var(--color-muted);
+}
+
+.chargeBtn {
+  padding: 0.55rem 1.25rem;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 2px solid #0a0a0a;
+  background: #0a0a0a;
+  color: #f5f0eb;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.chargeBtn:hover:not(:disabled) {
+  background: transparent;
+  color: #0a0a0a;
+}
+
+.chargeBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.chargeBtnDisabled {
+  opacity: 0.4;
+}
+
+.successMsg {
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.errorMsg {
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+  color: #dc2626;
+  font-weight: 600;
+}
+
+/* ─── Status tabs (booking history) ─── */
+
+.statusTabs {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.statusTab {
+  flex: 1;
+  padding: 0.55rem 0.4rem;
+  font-family: var(--font-body);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: none;
+  border-right: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+.statusTab:last-child {
+  border-right: none;
+}
+
+.statusTab:hover {
+  color: var(--color-text);
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.statusTabActive {
+  background-color: #0a0a0a;
+  color: #f5f0eb;
+}
+
+.statusTabActive:hover {
+  background-color: #0a0a0a;
+  color: #f5f0eb;
+}
+
+.statusCount {
+  font-size: 0.6rem;
+  opacity: 0.7;
+}
+
+/* ─── Booking list ─── */
+
+.bookingList {
+  border: 1px solid var(--color-border);
+}
+
+.bookingCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--color-border);
+  gap: 1rem;
+}
+
+.bookingCard:last-child {
+  border-bottom: none;
+}
+
+.bookingCardLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.bookingAddr {
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bookingMeta {
+  font-size: 0.72rem;
+  color: var(--color-muted);
+}
+
+.bookingCardRight {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.bookingTotal {
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.bookingStatus {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid;
+}
+
+.bStatus_confirmed {
+  color: #2d7a3a;
+  border-color: #2d7a3a;
+}
+
+.bStatus_pending {
+  color: #e67e22;
+  border-color: #e67e22;
+}
+
+.bStatus_completed {
+  background-color: #0a0a0a;
+  color: #f5f0eb;
+  border-color: #0a0a0a;
+}
+
+.bStatus_invoiced {
+  color: #16a34a;
+  border-color: #16a34a;
+}
+
+.bStatus_cancelled {
+  color: #c0392b;
+  border-color: #c0392b;
+}
+
+/* ─── Invoice list ─── */
+
+.invoiceList {
+  border: 1px solid var(--color-border);
+}
+
+.invoiceCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--color-border);
+  gap: 1rem;
+}
+
+.invoiceCard:last-child {
+  border-bottom: none;
+}
+
+.invoiceLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.invoiceId {
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.05em;
+}
+
+.invoiceMeta {
+  font-size: 0.72rem;
+  color: var(--color-muted);
+}
+
+.invoiceRight {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.invoiceAmount {
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.invoiceStatus {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid;
+}
+
+.invStatus_pending {
+  color: #ca8a04;
+  border-color: #ca8a04;
+}
+
+.invStatus_paid {
+  color: #16a34a;
+  border-color: #16a34a;
+}
+
+.invStatus_failed {
+  color: #dc2626;
+  border-color: #dc2626;
+}
+
+.pdfLink {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  text-decoration: none;
+  border-bottom: 1px solid var(--color-muted);
+  padding-bottom: 1px;
+  transition: all 0.15s ease;
+}
+
+.pdfLink:hover {
+  color: var(--color-text);
+  border-color: var(--color-text);
+}
+
+.retryBtn {
+  padding: 0.3rem 0.65rem;
+  font-family: var(--font-body);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid #dc2626;
+  background: transparent;
+  color: #dc2626;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.retryBtn:hover:not(:disabled) {
+  background-color: #dc2626;
+  color: #f5f0eb;
+}
+
+.retryBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.retryMsg {
+  font-size: 0.7rem;
+  color: var(--color-muted);
+}
+
+.emptyMsg {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+  text-align: center;
+  padding: 2rem 0;
+}
+
+/* ─── Mobile ─── */
+
+@media (max-width: 700px) {
+  .main {
+    padding: 1.25rem;
+  }
+
+  .overviewGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .statusTabs {
+    flex-wrap: wrap;
+  }
+
+  .statusTab {
+    flex: unset;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .chargeRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .invoiceCard,
+  .bookingCard {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .invoiceRight,
+  .bookingCardRight {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
