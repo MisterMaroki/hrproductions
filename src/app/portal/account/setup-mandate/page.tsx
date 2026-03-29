@@ -1,12 +1,20 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import PortalNav from "../../components/PortalNav";
 import styles from "./page.module.css";
 
 export default function SetupMandatePage() {
+  return (
+    <Suspense fallback={<><PortalNav /><main className={styles.main}><p>Loading...</p></main></>}>
+      <SetupMandateContent />
+    </Suspense>
+  );
+}
+
+function SetupMandateContent() {
   const searchParams = useSearchParams();
   const isSuccess = searchParams.get("success") === "true";
 
