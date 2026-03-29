@@ -43,6 +43,12 @@ export default function AdminNav() {
 						Discounts
 					</Link>
 					<Link
+						href="/admin/services"
+						className={`${styles.link} ${pathname?.startsWith('/admin/services') ? styles.active : ''}`}
+					>
+						Services
+					</Link>
+					<Link
 						href="/admin/videos"
 						className={`${styles.link} ${pathname === '/admin/videos' ? styles.active : ''}`}
 					>
