@@ -272,7 +272,7 @@
 
 .bookingHeader {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 0.5rem;
   margin-bottom: 0.35rem;
@@ -302,4 +302,89 @@
   font-size: 0.85rem;
   color: var(--color-muted);
   font-style: italic;
+}
+
+/* Account client booking */
+.bookingAccount {
+  border-left: 3px solid #2980b9;
+}
+
+.bookingAddressRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.bookingAddressRow .bookingAddress {
+  margin-bottom: 0;
+}
+
+.companyBadge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #2980b9;
+  background-color: rgba(41, 128, 185, 0.1);
+  border: 1px solid rgba(41, 128, 185, 0.35);
+  padding: 0.15rem 0.45rem;
+  border-radius: 2px;
+  white-space: nowrap;
+}
+
+/* Status badges */
+.bookingBadges {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.statusDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--color-muted);
+  flex-shrink: 0;
+}
+
+.statusDot_pending     { background-color: #e67e22; }
+.statusDot_confirmed   { background-color: #27ae60; }
+.statusDot_completed   { background-color: #2980b9; }
+.statusDot_invoiced    { background-color: #8e44ad; }
+.statusDot_cancelled   { background-color: #c0392b; }
+
+.completedBadge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #2980b9;
+  border: 1px solid #2980b9;
+  padding: 0.2rem 0.5rem;
+  white-space: nowrap;
+}
+
+.invoicedBadge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #8e44ad;
+  border: 1px solid #8e44ad;
+  padding: 0.2rem 0.5rem;
+  white-space: nowrap;
+}
+
+.cancelledBadge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #c0392b;
+  border: 1px solid #c0392b;
+  padding: 0.2rem 0.5rem;
+  white-space: nowrap;
 }

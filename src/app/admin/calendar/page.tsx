@@ -15,6 +15,8 @@ interface Booking {
   total: number;
   status: string;
   services: string;
+  clientId?: string | null;
+  clientCompanyName?: string | null;
 }
 
 interface BlockedDay {
@@ -209,12 +211,29 @@ export default function CalendarPage() {
                     Bookings ({hoursForDate(selectedDate)}h / {MAX_DAILY_HOURS}h)
                   </h4>
                   {selectedBookings.map((b) => (
-                    <div key={b.id} className={`${styles.bookingCard}${b.status === "pending" ? ` ${styles.bookingPending}` : ""}`}>
+                    <div key={b.id} className={`${styles.bookingCard}${b.status === "pending" ? ` ${styles.bookingPending}` : ""}${b.clientCompanyName ? ` ${styles.bookingAccount}` : ""}`}>
                       <div className={styles.bookingHeader}>
-                        <p className={styles.bookingAddress}>{b.address}</p>
-                        {b.status === "pending" && (
-                          <span className={styles.pendingBadge}>Pending Payment</span>
-                        )}
+                        <div className={styles.bookingAddressRow}>
+                          <p className={styles.bookingAddress}>{b.address}</p>
+                          {b.clientCompanyName && (
+                            <span className={styles.companyBadge}>{b.clientCompanyName}</span>
+                          )}
+                        </div>
+                        <div className={styles.bookingBadges}>
+                          <span className={`${styles.statusDot} ${styles[`statusDot_${b.status}`]}`} title={b.status} />
+                          {b.status === "pending" && (
+                            <span className={styles.pendingBadge}>Pending Payment</span>
+                          )}
+                          {b.status === "completed" && (
+                            <span className={styles.completedBadge}>Completed</span>
+                          )}
+                          {b.status === "invoiced" && (
+                            <span className={styles.invoicedBadge}>Invoiced</span>
+                          )}
+                          {b.status === "cancelled" && (
+                            <span className={styles.cancelledBadge}>Cancelled</span>
+                          )}
+                        </div>
                       </div>
                       <p className={styles.bookingAgent}>{b.agentName} — {b.agentEmail}</p>
                       <p className={styles.bookingMeta}>
