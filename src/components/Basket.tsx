@@ -26,6 +26,8 @@ interface Props {
   onValidate: () => boolean;
 }
 
+type CheckoutMode = "choose" | "pay" | "account";
+
 function getLineItems(property: PropertyBooking) {
   const items: { label: string; price: number; indent?: boolean }[] = [];
 
@@ -97,6 +99,11 @@ function getLineItems(property: PropertyBooking) {
 
 export default function Basket({ properties, agent, discountCode, discountPercentage, onValidate }: Props) {
   const [loading, setLoading] = useState(false);
+  const [mode, setMode] = useState<CheckoutMode>("choose");
+  const [accountPassword, setAccountPassword] = useState("");
+  const [accountConfirm, setAccountConfirm] = useState("");
+  const [accountError, setAccountError] = useState("");
+  const [accountSuccess, setAccountSuccess] = useState(false);
 
   const propertyTotals = properties.map((p) => ({
     property: p,
@@ -135,6 +142,53 @@ export default function Basket({ properties, agent, discountCode, discountPercen
       setLoading(false);
     }
   }, [properties, agent, discountCode, discountPercentage, onValidate]);
+
+  const handleAccountSignup = useCallback(async () => {
+    setAccountError("");
+
+    if (!onValidate()) return;
+
+    if (accountPassword.length < 8) {
+      setAccountError("Password must be at least 8 characters");
+      return;
+    }
+    if (accountPassword !== accountConfirm) {
+      setAccountError("Passwords do not match");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch("/api/portal/signup-with-booking", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          account: {
+            companyName: agent.company,
+            contactName: agent.name,
+            email: agent.email,
+            phone: agent.phone,
+            password: accountPassword,
+          },
+          properties,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setAccountError(data.error || "Failed to create account");
+        setLoading(false);
+        return;
+      }
+
+      setAccountSuccess(true);
+      setLoading(false);
+    } catch {
+      setAccountError("Something went wrong. Please try again.");
+      setLoading(false);
+    }
+  }, [properties, agent, accountPassword, accountConfirm, onValidate]);
 
   const basketContent = (
     <>
@@ -178,13 +232,134 @@ export default function Basket({ properties, agent, discountCode, discountPercen
         <span>£{grandTotal.toFixed(2)}</span>
       </div>
 
-      <button
-        className={styles.checkout}
-        onClick={handleCheckout}
-        disabled={!hasItems || loading}
-      >
-        {loading ? "Redirecting…" : "Proceed to Payment"}
-      </button>
+      {/* Account signup success state */}
+      {accountSuccess ? (
+        <div className={styles.accountSuccess}>
+          <div className={styles.accountSuccessIcon}>
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="16" fill="#0a0a0a"/><path d="M10 16.5L14 20.5L22 12.5" stroke="#fff" strokeWidth="2.5" strokeLinecap="square"/></svg>
+          </div>
+          <h4 className={styles.accountSuccessTitle}>Account Created</h4>
+          <p className={styles.accountSuccessText}>
+            Your booking has been submitted and your trade account is pending approval.
+            We&apos;ll email you at <strong>{agent.email}</strong> once it&apos;s active.
+          </p>
+          <a href="/portal/login" className={styles.accountSuccessLink}>
+            Go to Client Portal
+          </a>
+        </div>
+      ) : mode === "account" ? (
+        /* Inline account signup form */
+        <div className={styles.accountForm}>
+          <div className={styles.accountFormHeader}>
+            <h4 className={styles.accountFormTitle}>Create Trade Account</h4>
+            <p className={styles.accountFormSub}>
+              Book on credit. One monthly invoice via Direct Debit.
+            </p>
+          </div>
+
+          <div className={styles.accountPreFilled}>
+            <div className={styles.accountPreFilledRow}>
+              <span className={styles.accountPreFilledLabel}>Name</span>
+              <span className={styles.accountPreFilledValue}>{agent.name}</span>
+            </div>
+            <div className={styles.accountPreFilledRow}>
+              <span className={styles.accountPreFilledLabel}>Company</span>
+              <span className={styles.accountPreFilledValue}>{agent.company}</span>
+            </div>
+            <div className={styles.accountPreFilledRow}>
+              <span className={styles.accountPreFilledLabel}>Email</span>
+              <span className={styles.accountPreFilledValue}>{agent.email}</span>
+            </div>
+          </div>
+
+          <div className={styles.accountFields}>
+            <label className={styles.accountLabel}>
+              <span className={styles.accountLabelText}>Password</span>
+              <input
+                className={styles.accountInput}
+                type="password"
+                value={accountPassword}
+                onChange={(e) => setAccountPassword(e.target.value)}
+                placeholder="Min. 8 characters"
+              />
+            </label>
+            <label className={styles.accountLabel}>
+              <span className={styles.accountLabelText}>Confirm Password</span>
+              <input
+                className={styles.accountInput}
+                type="password"
+                value={accountConfirm}
+                onChange={(e) => setAccountConfirm(e.target.value)}
+                placeholder="Re-enter password"
+              />
+            </label>
+          </div>
+
+          {accountError && (
+            <p className={styles.accountError}>{accountError}</p>
+          )}
+
+          <button
+            className={styles.accountSubmit}
+            onClick={handleAccountSignup}
+            disabled={!hasItems || loading}
+          >
+            {loading ? "Creating account..." : "Create Account & Book"}
+          </button>
+
+          <button
+            className={styles.accountBack}
+            onClick={() => setMode("choose")}
+            disabled={loading}
+          >
+            Back to options
+          </button>
+        </div>
+      ) : mode === "pay" ? (
+        /* Standard Stripe checkout */
+        <>
+          <button
+            className={styles.checkout}
+            onClick={handleCheckout}
+            disabled={!hasItems || loading}
+          >
+            {loading ? "Redirecting..." : "Proceed to Payment"}
+          </button>
+          <button
+            className={styles.backToOptions}
+            onClick={() => setMode("choose")}
+            disabled={loading}
+          >
+            Back to options
+          </button>
+        </>
+      ) : (
+        /* Choose: pay now or create account */
+        <div className={styles.checkoutOptions}>
+          <button
+            className={styles.checkout}
+            onClick={() => { setMode("pay"); }}
+            disabled={!hasItems}
+          >
+            Pay Now
+          </button>
+
+          <div className={styles.optionDivider}>
+            <span className={styles.optionDividerLine} />
+            <span className={styles.optionDividerText}>or</span>
+            <span className={styles.optionDividerLine} />
+          </div>
+
+          <button
+            className={styles.accountOption}
+            onClick={() => { setMode("account"); }}
+            disabled={!hasItems}
+          >
+            <span className={styles.accountOptionTitle}>Open a Trade Account</span>
+            <span className={styles.accountOptionSub}>Book on credit with a single monthly invoice</span>
+          </button>
+        </div>
+      )}
     </>
   );
 

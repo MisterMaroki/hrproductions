@@ -7,6 +7,49 @@
   margin: 0 auto;
 }
 
+.tradeBanner {
+  margin-bottom: 2.5rem;
+  border: 1px solid var(--color-border);
+  padding: 1rem 1.5rem;
+}
+
+.tradeBannerContent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.tradeBannerText {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+  line-height: 1.5;
+}
+
+.tradeBannerText strong {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.tradeBannerLink {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-text);
+  text-decoration: none;
+  white-space: nowrap;
+  padding: 0.5rem 1.25rem;
+  border: 1px solid var(--color-text);
+  transition: all 0.2s ease;
+}
+
+.tradeBannerLink:hover {
+  background: var(--color-text);
+  color: var(--color-white);
+}
+
 .layout {
   display: grid;
   grid-template-columns: 1fr 380px;
@@ -153,5 +196,11 @@
 
   .basket {
     position: static;
+  }
+
+  .tradeBannerContent {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
   }
 }
