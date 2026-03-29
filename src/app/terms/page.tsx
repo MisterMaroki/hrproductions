@@ -15,7 +15,7 @@ export default function TermsPage() {
         <div className={styles.banner}>
           <div className={styles.bannerInner}>
             <h1 className={styles.bannerHeadline}>Terms &amp; Conditions</h1>
-            <p className={styles.updated}>Last updated: 19 February 2026</p>
+            <p className={styles.updated}>Last updated: 29 March 2026</p>
           </div>
         </div>
         <div className={styles.content}>
@@ -63,7 +63,44 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2>4. Cancellations &amp; Rescheduling</h2>
+            <h2>4. Trade Accounts &amp; Credit Terms</h2>
+            <ul>
+              <li>
+                By opening a trade account, you enter into a binding agreement to pay
+                for all services booked through your account. Each booking placed
+                constitutes a contractual obligation to pay the invoiced amount in full.
+              </li>
+              <li>
+                Trade account holders are invoiced monthly via Direct Debit. Payment is
+                collected automatically on or around the date shown on each invoice.
+              </li>
+              <li>
+                It is your responsibility to ensure sufficient funds are available for
+                collection. If a Direct Debit payment fails, your account will be
+                suspended and no further bookings may be placed until the outstanding
+                balance is settled.
+              </li>
+              <li>
+                Invoices not paid within 14 days of the due date will incur a late
+                payment fee of 8% above the Bank of England base rate, in accordance
+                with the Late Payment of Commercial Debts (Interest) Act 1998.
+              </li>
+              <li>
+                If payment remains outstanding after 30 days, we reserve the right to
+                instruct a third-party debt recovery agency or commence legal
+                proceedings to recover the full amount owed, including any accrued
+                interest, administration charges, and reasonable legal costs.
+              </li>
+              <li>
+                We may, at our sole discretion, suspend, restrict, or terminate your
+                trade account at any time. Outstanding balances remain payable
+                regardless of account status.
+              </li>
+            </ul>
+          </section>
+
+          <section>
+            <h2>5. Cancellations &amp; Rescheduling</h2>
             <ul>
               <li>
                 Cancellations made more than 48 hours before the scheduled shoot will
@@ -82,7 +119,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2>5. Access &amp; Property</h2>
+            <h2>6. Access &amp; Property</h2>
             <ul>
               <li>
                 You are responsible for ensuring we have access to the property at the
@@ -101,7 +138,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2>6. Deliverables &amp; Usage</h2>
+            <h2>7. Deliverables &amp; Usage</h2>
             <ul>
               <li>
                 Edited photos and videos will be delivered digitally within an agreed
@@ -120,7 +157,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2>7. Drone Photography &amp; Videography</h2>
+            <h2>8. Drone Photography &amp; Videography</h2>
             <p>
               All drone operations are conducted in compliance with UK Civil Aviation
               Authority (CAA) regulations. Flights may be cancelled or limited due to
@@ -130,7 +167,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2>8. Liability</h2>
+            <h2>9. Liability</h2>
             <p>
               We take reasonable care during shoots but are not liable for any damage
               to property or belongings unless caused by our negligence. Our total
@@ -139,7 +176,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2>9. Changes to These Terms</h2>
+            <h2>10. Changes to These Terms</h2>
             <p>
               We may update these terms from time to time. The latest version will
               always be available on this page.
@@ -147,7 +184,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2>10. Contact</h2>
+            <h2>11. Contact</h2>
             <p>
               For any questions about these terms, contact us at{" "}
               <a href="mailto:hello@harrisonross.co.uk">hello@harrisonross.co.uk</a>.
