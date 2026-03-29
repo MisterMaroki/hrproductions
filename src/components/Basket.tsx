@@ -1,22 +1,9 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import type { PropertyBooking, AgentInfo } from "./BookingSection";
+import type { PropertyBooking, AgentInfo, SelectedService } from "./BookingSection";
 import { isWhiteLabel } from "@/lib/brand";
-import {
-  calcPhotography,
-  calcDronePhotography,
-  calcStandardVideo,
-  calcAgentPresentedVideo,
-  calcVideoDrone,
-  calcSocialMediaVideo,
-  calcSocialMediaPresentedVideo,
-  calcStandardFloorPlan,
-  calcPremiumFloorPlan,
-  calcFloorPlan3D,
-  calcPropertyTotal,
-  calcMultiPropertyDiscount,
-} from "@/lib/pricing";
+import { evaluatePrice, calcMultiPropertyDiscount, type PricingRules } from "@/lib/pricing-engine";
 import styles from "./Basket.module.css";
 
 interface Props {
@@ -25,80 +12,32 @@ interface Props {
   discountCode: string;
   discountPercentage: number;
   onValidate: () => boolean;
+  serviceCategories: any[]; // ResolvedCategory[]
 }
 
 type CheckoutMode = "choose" | "pay" | "account";
 
-function getLineItems(property: PropertyBooking) {
+function getLineItems(property: PropertyBooking, allServices: any[]) {
   const items: { label: string; price: number; indent?: boolean }[] = [];
 
-  if (property.photography) {
-    const price = calcPhotography(property.photoCount);
-    const bulkApplied = property.photoCount >= 100;
-    items.push({
-      label: `Photography (${property.photoCount} photos)${bulkApplied ? " — 10% off" : ""}`,
-      price,
-    });
-  }
+  for (const sel of property.selectedServices) {
+    const svc = allServices.find((s: any) => s.id === sel.serviceId);
+    if (!svc) continue;
 
-  if (property.dronePhotography) {
-    items.push({
-      label: `Drone Photography (${property.dronePhotoCount} photos)`,
-      price: calcDronePhotography(property.dronePhotoCount),
-    });
-  }
+    const inputs = { ...sel.inputs, bedrooms: property.bedrooms };
+    const result = evaluatePrice(svc.pricingRules as PricingRules, inputs);
 
-  if (property.agentPresentedVideo) {
     items.push({
-      label: `Agent Presented Video (${property.bedrooms}-bed)`,
-      price: calcAgentPresentedVideo(property.bedrooms),
-    });
-    if (property.agentPresentedVideoDrone) {
-      items.push({ label: "Drone footage", price: calcVideoDrone(), indent: true });
-    }
-  } else if (property.standardVideo) {
-    items.push({
-      label: `Unpresented Video (${property.bedrooms}-bed)`,
-      price: calcStandardVideo(property.bedrooms),
-    });
-    if (property.standardVideoDrone) {
-      items.push({ label: "Drone footage", price: calcVideoDrone(), indent: true });
-    }
-  }
-
-  if (property.socialMediaPresentedVideo) {
-    items.push({
-      label: `Social Media Video — Presented (${property.bedrooms}-bed)`,
-      price: calcSocialMediaPresentedVideo(property.bedrooms),
-    });
-  } else if (property.socialMediaVideo) {
-    items.push({
-      label: `Social Media Video — Unpresented (${property.bedrooms}-bed)`,
-      price: calcSocialMediaVideo(property.bedrooms),
-    });
-  }
-
-  if (property.floorPlan3D) {
-    items.push({
-      label: `3D Floor Plan (${property.bedrooms}-bed)`,
-      price: calcFloorPlan3D(property.bedrooms),
-    });
-  } else if (property.premiumFloorPlan) {
-    items.push({
-      label: `Premium Floor Plan (${property.bedrooms}-bed)`,
-      price: calcPremiumFloorPlan(property.bedrooms),
-    });
-  } else if (property.standardFloorPlan) {
-    items.push({
-      label: `Standard Floor Plan (${property.bedrooms}-bed)`,
-      price: calcStandardFloorPlan(property.bedrooms),
+      label: svc.name,
+      price: result.total,
+      indent: svc.isAddon,
     });
   }
 
   return items;
 }
 
-export default function Basket({ properties, agent, discountCode, discountPercentage, onValidate }: Props) {
+export default function Basket({ properties, agent, discountCode, discountPercentage, onValidate, serviceCategories }: Props) {
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<CheckoutMode>(isWhiteLabel() ? "pay" : "choose");
   const [accountPassword, setAccountPassword] = useState("");
@@ -106,11 +45,13 @@ export default function Basket({ properties, agent, discountCode, discountPercen
   const [accountError, setAccountError] = useState("");
   const [accountSuccess, setAccountSuccess] = useState(false);
 
-  const propertyTotals = properties.map((p) => ({
-    property: p,
-    items: getLineItems(p),
-    subtotal: calcPropertyTotal(p),
-  }));
+  const allServices = serviceCategories.flatMap((c: any) => c.services);
+
+  const propertyTotals = properties.map((p) => {
+    const items = getLineItems(p, allServices);
+    const subtotal = items.reduce((sum, item) => sum + item.price, 0);
+    return { property: p, items, subtotal };
+  });
 
   const subtotalBeforeDiscount = propertyTotals.reduce((sum, p) => sum + p.subtotal, 0);
   const discount = calcMultiPropertyDiscount(properties.length);
