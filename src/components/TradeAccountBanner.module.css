@@ -1,5 +1,5 @@
 .section {
-  padding: 0 var(--content-padding);
+  padding: var(--section-padding) var(--content-padding) 0;
 }
 
 .container {
