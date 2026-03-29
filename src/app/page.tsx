@@ -1,5 +1,6 @@
 import Nav from "@/components/Nav";
 import Hero from "@/components/Hero";
+import TradeAccountBanner from "@/components/TradeAccountBanner";
 import Gallery from "@/components/Gallery";
 import Services from "@/components/Services";
 import Contact from "@/components/Contact";
@@ -11,6 +12,7 @@ export default function Home() {
       <Nav />
       <main id="top">
         <Hero />
+        <TradeAccountBanner />
         <Gallery />
         <Services />
         <Contact />
