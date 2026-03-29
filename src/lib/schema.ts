@@ -22,6 +22,7 @@ export const bookings = sqliteTable("bookings", {
   total: integer("total").notNull(),
   stripeSession: text("stripe_session"),
   status: text("status").default("confirmed"),
+  clientId: text("client_id"),
   createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 
@@ -59,4 +60,38 @@ export const galleryPhotos = sqliteTable("gallery_photos", {
   sortOrder: integer("sort_order").notNull().default(0),
   visible: integer("visible").notNull().default(0),
   createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const clients = sqliteTable("clients", {
+  id: text("id").primaryKey(),
+  companyName: text("company_name").notNull(),
+  contactName: text("contact_name").notNull(),
+  email: text("email").notNull().unique(),
+  phone: text("phone").notNull(),
+  passwordHash: text("password_hash").notNull(),
+  status: text("status").notNull().default("pending_approval"),
+  gocardlessMandateId: text("gocardless_mandate_id"),
+  gocardlessCustomerId: text("gocardless_customer_id"),
+  bookingsPaused: integer("bookings_paused").notNull().default(0),
+  createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const invoices = sqliteTable("invoices", {
+  id: text("id").primaryKey(),
+  clientId: text("client_id").notNull(),
+  totalAmount: integer("total_amount").notNull(),
+  status: text("status").notNull().default("pending"),
+  gocardlessPaymentId: text("gocardless_payment_id"),
+  pdfPath: text("pdf_path"),
+  failureReason: text("failure_reason"),
+  chargedAt: text("charged_at"),
+  paidAt: text("paid_at"),
+  createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const invoiceItems = sqliteTable("invoice_items", {
+  id: text("id").primaryKey(),
+  invoiceId: text("invoice_id").notNull(),
+  bookingId: text("booking_id").notNull(),
+  amount: integer("amount").notNull(),
 });
