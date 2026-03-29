@@ -503,6 +503,10 @@ export default function ServicesPage() {
     if (!newServiceName.trim()) return;
     setCreatingService(true);
     try {
+      // When creating on WL tab: service is globally hidden, WL override makes it visible
+      // When creating on main tab: service is globally visible, WL override hides it
+      const globalVisible = siteTab === "whitelabel" ? 0 : 1;
+
       const res = await fetch("/api/admin/services", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -512,6 +516,7 @@ export default function ServicesPage() {
           pricingRules: defaultPricingRules(),
           durationRules: defaultDurationRules(),
           inputFields: [],
+          visible: globalVisible,
         }),
       });
       if (!res.ok) {
@@ -519,6 +524,26 @@ export default function ServicesPage() {
         alert(data.error || "Failed to create service");
         return;
       }
+
+      const created = await res.json();
+      const newId = created.id;
+
+      if (newId) {
+        // Create the brand override to hide on the OTHER brand
+        await fetch(`/api/admin/services/${newId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            brandOverride: {
+              brandMode: siteTab === "main" ? "whitelabel" : "main",
+              visible: 0,
+              pricingRules: null,
+              durationRules: null,
+            },
+          }),
+        });
+      }
+
       setAddingServiceFor(null);
       setNewServiceName("");
       fetchData();
@@ -592,7 +617,7 @@ export default function ServicesPage() {
               visible: svc.visible,
               pricingRules: svc.pricingRules ? { ...svc.pricingRules } : defaultPricingRules(),
               durationRules: svc.durationRules ? { ...svc.durationRules } : defaultDurationRules(),
-              inputFields: null,
+              inputFields: svc.inputFields ? [...svc.inputFields] : [],
             }
       );
     } else {
@@ -698,14 +723,12 @@ export default function ServicesPage() {
                   {/* Category header */}
                   <div className={styles.categoryHeader}>
                     <span className={styles.categoryName}>{cat.name}</span>
-                    {siteTab === "main" && (
-                      <button
-                        className={styles.deleteCatBtn}
-                        onClick={() => handleDeleteCategory(cat.id, cat.name)}
-                      >
-                        Delete Category
-                      </button>
-                    )}
+                    <button
+                      className={styles.deleteCatBtn}
+                      onClick={() => handleDeleteCategory(cat.id, cat.name)}
+                    >
+                      Delete Category
+                    </button>
                   </div>
 
                   {/* Services list */}
@@ -721,7 +744,7 @@ export default function ServicesPage() {
                         <span>Base Price</span>
                         <span>Visible</span>
                         <span></span>
-                        {siteTab === "main" && <span></span>}
+                        <span></span>
                       </div>
                     )}
 
@@ -732,14 +755,7 @@ export default function ServicesPage() {
 
                       return (
                         <div key={svc.id}>
-                          <div
-                            className={styles.serviceRow}
-                            style={
-                              siteTab === "main"
-                                ? undefined
-                                : { gridTemplateColumns: "1fr 80px 80px 60px" }
-                            }
-                          >
+                          <div className={styles.serviceRow}>
                             <span className={styles.serviceName}>
                               {svc.isAddon ? "↳ " : ""}
                               {svc.name}
@@ -775,14 +791,12 @@ export default function ServicesPage() {
                             >
                               {editingServiceId === svc.id ? "Close" : "Edit"}
                             </button>
-                            {siteTab === "main" && (
-                              <button
-                                className={styles.deleteBtn}
-                                onClick={() => handleDeleteService(svc.id, svc.name)}
-                              >
-                                ✕
-                              </button>
-                            )}
+                            <button
+                              className={styles.deleteBtn}
+                              onClick={() => handleDeleteService(svc.id, svc.name)}
+                            >
+                              ✕
+                            </button>
                           </div>
 
                           {/* Edit panel */}
@@ -906,11 +920,6 @@ export default function ServicesPage() {
 
                               {siteTab === "whitelabel" && editOverrideDraft && (
                                 <div className={styles.editFields}>
-                                  <p className={styles.wlEditNote}>
-                                    Editing White Label overrides for <strong>{svc.name}</strong>.
-                                    Name, description, and inputs are inherited from the main site.
-                                  </p>
-
                                   {/* Pricing override */}
                                   <div className={styles.sectionBlock}>
                                     <div className={styles.sectionLabel}>Pricing</div>
@@ -919,7 +928,9 @@ export default function ServicesPage() {
                                       onChange={(r) =>
                                         setEditOverrideDraft({ ...editOverrideDraft, pricingRules: r })
                                       }
-                                      availableInputs={(svc.inputFields || []).map((f) => f.key)}
+                                      availableInputs={
+                                        (editOverrideDraft.inputFields || svc.inputFields || []).map((f) => f.key)
+                                      }
                                     />
                                   </div>
 
@@ -931,7 +942,20 @@ export default function ServicesPage() {
                                       onChange={(r) =>
                                         setEditOverrideDraft({ ...editOverrideDraft, durationRules: r })
                                       }
-                                      availableInputs={(svc.inputFields || []).map((f) => f.key)}
+                                      availableInputs={
+                                        (editOverrideDraft.inputFields || svc.inputFields || []).map((f) => f.key)
+                                      }
+                                    />
+                                  </div>
+
+                                  {/* Input Fields override */}
+                                  <div className={styles.sectionBlock}>
+                                    <div className={styles.sectionLabel}>Custom Input Fields</div>
+                                    <InputFieldsEditor
+                                      fields={editOverrideDraft.inputFields || svc.inputFields || []}
+                                      onChange={(fields) =>
+                                        setEditOverrideDraft({ ...editOverrideDraft, inputFields: fields })
+                                      }
                                     />
                                   </div>
 
@@ -963,73 +987,69 @@ export default function ServicesPage() {
                       );
                     })}
 
-                    {/* Inline add service row — main site only */}
-                    {siteTab === "main" && (
-                      addingServiceFor === cat.id ? (
-                        <div className={styles.addServiceRow}>
-                          <input
-                            className={styles.addServiceInput}
-                            type="text"
-                            placeholder="Service name"
-                            value={newServiceName}
-                            autoFocus
-                            onChange={(e) => setNewServiceName(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") handleCreateService(cat.id);
-                              if (e.key === "Escape") {
-                                setAddingServiceFor(null);
-                                setNewServiceName("");
-                              }
-                            }}
-                          />
-                          <button
-                            className={styles.createBtn}
-                            onClick={() => handleCreateService(cat.id)}
-                            disabled={creatingService}
-                          >
-                            {creatingService ? "Creating…" : "Create"}
-                          </button>
-                          <button
-                            className={styles.cancelBtn}
-                            onClick={() => {
+                    {/* Inline add service row */}
+                    {addingServiceFor === cat.id ? (
+                      <div className={styles.addServiceRow}>
+                        <input
+                          className={styles.addServiceInput}
+                          type="text"
+                          placeholder="Service name"
+                          value={newServiceName}
+                          autoFocus
+                          onChange={(e) => setNewServiceName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handleCreateService(cat.id);
+                            if (e.key === "Escape") {
                               setAddingServiceFor(null);
                               setNewServiceName("");
-                            }}
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      ) : (
+                            }
+                          }}
+                        />
                         <button
-                          className={styles.addServiceBtn}
+                          className={styles.createBtn}
+                          onClick={() => handleCreateService(cat.id)}
+                          disabled={creatingService}
+                        >
+                          {creatingService ? "Creating…" : "Create"}
+                        </button>
+                        <button
+                          className={styles.cancelBtn}
                           onClick={() => {
-                            setAddingServiceFor(cat.id);
+                            setAddingServiceFor(null);
                             setNewServiceName("");
                           }}
                         >
-                          + Add Service
+                          Cancel
                         </button>
-                      )
+                      </div>
+                    ) : (
+                      <button
+                        className={styles.addServiceBtn}
+                        onClick={() => {
+                          setAddingServiceFor(cat.id);
+                          setNewServiceName("");
+                        }}
+                      >
+                        + Add Service
+                      </button>
                     )}
                   </div>
                 </div>
               ))}
 
-              {/* Create category — main site only */}
-              {siteTab === "main" && (
-                <form className={styles.createCatForm} onSubmit={handleCreateCategory}>
-                  <input
-                    className={styles.input}
-                    type="text"
-                    placeholder="New category name"
-                    value={newCatName}
-                    onChange={(e) => setNewCatName(e.target.value)}
-                  />
-                  <button className={styles.createBtn} type="submit" disabled={creatingCat}>
-                    {creatingCat ? "Creating…" : "Create Category"}
-                  </button>
-                </form>
-              )}
+              {/* Create category */}
+              <form className={styles.createCatForm} onSubmit={handleCreateCategory}>
+                <input
+                  className={styles.input}
+                  type="text"
+                  placeholder="New category name"
+                  value={newCatName}
+                  onChange={(e) => setNewCatName(e.target.value)}
+                />
+                <button className={styles.createBtn} type="submit" disabled={creatingCat}>
+                  {creatingCat ? "Creating…" : "Create Category"}
+                </button>
+              </form>
             </>
           )}
         </div>
