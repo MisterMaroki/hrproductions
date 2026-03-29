@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { isWhiteLabel } from "@/lib/brand";
 import styles from "./page.module.css";
 
 const SHOWCASE_IMAGES = [
@@ -83,9 +84,11 @@ export default function ClientLoginPage() {
         </div>
         <div className={styles.imageOverlay} />
         <div className={styles.imageContent}>
-          <Link href="/" className={styles.logoLink}>
-            <span className={styles.logo}>The Property Room</span>
-          </Link>
+          {!isWhiteLabel() && (
+            <Link href="/" className={styles.logoLink}>
+              <span className={styles.logo}>The Property Room</span>
+            </Link>
+          )}
           <div className={styles.imageBottom}>
             <p className={styles.imageQuote}>
               Your property marketing portal

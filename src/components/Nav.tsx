@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { isWhiteLabel } from '@/lib/brand';
 import styles from './Nav.module.css';
 
 const landingLinks = [
@@ -69,6 +70,18 @@ export default function Nav({ bookPage = false }: { bookPage?: boolean }) {
 			</a>
 		);
 	};
+
+	if (isWhiteLabel()) {
+		return (
+			<nav className={`${styles.nav} ${scrolled ? styles.scrolled : ''}`}>
+				<div className={styles.inner}>
+					<div className={styles.links}>
+						<NavLink href="/book">Book</NavLink>
+					</div>
+				</div>
+			</nav>
+		);
+	}
 
 	return (
 		<>

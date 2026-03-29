@@ -8,6 +8,7 @@ import type { SiblingBooking } from "./PropertyBlock";
 import Basket from "./Basket";
 import { useFadeIn } from "@/hooks/useFadeIn";
 import { isWorkingDay, calcShootMinutes } from "@/lib/scheduling";
+import { isWhiteLabel } from "@/lib/brand";
 import styles from "./BookingSection.module.css";
 
 export interface AgentInfo {
@@ -212,16 +213,18 @@ export default function BookingSection() {
       <div className={styles.container}>
         <SectionHeader title="Book" id="book" />
 
-        <div className={styles.tradeBanner}>
-          <div className={styles.tradeBannerContent}>
-            <span className={styles.tradeBannerText}>
-              Book regularly? Open a <strong>trade account</strong> for credit terms and a single monthly invoice.
-            </span>
-            <a href="/portal/signup" className={styles.tradeBannerLink}>
-              Learn more
-            </a>
+        {!isWhiteLabel() && (
+          <div className={styles.tradeBanner}>
+            <div className={styles.tradeBannerContent}>
+              <span className={styles.tradeBannerText}>
+                Book regularly? Open a <strong>trade account</strong> for credit terms and a single monthly invoice.
+              </span>
+              <a href="/portal/signup" className={styles.tradeBannerLink}>
+                Learn more
+              </a>
+            </div>
           </div>
-        </div>
+        )}
 
         <div className={styles.layout}>
           <div className={styles.form}>

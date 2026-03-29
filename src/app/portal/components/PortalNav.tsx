@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { isWhiteLabel } from "@/lib/brand";
 import styles from "./PortalNav.module.css";
 
 export default function PortalNav() {
@@ -17,7 +18,7 @@ export default function PortalNav() {
     <nav className={styles.nav}>
       <div className={styles.inner}>
         <Link href="/portal/dashboard" className={styles.brand}>
-          THE PROPERTY ROOM
+          {isWhiteLabel() ? "Client Portal" : "THE PROPERTY ROOM"}
         </Link>
         <div className={styles.links}>
           <Link

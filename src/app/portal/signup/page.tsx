@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { isWhiteLabel } from "@/lib/brand";
 import styles from "./page.module.css";
 
 const SHOWCASE_IMAGES = [
@@ -155,12 +156,16 @@ export default function ClientSignupPage() {
         </div>
         <div className={styles.imageOverlay} />
         <div className={styles.imageContent}>
-          <Link href="/" className={styles.logoLink}>
-            <span className={styles.logo}>The Property Room</span>
-          </Link>
+          {!isWhiteLabel() && (
+            <Link href="/" className={styles.logoLink}>
+              <span className={styles.logo}>The Property Room</span>
+            </Link>
+          )}
           <div className={styles.imageBottom}>
             <p className={styles.imageQuote}>
-              Professional property marketing trusted by leading estate agents across the South East.
+              {isWhiteLabel()
+                ? "Professional property photography and visual media services."
+                : "Professional property marketing trusted by leading estate agents across the South East."}
             </p>
             <div className={styles.imageDots}>
               {SHOWCASE_IMAGES.map((_, i) => (

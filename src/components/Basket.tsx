@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 import type { PropertyBooking, AgentInfo } from "./BookingSection";
+import { isWhiteLabel } from "@/lib/brand";
 import {
   calcPhotography,
   calcDronePhotography,
@@ -99,7 +100,7 @@ function getLineItems(property: PropertyBooking) {
 
 export default function Basket({ properties, agent, discountCode, discountPercentage, onValidate }: Props) {
   const [loading, setLoading] = useState(false);
-  const [mode, setMode] = useState<CheckoutMode>("choose");
+  const [mode, setMode] = useState<CheckoutMode>(isWhiteLabel() ? "pay" : "choose");
   const [accountPassword, setAccountPassword] = useState("");
   const [accountConfirm, setAccountConfirm] = useState("");
   const [accountError, setAccountError] = useState("");
@@ -325,13 +326,15 @@ export default function Basket({ properties, agent, discountCode, discountPercen
           >
             {loading ? "Redirecting..." : "Proceed to Payment"}
           </button>
-          <button
-            className={styles.backToOptions}
-            onClick={() => setMode("choose")}
-            disabled={loading}
-          >
-            Back to options
-          </button>
+          {!isWhiteLabel() && (
+            <button
+              className={styles.backToOptions}
+              onClick={() => setMode("choose")}
+              disabled={loading}
+            >
+              Back to options
+            </button>
+          )}
         </>
       ) : (
         /* Choose: pay now or create account */
