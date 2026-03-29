@@ -414,6 +414,9 @@ export default function ServicesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Top-level site tab
+  const [siteTab, setSiteTab] = useState<"main" | "whitelabel">("main");
+
   // Create category
   const [newCatName, setNewCatName] = useState("");
   const [creatingCat, setCreatingCat] = useState(false);
@@ -425,7 +428,6 @@ export default function ServicesPage() {
 
   // Edit state
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
-  const [editTab, setEditTab] = useState<"main" | "whitelabel">("main");
   const [editDraft, setEditDraft] = useState<Partial<Service> | null>(null);
   const [editOverrideDraft, setEditOverrideDraft] = useState<Partial<BrandOverride> | null>(null);
   const [saving, setSaving] = useState(false);
@@ -449,6 +451,16 @@ export default function ServicesPage() {
 
   // All services flat list for parent-service dropdown
   const allServices: Service[] = categories.flatMap((c) => c.services);
+
+  // ── Site tab switch ───────────────────────────────────────────────────────
+
+  const switchSiteTab = (tab: "main" | "whitelabel") => {
+    setSiteTab(tab);
+    // Close any open edit panel when switching tabs
+    setEditingServiceId(null);
+    setEditDraft(null);
+    setEditOverrideDraft(null);
+  };
 
   // ── Category actions ──────────────────────────────────────────────────────
 
@@ -527,12 +539,33 @@ export default function ServicesPage() {
     fetchData();
   };
 
+  // ── Visibility toggle ─────────────────────────────────────────────────────
+
   const handleToggleVisible = async (svc: Service) => {
-    await fetch(`/api/admin/services/${svc.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ visible: svc.visible ? 0 : 1 }),
-    });
+    if (siteTab === "main") {
+      // Toggle global visibility
+      await fetch(`/api/admin/services/${svc.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ visible: svc.visible ? 0 : 1 }),
+      });
+    } else {
+      // Toggle whitelabel brand override visibility
+      const existing = svc.overrides.find((o) => o.brandMode === "whitelabel");
+      const currentVisible = existing != null ? existing.visible : svc.visible;
+      await fetch(`/api/admin/services/${svc.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          brandOverride: {
+            brandMode: "whitelabel",
+            visible: currentVisible ? 0 : 1,
+            pricingRules: existing?.pricingRules ?? null,
+            durationRules: existing?.durationRules ?? null,
+          },
+        }),
+      });
+    }
     fetchData();
   };
 
@@ -546,16 +579,9 @@ export default function ServicesPage() {
       return;
     }
     setEditingServiceId(svc.id);
-    setEditTab("main");
     setEditDraft({ ...svc });
-    setEditOverrideDraft(null);
-  };
 
-  const selectTab = (tab: "main" | "whitelabel", svc: Service) => {
-    setEditTab(tab);
-    if (tab === "main") {
-      setEditOverrideDraft(null);
-    } else {
+    if (siteTab === "whitelabel") {
       const existing = svc.overrides.find((o) => o.brandMode === "whitelabel");
       setEditOverrideDraft(
         existing
@@ -563,20 +589,36 @@ export default function ServicesPage() {
           : {
               id: "",
               brandMode: "whitelabel",
-              visible: 1,
+              visible: svc.visible,
               pricingRules: svc.pricingRules ? { ...svc.pricingRules } : defaultPricingRules(),
               durationRules: svc.durationRules ? { ...svc.durationRules } : defaultDurationRules(),
               inputFields: null,
             }
       );
+    } else {
+      setEditOverrideDraft(null);
     }
   };
 
+  const handleResetOverride = async (svcId: string) => {
+    if (!confirm("Reset White Label pricing to default? This will remove the custom override.")) return;
+    await fetch(`/api/admin/services/${svcId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ removeBrandOverride: { brandMode: "whitelabel" } }),
+    });
+    setEditingServiceId(null);
+    setEditDraft(null);
+    setEditOverrideDraft(null);
+    fetchData();
+  };
+
   const handleSave = async () => {
-    if (!editingServiceId || !editDraft) return;
+    if (!editingServiceId) return;
     setSaving(true);
     try {
-      if (editTab === "main") {
+      if (siteTab === "main") {
+        if (!editDraft) return;
         const res = await fetch(`/api/admin/services/${editingServiceId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -589,11 +631,11 @@ export default function ServicesPage() {
         }
       } else {
         // White label override
-        const brandMode = "whitelabel";
+        if (!editOverrideDraft) return;
         const res = await fetch(`/api/admin/services/${editingServiceId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ brandOverride: { ...editOverrideDraft, brandMode } }),
+          body: JSON.stringify({ brandOverride: { ...editOverrideDraft, brandMode: "whitelabel" } }),
         });
         if (!res.ok) {
           const data = await res.json();
@@ -607,6 +649,21 @@ export default function ServicesPage() {
     }
   };
 
+  // ── Helper: get effective whitelabel visibility ───────────────────────────
+
+  const getWlVisible = (svc: Service): number => {
+    const existing = svc.overrides.find((o) => o.brandMode === "whitelabel");
+    return existing != null ? existing.visible : svc.visible;
+  };
+
+  const hasWlOverride = (svc: Service): boolean =>
+    svc.overrides.some((o) => o.brandMode === "whitelabel");
+
+  const hasCustomPricing = (svc: Service): boolean => {
+    const ov = svc.overrides.find((o) => o.brandMode === "whitelabel");
+    return !!ov && ov.pricingRules != null;
+  };
+
   // ─────────────────────────────────────────────────────────────────────────
 
   return (
@@ -615,6 +672,22 @@ export default function ServicesPage() {
       <main className={styles.main}>
         <div className={styles.container}>
           <h2 className={styles.title}>Services &amp; Pricing</h2>
+
+          {/* Top-level site tabs */}
+          <div className={styles.siteTabs}>
+            <button
+              className={`${styles.siteTab} ${siteTab === "main" ? styles.siteTabActive : ""}`}
+              onClick={() => switchSiteTab("main")}
+            >
+              Main Site
+            </button>
+            <button
+              className={`${styles.siteTab} ${siteTab === "whitelabel" ? styles.siteTabActive : ""}`}
+              onClick={() => switchSiteTab("whitelabel")}
+            >
+              White Label
+            </button>
+          </div>
 
           {loading ? (
             <p className={styles.empty}>Loading…</p>
@@ -625,12 +698,14 @@ export default function ServicesPage() {
                   {/* Category header */}
                   <div className={styles.categoryHeader}>
                     <span className={styles.categoryName}>{cat.name}</span>
-                    <button
-                      className={styles.deleteCatBtn}
-                      onClick={() => handleDeleteCategory(cat.id, cat.name)}
-                    >
-                      Delete Category
-                    </button>
+                    {siteTab === "main" && (
+                      <button
+                        className={styles.deleteCatBtn}
+                        onClick={() => handleDeleteCategory(cat.id, cat.name)}
+                      >
+                        Delete Category
+                      </button>
+                    )}
                   </div>
 
                   {/* Services list */}
@@ -646,276 +721,315 @@ export default function ServicesPage() {
                         <span>Base Price</span>
                         <span>Visible</span>
                         <span></span>
-                        <span></span>
+                        {siteTab === "main" && <span></span>}
                       </div>
                     )}
 
-                    {cat.services.map((svc) => (
-                      <div key={svc.id}>
-                        <div className={styles.serviceRow}>
-                          <span className={styles.serviceName}>
-                            {svc.isAddon ? "↳ " : ""}{svc.name}
-                          </span>
-                          <span className={styles.servicePrice}>
-                            £{svc.pricingRules?.basePrice?.toFixed(2) ?? "0.00"}
-                          </span>
-                          <button
-                            className={`${styles.toggleBtn} ${svc.visible ? styles.toggleActive : styles.toggleInactive}`}
-                            onClick={() => handleToggleVisible(svc)}
+                    {cat.services.map((svc) => {
+                      const wlVisible = getWlVisible(svc);
+                      const hasOverride = hasWlOverride(svc);
+                      const customPricing = hasCustomPricing(svc);
+
+                      return (
+                        <div key={svc.id}>
+                          <div
+                            className={styles.serviceRow}
+                            style={
+                              siteTab === "main"
+                                ? undefined
+                                : { gridTemplateColumns: "1fr 80px 80px 60px" }
+                            }
                           >
-                            {svc.visible ? "On" : "Off"}
-                          </button>
-                          <button
-                            className={`${styles.editBtn} ${editingServiceId === svc.id ? styles.editBtnActive : ""}`}
-                            onClick={() => openEdit(svc)}
-                          >
-                            {editingServiceId === svc.id ? "Close" : "Edit"}
-                          </button>
-                          <button
-                            className={styles.deleteBtn}
-                            onClick={() => handleDeleteService(svc.id, svc.name)}
-                          >
-                            ✕
-                          </button>
-                        </div>
+                            <span className={styles.serviceName}>
+                              {svc.isAddon ? "↳ " : ""}
+                              {svc.name}
+                              {siteTab === "whitelabel" && customPricing && (
+                                <span className={styles.customBadge}>Custom pricing</span>
+                              )}
+                            </span>
+                            <span className={styles.servicePrice}>
+                              {siteTab === "main"
+                                ? `£${svc.pricingRules?.basePrice?.toFixed(2) ?? "0.00"}`
+                                : (() => {
+                                    const ov = svc.overrides.find((o) => o.brandMode === "whitelabel");
+                                    const price = ov?.pricingRules?.basePrice ?? svc.pricingRules?.basePrice;
+                                    return `£${price?.toFixed(2) ?? "0.00"}`;
+                                  })()}
+                            </span>
+                            <button
+                              className={`${styles.toggleBtn} ${
+                                (siteTab === "main" ? svc.visible : wlVisible)
+                                  ? styles.toggleActive
+                                  : styles.toggleInactive
+                              }`}
+                              onClick={() => handleToggleVisible(svc)}
+                            >
+                              {(siteTab === "main" ? svc.visible : wlVisible) ? "On" : "Off"}
+                              {siteTab === "whitelabel" && !hasOverride && (
+                                <span className={styles.inheritedMark}> (default)</span>
+                              )}
+                            </button>
+                            <button
+                              className={`${styles.editBtn} ${editingServiceId === svc.id ? styles.editBtnActive : ""}`}
+                              onClick={() => openEdit(svc)}
+                            >
+                              {editingServiceId === svc.id ? "Close" : "Edit"}
+                            </button>
+                            {siteTab === "main" && (
+                              <button
+                                className={styles.deleteBtn}
+                                onClick={() => handleDeleteService(svc.id, svc.name)}
+                              >
+                                ✕
+                              </button>
+                            )}
+                          </div>
 
-                        {/* Edit panel */}
-                        {editingServiceId === svc.id && editDraft && (
-                          <div className={styles.editPanel}>
-                            {/* Brand tabs */}
-                            <div className={styles.brandTabs}>
-                              {(["main", "whitelabel"] as const).map((tab) => (
-                                <button
-                                  key={tab}
-                                  className={`${styles.brandTab} ${editTab === tab ? styles.brandTabActive : ""}`}
-                                  onClick={() => selectTab(tab, svc)}
-                                >
-                                  {tab === "main" ? "Main Site" : "White Label"}
-                                </button>
-                              ))}
-                            </div>
-
-                            {editTab === "main" && (
-                              <div className={styles.editFields}>
-                                {/* Name */}
-                                <label className={styles.fieldGroup}>
-                                  <span className={styles.fieldLabel}>Name</span>
-                                  <input
-                                    className={styles.editInput}
-                                    type="text"
-                                    value={editDraft.name || ""}
-                                    onChange={(e) =>
-                                      setEditDraft({ ...editDraft, name: e.target.value })
-                                    }
-                                  />
-                                </label>
-
-                                {/* Description */}
-                                <label className={styles.fieldGroup}>
-                                  <span className={styles.fieldLabel}>Description</span>
-                                  <textarea
-                                    className={styles.editTextarea}
-                                    value={editDraft.description || ""}
-                                    onChange={(e) =>
-                                      setEditDraft({ ...editDraft, description: e.target.value })
-                                    }
-                                  />
-                                </label>
-
-                                {/* Category */}
-                                <label className={styles.fieldGroup}>
-                                  <span className={styles.fieldLabel}>Category</span>
-                                  <select
-                                    className={styles.editSelect}
-                                    value={editDraft.categoryId || ""}
-                                    onChange={(e) =>
-                                      setEditDraft({ ...editDraft, categoryId: e.target.value })
-                                    }
-                                  >
-                                    {categories.map((c) => (
-                                      <option key={c.id} value={c.id}>{c.name}</option>
-                                    ))}
-                                  </select>
-                                </label>
-
-                                {/* Is add-on */}
-                                <div className={styles.fieldGroup}>
-                                  <label className={styles.checkboxLabel}>
+                          {/* Edit panel */}
+                          {editingServiceId === svc.id && (
+                            <div className={styles.editPanel}>
+                              {siteTab === "main" && editDraft && (
+                                <div className={styles.editFields}>
+                                  {/* Name */}
+                                  <label className={styles.fieldGroup}>
+                                    <span className={styles.fieldLabel}>Name</span>
                                     <input
-                                      type="checkbox"
-                                      checked={!!editDraft.isAddon}
+                                      className={styles.editInput}
+                                      type="text"
+                                      value={editDraft.name || ""}
                                       onChange={(e) =>
-                                        setEditDraft({
-                                          ...editDraft,
-                                          isAddon: e.target.checked ? 1 : 0,
-                                          parentServiceId: e.target.checked
-                                            ? editDraft.parentServiceId
-                                            : null,
-                                        })
+                                        setEditDraft({ ...editDraft, name: e.target.value })
                                       }
                                     />
-                                    Is add-on service
                                   </label>
-                                  {!!editDraft.isAddon && (
-                                    <div className={styles.parentServiceRow}>
-                                      <span className={styles.fieldLabel}>Parent Service</span>
-                                      <select
-                                        className={styles.editSelect}
-                                        value={editDraft.parentServiceId || ""}
+
+                                  {/* Description */}
+                                  <label className={styles.fieldGroup}>
+                                    <span className={styles.fieldLabel}>Description</span>
+                                    <textarea
+                                      className={styles.editTextarea}
+                                      value={editDraft.description || ""}
+                                      onChange={(e) =>
+                                        setEditDraft({ ...editDraft, description: e.target.value })
+                                      }
+                                    />
+                                  </label>
+
+                                  {/* Category */}
+                                  <label className={styles.fieldGroup}>
+                                    <span className={styles.fieldLabel}>Category</span>
+                                    <select
+                                      className={styles.editSelect}
+                                      value={editDraft.categoryId || ""}
+                                      onChange={(e) =>
+                                        setEditDraft({ ...editDraft, categoryId: e.target.value })
+                                      }
+                                    >
+                                      {categories.map((c) => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                      ))}
+                                    </select>
+                                  </label>
+
+                                  {/* Is add-on */}
+                                  <div className={styles.fieldGroup}>
+                                    <label className={styles.checkboxLabel}>
+                                      <input
+                                        type="checkbox"
+                                        checked={!!editDraft.isAddon}
                                         onChange={(e) =>
                                           setEditDraft({
                                             ...editDraft,
-                                            parentServiceId: e.target.value || null,
+                                            isAddon: e.target.checked ? 1 : 0,
+                                            parentServiceId: e.target.checked
+                                              ? editDraft.parentServiceId
+                                              : null,
                                           })
                                         }
+                                      />
+                                      Is add-on service
+                                    </label>
+                                    {!!editDraft.isAddon && (
+                                      <div className={styles.parentServiceRow}>
+                                        <span className={styles.fieldLabel}>Parent Service</span>
+                                        <select
+                                          className={styles.editSelect}
+                                          value={editDraft.parentServiceId || ""}
+                                          onChange={(e) =>
+                                            setEditDraft({
+                                              ...editDraft,
+                                              parentServiceId: e.target.value || null,
+                                            })
+                                          }
+                                        >
+                                          <option value="">— None —</option>
+                                          {allServices
+                                            .filter((s) => s.id !== svc.id && !s.isAddon)
+                                            .map((s) => (
+                                              <option key={s.id} value={s.id}>{s.name}</option>
+                                            ))}
+                                        </select>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Pricing */}
+                                  <div className={styles.sectionBlock}>
+                                    <div className={styles.sectionLabel}>Pricing</div>
+                                    <PricingRulesEditor
+                                      rules={editDraft.pricingRules || defaultPricingRules()}
+                                      onChange={(r) => setEditDraft({ ...editDraft, pricingRules: r })}
+                                      availableInputs={(editDraft.inputFields || []).map((f) => f.key)}
+                                    />
+                                  </div>
+
+                                  {/* Duration */}
+                                  <div className={styles.sectionBlock}>
+                                    <div className={styles.sectionLabel}>Duration</div>
+                                    <DurationEditor
+                                      rules={editDraft.durationRules || defaultDurationRules()}
+                                      onChange={(r) => setEditDraft({ ...editDraft, durationRules: r })}
+                                      availableInputs={(editDraft.inputFields || []).map((f) => f.key)}
+                                    />
+                                  </div>
+
+                                  {/* Custom Input Fields */}
+                                  <div className={styles.sectionBlock}>
+                                    <div className={styles.sectionLabel}>Custom Input Fields</div>
+                                    <InputFieldsEditor
+                                      fields={editDraft.inputFields || []}
+                                      onChange={(fields) => setEditDraft({ ...editDraft, inputFields: fields })}
+                                    />
+                                  </div>
+                                </div>
+                              )}
+
+                              {siteTab === "whitelabel" && editOverrideDraft && (
+                                <div className={styles.editFields}>
+                                  <p className={styles.wlEditNote}>
+                                    Editing White Label overrides for <strong>{svc.name}</strong>.
+                                    Name, description, and inputs are inherited from the main site.
+                                  </p>
+
+                                  {/* Pricing override */}
+                                  <div className={styles.sectionBlock}>
+                                    <div className={styles.sectionLabel}>Pricing</div>
+                                    <PricingRulesEditor
+                                      rules={editOverrideDraft.pricingRules || defaultPricingRules()}
+                                      onChange={(r) =>
+                                        setEditOverrideDraft({ ...editOverrideDraft, pricingRules: r })
+                                      }
+                                      availableInputs={(svc.inputFields || []).map((f) => f.key)}
+                                    />
+                                  </div>
+
+                                  {/* Duration override */}
+                                  <div className={styles.sectionBlock}>
+                                    <div className={styles.sectionLabel}>Duration</div>
+                                    <DurationEditor
+                                      rules={editOverrideDraft.durationRules || defaultDurationRules()}
+                                      onChange={(r) =>
+                                        setEditOverrideDraft({ ...editOverrideDraft, durationRules: r })
+                                      }
+                                      availableInputs={(svc.inputFields || []).map((f) => f.key)}
+                                    />
+                                  </div>
+
+                                  {hasWlOverride(svc) && (
+                                    <div>
+                                      <button
+                                        className={styles.resetOverrideBtn}
+                                        onClick={() => handleResetOverride(svc.id)}
                                       >
-                                        <option value="">— None —</option>
-                                        {allServices
-                                          .filter((s) => s.id !== svc.id && !s.isAddon)
-                                          .map((s) => (
-                                            <option key={s.id} value={s.id}>{s.name}</option>
-                                          ))}
-                                      </select>
+                                        Reset to Default
+                                      </button>
                                     </div>
                                   )}
                                 </div>
+                              )}
 
-                                {/* Pricing */}
-                                <div className={styles.sectionBlock}>
-                                  <div className={styles.sectionLabel}>Pricing</div>
-                                  <PricingRulesEditor
-                                    rules={editDraft.pricingRules || defaultPricingRules()}
-                                    onChange={(r) => setEditDraft({ ...editDraft, pricingRules: r })}
-                                    availableInputs={(editDraft.inputFields || []).map((f) => f.key)}
-                                  />
-                                </div>
-
-                                {/* Duration */}
-                                <div className={styles.sectionBlock}>
-                                  <div className={styles.sectionLabel}>Duration</div>
-                                  <DurationEditor
-                                    rules={editDraft.durationRules || defaultDurationRules()}
-                                    onChange={(r) => setEditDraft({ ...editDraft, durationRules: r })}
-                                    availableInputs={(editDraft.inputFields || []).map((f) => f.key)}
-                                  />
-                                </div>
-
-                                {/* Custom Input Fields */}
-                                <div className={styles.sectionBlock}>
-                                  <div className={styles.sectionLabel}>Custom Input Fields</div>
-                                  <InputFieldsEditor
-                                    fields={editDraft.inputFields || []}
-                                    onChange={(fields) => setEditDraft({ ...editDraft, inputFields: fields })}
-                                  />
-                                </div>
+                              <div className={styles.editActions}>
+                                <button
+                                  className={styles.saveBtn}
+                                  onClick={handleSave}
+                                  disabled={saving}
+                                >
+                                  {saving ? "Saving…" : "Save Changes"}
+                                </button>
                               </div>
-                            )}
-
-                            {editTab === "whitelabel" && editOverrideDraft && (
-                              <div className={styles.editFields}>
-                                {/* Pricing override */}
-                                <div className={styles.sectionBlock}>
-                                  <div className={styles.sectionLabel}>Pricing</div>
-                                  <PricingRulesEditor
-                                    rules={editOverrideDraft.pricingRules || defaultPricingRules()}
-                                    onChange={(r) =>
-                                      setEditOverrideDraft({ ...editOverrideDraft, pricingRules: r })
-                                    }
-                                    availableInputs={(svc.inputFields || []).map((f) => f.key)}
-                                  />
-                                </div>
-
-                                {/* Duration override */}
-                                <div className={styles.sectionBlock}>
-                                  <div className={styles.sectionLabel}>Duration</div>
-                                  <DurationEditor
-                                    rules={editOverrideDraft.durationRules || defaultDurationRules()}
-                                    onChange={(r) =>
-                                      setEditOverrideDraft({ ...editOverrideDraft, durationRules: r })
-                                    }
-                                    availableInputs={(svc.inputFields || []).map((f) => f.key)}
-                                  />
-                                </div>
-                              </div>
-                            )}
-
-                            <div className={styles.editActions}>
-                              <button
-                                className={styles.saveBtn}
-                                onClick={handleSave}
-                                disabled={saving}
-                              >
-                                {saving ? "Saving…" : "Save Changes"}
-                              </button>
                             </div>
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                          )}
+                        </div>
+                      );
+                    })}
 
-                    {/* Inline add service row */}
-                    {addingServiceFor === cat.id ? (
-                      <div className={styles.addServiceRow}>
-                        <input
-                          className={styles.addServiceInput}
-                          type="text"
-                          placeholder="Service name"
-                          value={newServiceName}
-                          autoFocus
-                          onChange={(e) => setNewServiceName(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") handleCreateService(cat.id);
-                            if (e.key === "Escape") {
+                    {/* Inline add service row — main site only */}
+                    {siteTab === "main" && (
+                      addingServiceFor === cat.id ? (
+                        <div className={styles.addServiceRow}>
+                          <input
+                            className={styles.addServiceInput}
+                            type="text"
+                            placeholder="Service name"
+                            value={newServiceName}
+                            autoFocus
+                            onChange={(e) => setNewServiceName(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") handleCreateService(cat.id);
+                              if (e.key === "Escape") {
+                                setAddingServiceFor(null);
+                                setNewServiceName("");
+                              }
+                            }}
+                          />
+                          <button
+                            className={styles.createBtn}
+                            onClick={() => handleCreateService(cat.id)}
+                            disabled={creatingService}
+                          >
+                            {creatingService ? "Creating…" : "Create"}
+                          </button>
+                          <button
+                            className={styles.cancelBtn}
+                            onClick={() => {
                               setAddingServiceFor(null);
                               setNewServiceName("");
-                            }
-                          }}
-                        />
+                            }}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
                         <button
-                          className={styles.createBtn}
-                          onClick={() => handleCreateService(cat.id)}
-                          disabled={creatingService}
-                        >
-                          {creatingService ? "Creating…" : "Create"}
-                        </button>
-                        <button
-                          className={styles.cancelBtn}
+                          className={styles.addServiceBtn}
                           onClick={() => {
-                            setAddingServiceFor(null);
+                            setAddingServiceFor(cat.id);
                             setNewServiceName("");
                           }}
                         >
-                          Cancel
+                          + Add Service
                         </button>
-                      </div>
-                    ) : (
-                      <button
-                        className={styles.addServiceBtn}
-                        onClick={() => {
-                          setAddingServiceFor(cat.id);
-                          setNewServiceName("");
-                        }}
-                      >
-                        + Add Service
-                      </button>
+                      )
                     )}
                   </div>
                 </div>
               ))}
 
-              {/* Create category */}
-              <form className={styles.createCatForm} onSubmit={handleCreateCategory}>
-                <input
-                  className={styles.input}
-                  type="text"
-                  placeholder="New category name"
-                  value={newCatName}
-                  onChange={(e) => setNewCatName(e.target.value)}
-                />
-                <button className={styles.createBtn} type="submit" disabled={creatingCat}>
-                  {creatingCat ? "Creating…" : "Create Category"}
-                </button>
-              </form>
+              {/* Create category — main site only */}
+              {siteTab === "main" && (
+                <form className={styles.createCatForm} onSubmit={handleCreateCategory}>
+                  <input
+                    className={styles.input}
+                    type="text"
+                    placeholder="New category name"
+                    value={newCatName}
+                    onChange={(e) => setNewCatName(e.target.value)}
+                  />
+                  <button className={styles.createBtn} type="submit" disabled={creatingCat}>
+                    {creatingCat ? "Creating…" : "Create Category"}
+                  </button>
+                </form>
+              )}
             </>
           )}
         </div>
