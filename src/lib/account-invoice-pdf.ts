@@ -2,23 +2,6 @@ import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { readFile } from "fs/promises";
 import { join } from "path";
 
-interface PropertyServices {
-  bedrooms: number;
-  photography: boolean;
-  photoCount: number;
-  dronePhotography: boolean;
-  dronePhotoCount: 8 | 20;
-  standardVideo: boolean;
-  standardVideoDrone: boolean;
-  agentPresentedVideo: boolean;
-  agentPresentedVideoDrone: boolean;
-  socialMediaVideo: boolean;
-  socialMediaPresentedVideo: boolean;
-  standardFloorPlan: boolean;
-  premiumFloorPlan: boolean;
-  floorPlan3D: boolean;
-}
-
 export interface AccountInvoiceData {
   invoiceId: string;
   client: {
@@ -72,49 +55,34 @@ function generateAccountInvoiceNumber(invoiceId: string, chargedAt: string): str
 }
 
 function parseServiceNames(servicesJson: string): string[] {
-  let svc: Partial<PropertyServices>;
+  let parsed: unknown;
   try {
-    svc = JSON.parse(servicesJson) as Partial<PropertyServices>;
+    parsed = JSON.parse(servicesJson);
   } catch {
     return [];
   }
 
+  // New format: array of selected services with serviceName
+  if (Array.isArray(parsed)) {
+    return parsed.map((s: { serviceName?: string; serviceId?: string }) =>
+      s.serviceName || s.serviceId || "Service"
+    );
+  }
+
+  // Legacy format: boolean flags object
+  const svc = parsed as Record<string, unknown>;
   const names: string[] = [];
-
-  if (svc.photography) {
-    names.push(`Photography (${svc.photoCount ?? 0} photos)`);
-  }
-  if (svc.dronePhotography) {
-    names.push(`Drone Photography (${svc.dronePhotoCount ?? 8} photos)`);
-  }
-  if (svc.standardVideo) {
-    names.push("Standard Video");
-  }
-  if (svc.standardVideoDrone) {
-    names.push("Standard Video with Drone");
-  }
-  if (svc.agentPresentedVideo) {
-    names.push("Agent-Presented Video");
-  }
-  if (svc.agentPresentedVideoDrone) {
-    names.push("Agent-Presented Video with Drone");
-  }
-  if (svc.socialMediaVideo) {
-    names.push("Social Media Video");
-  }
-  if (svc.socialMediaPresentedVideo) {
-    names.push("Social Media Presented Video");
-  }
-  if (svc.standardFloorPlan) {
-    names.push("Standard Floor Plan");
-  }
-  if (svc.premiumFloorPlan) {
-    names.push("Premium Floor Plan");
-  }
-  if (svc.floorPlan3D) {
-    names.push("3D Floor Plan");
-  }
-
+  if (svc.photography) names.push(`Photography (${svc.photoCount ?? 0} photos)`);
+  if (svc.dronePhotography) names.push(`Drone Photography (${svc.dronePhotoCount ?? 8} photos)`);
+  if (svc.standardVideo) names.push("Standard Video");
+  if (svc.standardVideoDrone) names.push("Standard Video with Drone");
+  if (svc.agentPresentedVideo) names.push("Agent-Presented Video");
+  if (svc.agentPresentedVideoDrone) names.push("Agent-Presented Video with Drone");
+  if (svc.socialMediaVideo) names.push("Social Media Video");
+  if (svc.socialMediaPresentedVideo) names.push("Social Media Presented Video");
+  if (svc.standardFloorPlan) names.push("Standard Floor Plan");
+  if (svc.premiumFloorPlan) names.push("Premium Floor Plan");
+  if (svc.floorPlan3D) names.push("3D Floor Plan");
   return names;
 }
 

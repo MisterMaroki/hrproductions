@@ -3,17 +3,26 @@ import { db } from "@/lib/db";
 import { clients, bookings } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { hashPassword } from "@/lib/client-auth";
-import { calcWorkHours } from "@/lib/scheduling";
-import { calcPropertyTotal, type PropertyServices } from "@/lib/pricing";
+import { evaluatePrice, evaluateDuration } from "@/lib/pricing-engine";
+import { getServicesForBrand } from "@/lib/services";
+import { getBrandMode } from "@/lib/brand";
 import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const HARRISON_EMAIL = "harrison@thepropertyroom.co";
 const FROM = "Harrison <harrison@thepropertyroom.co>";
 
+interface SelectedServicePayload {
+  serviceId: string;
+  inputs: Record<string, number | string | boolean>;
+}
+
 export async function POST(request: Request) {
   try {
     const { account, properties } = await request.json();
+
+    const categories = await getServicesForBrand(getBrandMode());
+    const allServices = categories.flatMap(c => c.services);
 
     if (
       !account?.companyName ||
@@ -74,27 +83,24 @@ export async function POST(request: Request) {
     const createdIds: string[] = [];
 
     for (const p of properties) {
-      const services: PropertyServices = {
-        bedrooms: p.bedrooms,
-        photography: p.photography || false,
-        photoCount: p.photoCount || 20,
-        dronePhotography: p.dronePhotography || false,
-        dronePhotoCount: p.dronePhotoCount || 8,
-        standardVideo: p.standardVideo || false,
-        standardVideoDrone: p.standardVideoDrone || false,
-        agentPresentedVideo: p.agentPresentedVideo || false,
-        agentPresentedVideoDrone: p.agentPresentedVideoDrone || false,
-        socialMediaVideo: p.socialMediaVideo || false,
-        socialMediaPresentedVideo: p.socialMediaPresentedVideo || false,
-        standardFloorPlan: p.standardFloorPlan || false,
-        premiumFloorPlan: p.premiumFloorPlan || false,
-        floorPlan3D: p.floorPlan3D || false,
-      };
+      const servicesData = p.selectedServices.map((sel: SelectedServicePayload) => {
+        const svc = allServices.find(s => s.id === sel.serviceId);
+        return {
+          serviceId: sel.serviceId,
+          serviceName: svc?.name ?? "Unknown",
+          inputs: sel.inputs,
+          computedPrice: svc ? evaluatePrice(svc.pricingRules, { ...sel.inputs, bedrooms: p.bedrooms }).total : 0,
+        };
+      });
 
-      const subtotal = Math.round(calcPropertyTotal(services) * 100);
+      const subtotal = Math.round(servicesData.reduce((sum: number, s: { computedPrice: number }) => sum + s.computedPrice, 0) * 100); // pence
       const total = subtotal;
 
-      const workHours = calcWorkHours({ ...services, bedrooms: p.bedrooms });
+      const workHours = Math.round((p.selectedServices.reduce((acc: number, sel: SelectedServicePayload) => {
+        const svc = allServices.find(s => s.id === sel.serviceId);
+        if (!svc) return acc;
+        return acc + evaluateDuration(svc.durationRules, { ...sel.inputs, bedrooms: p.bedrooms });
+      }, 0) / 60) * 100) / 100;
 
       let startTime: string | null = p.timeSlot || null;
       let endTime: string | null = null;
@@ -120,7 +126,7 @@ export async function POST(request: Request) {
         agentCompany: account.companyName,
         agentEmail: account.email,
         agentPhone: account.phone,
-        services: JSON.stringify(services),
+        services: JSON.stringify(servicesData),
         workHours,
         subtotal,
         discountCode: null,
