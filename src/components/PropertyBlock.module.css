@@ -133,6 +133,17 @@
   margin-bottom: 0.5rem;
 }
 
+.categoryLabel {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  margin-bottom: 0.4rem;
+  margin-top: 0.75rem;
+}
+
 .pill {
   font-family: var(--font-body);
   font-size: 0.875rem;

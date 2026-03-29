@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import SectionHeader from "./SectionHeader";
 import AgentDetails from "./AgentDetails";
 import PropertyBlock from "./PropertyBlock";
 import type { SiblingBooking } from "./PropertyBlock";
 import Basket from "./Basket";
 import { useFadeIn } from "@/hooks/useFadeIn";
-import { isWorkingDay, calcShootMinutes } from "@/lib/scheduling";
-import { isWhiteLabel } from "@/lib/brand";
+import { isWorkingDay } from "@/lib/scheduling";
+import { isWhiteLabel, getBrandMode } from "@/lib/brand";
+import { evaluateDuration } from "@/lib/pricing-engine";
 import styles from "./BookingSection.module.css";
 
 export interface AgentInfo {
@@ -16,6 +17,11 @@ export interface AgentInfo {
   company: string;
   email: string;
   phone: string;
+}
+
+export interface SelectedService {
+  serviceId: string;
+  inputs: Record<string, number | string | boolean>;
 }
 
 export interface PropertyBooking {
@@ -26,19 +32,7 @@ export interface PropertyBooking {
   preferredDate: string;
   timeSlot: string; // "HH:MM" start time
   notes: string;
-  photography: boolean;
-  photoCount: number;
-  dronePhotography: boolean;
-  dronePhotoCount: 8 | 20;
-  standardVideo: boolean;
-  standardVideoDrone: boolean;
-  agentPresentedVideo: boolean;
-  agentPresentedVideoDrone: boolean;
-  socialMediaVideo: boolean;
-  socialMediaPresentedVideo: boolean;
-  standardFloorPlan: boolean;
-  premiumFloorPlan: boolean;
-  floorPlan3D: boolean;
+  selectedServices: SelectedService[];
 }
 
 export interface ValidationErrors {
@@ -55,19 +49,7 @@ function createProperty(): PropertyBooking {
     preferredDate: "",
     timeSlot: "",
     notes: "",
-    photography: false,
-    photoCount: 20,
-    dronePhotography: false,
-    dronePhotoCount: 8,
-    standardVideo: false,
-    standardVideoDrone: false,
-    agentPresentedVideo: false,
-    agentPresentedVideoDrone: false,
-    socialMediaVideo: false,
-    socialMediaPresentedVideo: false,
-    standardFloorPlan: false,
-    premiumFloorPlan: false,
-    floorPlan3D: false,
+    selectedServices: [],
   };
 }
 
@@ -82,6 +64,15 @@ export default function BookingSection() {
   const [properties, setProperties] = useState<PropertyBooking[]>([
     createProperty(),
   ]);
+
+  const [serviceCategories, setServiceCategories] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch(`/api/services?brand=${getBrandMode()}`)
+      .then((r) => r.json())
+      .then(setServiceCategories)
+      .catch(console.error);
+  }, []);
 
   const [discountCode, setDiscountCode] = useState("");
   const [discountPercentage, setDiscountPercentage] = useState(0);
@@ -133,11 +124,10 @@ export default function BookingSection() {
           pErr.preferredDate = "We only operate Monday – Saturday";
         }
       }
-      const hasServices = p.photography || p.dronePhotography || p.standardVideo || p.agentPresentedVideo || p.socialMediaVideo || p.socialMediaPresentedVideo || p.standardFloorPlan || p.premiumFloorPlan || p.floorPlan3D;
+      const hasServices = p.selectedServices.length > 0;
       if (hasServices && !p.timeSlot) {
         pErr.timeSlot = "Please select a time slot";
       }
-      if (p.photography && p.photoCount < 20) pErr.photoCount = "Minimum 20 photos";
       if (Object.keys(pErr).length > 0) propErrors[p.id] = pErr;
     }
 
@@ -194,6 +184,7 @@ export default function BookingSection() {
   // Build sibling booking info so each PropertyBlock can exclude
   // time slots already claimed by other properties in this booking
   const siblingMap = useMemo(() => {
+    const allServices = serviceCategories.flatMap((c: any) => c.services ?? []);
     const map = new Map<string, SiblingBooking[]>();
     for (const p of properties) {
       const siblings: SiblingBooking[] = properties
@@ -201,12 +192,16 @@ export default function BookingSection() {
         .map((s) => ({
           date: s.preferredDate,
           timeSlot: s.timeSlot,
-          durationMins: calcShootMinutes(s),
+          durationMins: s.selectedServices.reduce((total, sel) => {
+            const svc = allServices.find((sv: any) => sv.id === sel.serviceId);
+            if (!svc) return total;
+            return total + evaluateDuration(svc.durationRules, { ...sel.inputs, bedrooms: s.bedrooms });
+          }, 0),
         }));
       map.set(p.id, siblings);
     }
     return map;
-  }, [properties]);
+  }, [properties, serviceCategories]);
 
   return (
     <section ref={ref} className={`${styles.section} fade-in`}>
@@ -233,6 +228,7 @@ export default function BookingSection() {
               <PropertyBlock
                 key={property.id}
                 property={property}
+                serviceCategories={serviceCategories}
                 siblingBookings={siblingMap.get(property.id) || []}
                 onChange={(updates) => updateProperty(property.id, updates)}
                 onRemove={() => removeProperty(property.id)}
@@ -313,6 +309,7 @@ export default function BookingSection() {
             </div>
             <Basket
               properties={properties}
+              serviceCategories={serviceCategories}
               agent={agent}
               discountCode={appliedCode}
               discountPercentage={discountPercentage}

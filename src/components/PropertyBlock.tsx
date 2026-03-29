@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import type { PropertyBooking } from "./BookingSection";
-import { calcPropertyTotal } from "@/lib/pricing";
-import { calcShootMinutes, isWorkingDay, TRAVEL_BUFFER, type TimeSlot } from "@/lib/scheduling";
+import { evaluatePrice, evaluateDuration } from "@/lib/pricing-engine";
+import { isWorkingDay, TRAVEL_BUFFER, type TimeSlot } from "@/lib/scheduling";
 import DatePicker from "./DatePicker";
 import styles from "./PropertyBlock.module.css";
 
@@ -13,6 +13,7 @@ export interface SiblingBooking {
 
 interface Props {
   property: PropertyBooking;
+  serviceCategories: any[]; // ResolvedCategory[]
   siblingBookings: SiblingBooking[];
   onChange: (updates: Partial<PropertyBooking>) => void;
   onRemove: () => void;
@@ -23,6 +24,7 @@ interface Props {
 
 export default function PropertyBlock({
   property,
+  serviceCategories,
   siblingBookings,
   onChange,
   onRemove,
@@ -30,82 +32,108 @@ export default function PropertyBlock({
   errors = {},
   onClearError,
 }: Props) {
-  const togglePhotography = () => {
-    onChange({ photography: !property.photography });
+  const allServices = useMemo(
+    () => serviceCategories.flatMap((c: any) => c.services ?? []),
+    [serviceCategories]
+  );
+
+  const toggleService = (serviceId: string) => {
+    const existing = property.selectedServices.find(s => s.serviceId === serviceId);
+    if (existing) {
+      // Remove service (and any add-ons whose parent is this service)
+      const svc = allServices.find((s: any) => s.id === serviceId);
+      const idsToRemove = new Set([serviceId]);
+      if (!svc?.isAddon) {
+        allServices
+          .filter((s: any) => s.parentServiceId === serviceId)
+          .forEach((s: any) => idsToRemove.add(s.id));
+      }
+      onChange({ selectedServices: property.selectedServices.filter(s => !idsToRemove.has(s.serviceId)) });
+    } else {
+      // Add service with default inputs
+      const svc = allServices.find((s: any) => s.id === serviceId);
+      if (!svc) return;
+      const defaults: Record<string, number | string | boolean> = {};
+      for (const field of (svc.inputFields ?? [])) {
+        defaults[field.key] =
+          field.default !== undefined
+            ? field.default
+            : field.type === "number"
+            ? (field.min ?? 0)
+            : field.type === "boolean"
+            ? false
+            : field.options?.[0]?.value ?? "";
+      }
+      onChange({ selectedServices: [...property.selectedServices, { serviceId, inputs: defaults }] });
+    }
   };
 
-  const toggleDronePhotography = () => {
-    onChange({ dronePhotography: !property.dronePhotography });
-  };
+  const renderInputField = (serviceId: string, field: any, currentInputs: Record<string, any>) => {
+    const updateInput = (key: string, value: any) => {
+      const newServices = property.selectedServices.map(sel =>
+        sel.serviceId === serviceId
+          ? { ...sel, inputs: { ...sel.inputs, [key]: value } }
+          : sel
+      );
+      onChange({ selectedServices: newServices });
+    };
 
-  const toggleStandardVideo = () => {
-    const next = !property.standardVideo;
-    onChange({
-      standardVideo: next,
-      agentPresentedVideo: false,
-      agentPresentedVideoDrone: false,
-      standardVideoDrone: next ? property.standardVideoDrone : false,
-    });
-  };
-
-  const toggleAgentPresentedVideo = () => {
-    const next = !property.agentPresentedVideo;
-    onChange({
-      agentPresentedVideo: next,
-      standardVideo: false,
-      standardVideoDrone: false,
-      agentPresentedVideoDrone: next ? property.agentPresentedVideoDrone : false,
-    });
-  };
-
-  const toggleSocialMediaVideo = () => {
-    const next = !property.socialMediaVideo;
-    onChange({
-      socialMediaVideo: next,
-      socialMediaPresentedVideo: false,
-    });
-  };
-
-  const toggleSocialMediaPresentedVideo = () => {
-    const next = !property.socialMediaPresentedVideo;
-    onChange({
-      socialMediaPresentedVideo: next,
-      socialMediaVideo: false,
-    });
-  };
-
-  const toggleStandardFloorPlan = () => {
-    const next = !property.standardFloorPlan;
-    onChange({
-      standardFloorPlan: next,
-      premiumFloorPlan: false,
-      floorPlan3D: false,
-    });
-  };
-
-  const togglePremiumFloorPlan = () => {
-    const next = !property.premiumFloorPlan;
-    onChange({
-      standardFloorPlan: false,
-      premiumFloorPlan: next,
-      floorPlan3D: false,
-    });
-  };
-
-  const toggleFloorPlan3D = () => {
-    const next = !property.floorPlan3D;
-    onChange({
-      standardFloorPlan: false,
-      premiumFloorPlan: false,
-      floorPlan3D: next,
-    });
+    if (field.type === "number") {
+      return (
+        <label key={field.key} className={styles.serviceOption}>
+          <span>{field.label}</span>
+          <input
+            type="number"
+            value={currentInputs[field.key] ?? field.default ?? ""}
+            min={field.min}
+            max={field.max}
+            onChange={e => updateInput(field.key, parseInt(e.target.value, 10) || 0)}
+            className={styles.input}
+          />
+        </label>
+      );
+    }
+    if (field.type === "select") {
+      return (
+        <label key={field.key} className={styles.serviceOption}>
+          <span>{field.label}</span>
+          <select
+            value={String(currentInputs[field.key] ?? field.default ?? "")}
+            onChange={e => updateInput(field.key, e.target.value)}
+            className={styles.input}
+          >
+            {(field.options ?? []).map((opt: any) => (
+              <option key={opt.value} value={String(opt.value)}>{opt.label}</option>
+            ))}
+          </select>
+        </label>
+      );
+    }
+    if (field.type === "boolean") {
+      return (
+        <label key={field.key} className={styles.serviceOption}>
+          <input
+            type="checkbox"
+            checked={!!currentInputs[field.key]}
+            onChange={e => updateInput(field.key, e.target.checked)}
+            className={styles.checkbox}
+          />
+          <span>{field.label}</span>
+        </label>
+      );
+    }
+    return null;
   };
 
   const [apiSlots, setApiSlots] = useState<TimeSlot[]>([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [dateMessage, setDateMessage] = useState<{ text: string; ok: boolean } | null>(null);
 
-  const shootMinutes = calcShootMinutes(property);
+  const shootMinutes = property.selectedServices.reduce((total, sel) => {
+    const svc = allServices.find((s: any) => s.id === sel.serviceId);
+    if (!svc) return total;
+    return total + evaluateDuration(svc.durationRules, { ...sel.inputs, bedrooms: property.bedrooms });
+  }, 0);
 
   const fetchSlots = useCallback(async (date: string, duration: number) => {
     if (!date || duration <= 0) {
@@ -216,7 +244,11 @@ export default function PropertyBlock({
     return m === 0 ? `${hour}${period}` : `${hour}:${String(m).padStart(2, "0")}${period}`;
   };
 
-  const subtotal = calcPropertyTotal(property);
+  const subtotal = property.selectedServices.reduce((total, sel) => {
+    const svc = allServices.find((s: any) => s.id === sel.serviceId);
+    if (!svc) return total;
+    return total + evaluatePrice(svc.pricingRules, { ...sel.inputs, bedrooms: property.bedrooms }).total;
+  }, 0);
 
   return (
     <div className={styles.block}>
@@ -351,154 +383,53 @@ export default function PropertyBlock({
       <div className={styles.services}>
         <span className={styles.servicesLabel}>Services</span>
 
-        {/* Photography */}
-        <div className={styles.serviceGroup}>
-          <button
-            className={`${styles.pill} ${property.photography ? styles.active : ""}`}
-            onClick={togglePhotography}
-            type="button"
-          >
-            Photography
-          </button>
-          {property.photography && (
-            <label className={styles.serviceOption}>
-              <span>Number of photos</span>
-              <input
-                type="number"
-                value={property.photoCount}
-                onChange={(e) => {
-                  onChange({ photoCount: parseInt(e.target.value, 10) || 0 });
-                  onClearError?.("photoCount");
-                }}
-                className={`${styles.input} ${errors.photoCount ? styles.inputError : ""}`}
-              />
-              {errors.photoCount && <span className={styles.error}>{errors.photoCount}</span>}
-            </label>
-          )}
-        </div>
+        {serviceCategories.map((cat: any) => (
+          <div key={cat.id} className={styles.serviceGroup}>
+            {cat.name && (
+              <span className={styles.categoryLabel}>{cat.name}</span>
+            )}
+            {(cat.services ?? []).filter((s: any) => !s.isAddon).map((svc: any) => {
+              const isSelected = property.selectedServices.some(sel => sel.serviceId === svc.id);
+              const sel = property.selectedServices.find(sel => sel.serviceId === svc.id);
+              const addons = (cat.services ?? []).filter((a: any) => a.isAddon && a.parentServiceId === svc.id);
 
-        {/* Drone Photography */}
-        <div className={styles.serviceGroup}>
-          <button
-            className={`${styles.pill} ${property.dronePhotography ? styles.active : ""}`}
-            onClick={toggleDronePhotography}
-            type="button"
-          >
-            Drone Photography
-          </button>
-          {property.dronePhotography && (
-            <label className={styles.serviceOption}>
-              <span>Package</span>
-              <select
-                value={property.dronePhotoCount}
-                onChange={(e) =>
-                  onChange({ dronePhotoCount: parseInt(e.target.value, 10) as 8 | 20 })
-                }
-                className={styles.input}
-              >
-                <option value={8}>8 photos — £75</option>
-                <option value={20}>20 photos — £140</option>
-              </select>
-            </label>
-          )}
-        </div>
-
-        {/* Unpresented Property Video */}
-        <div className={styles.serviceGroup}>
-          <button
-            className={`${styles.pill} ${property.standardVideo ? styles.active : ""}`}
-            onClick={toggleStandardVideo}
-            type="button"
-          >
-            Unpresented Property Video
-          </button>
-          {property.standardVideo && (
-            <label className={styles.serviceOption}>
-              <input
-                type="checkbox"
-                checked={property.standardVideoDrone}
-                onChange={(e) => onChange({ standardVideoDrone: e.target.checked })}
-                className={styles.checkbox}
-              />
-              <span>Add drone footage (+£65)</span>
-            </label>
-          )}
-        </div>
-
-        {/* Agent Presented Video */}
-        <div className={styles.serviceGroup}>
-          <button
-            className={`${styles.pill} ${property.agentPresentedVideo ? styles.active : ""}`}
-            onClick={toggleAgentPresentedVideo}
-            type="button"
-          >
-            Agent Presented Video
-          </button>
-          {property.agentPresentedVideo && (
-            <label className={styles.serviceOption}>
-              <input
-                type="checkbox"
-                checked={property.agentPresentedVideoDrone}
-                onChange={(e) => onChange({ agentPresentedVideoDrone: e.target.checked })}
-                className={styles.checkbox}
-              />
-              <span>Add drone footage (+£65)</span>
-            </label>
-          )}
-        </div>
-
-        {/* Social Media Video — Unpresented */}
-        <div className={styles.serviceGroup}>
-          <button
-            className={`${styles.pill} ${property.socialMediaVideo ? styles.active : ""}`}
-            onClick={toggleSocialMediaVideo}
-            type="button"
-          >
-            Social Media Video (Unpresented)
-          </button>
-        </div>
-
-        {/* Social Media Video — Presented */}
-        <div className={styles.serviceGroup}>
-          <button
-            className={`${styles.pill} ${property.socialMediaPresentedVideo ? styles.active : ""}`}
-            onClick={toggleSocialMediaPresentedVideo}
-            type="button"
-          >
-            Social Media Video (Presented)
-          </button>
-        </div>
-
-        {/* Floor Plans */}
-        <div className={styles.serviceGroup}>
-          <button
-            className={`${styles.pill} ${property.standardFloorPlan ? styles.active : ""}`}
-            onClick={toggleStandardFloorPlan}
-            type="button"
-          >
-            Standard Floor Plan
-          </button>
-        </div>
-
-        <div className={styles.serviceGroup}>
-          <button
-            className={`${styles.pill} ${property.premiumFloorPlan ? styles.active : ""}`}
-            onClick={togglePremiumFloorPlan}
-            type="button"
-          >
-            Premium Floor Plan
-          </button>
-        </div>
-
-        <div className={styles.serviceGroup}>
-          <button
-            className={`${styles.pill} ${property.floorPlan3D ? styles.active : ""}`}
-            onClick={toggleFloorPlan3D}
-            type="button"
-          >
-            3D Floor Plan
-          </button>
-        </div>
+              return (
+                <div key={svc.id}>
+                  <button
+                    className={`${styles.pill} ${isSelected ? styles.active : ""}`}
+                    onClick={() => toggleService(svc.id)}
+                    type="button"
+                  >
+                    {svc.name}
+                  </button>
+                  {/* Input fields for selected service */}
+                  {isSelected && (svc.inputFields ?? []).length > 0 && (
+                    <div>
+                      {(svc.inputFields ?? []).map((field: any) =>
+                        renderInputField(svc.id, field, sel?.inputs ?? {})
+                      )}
+                    </div>
+                  )}
+                  {/* Add-on services */}
+                  {isSelected && addons.map((addon: any) => {
+                    const addonSelected = property.selectedServices.some(sel => sel.serviceId === addon.id);
+                    return (
+                      <label key={addon.id} className={styles.serviceOption}>
+                        <input
+                          type="checkbox"
+                          checked={addonSelected}
+                          onChange={() => toggleService(addon.id)}
+                          className={styles.checkbox}
+                        />
+                        <span>{addon.description || addon.name}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
+        ))}
       </div>
 
       {subtotal > 0 && (
