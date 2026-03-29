@@ -1,16 +1,30 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 
-function getSecret() {
+function getAdminSecret() {
   const secret = process.env.ADMIN_JWT_SECRET;
   if (!secret) throw new Error("ADMIN_JWT_SECRET not set");
   return new TextEncoder().encode(secret);
 }
 
+function getClientSecret() {
+  const secret = process.env.CLIENT_JWT_SECRET;
+  if (!secret) throw new Error("CLIENT_JWT_SECRET not set");
+  return new TextEncoder().encode(secret);
+}
+
+const PUBLIC_PORTAL_PATHS = [
+  "/portal/login",
+  "/portal/signup",
+  "/api/portal/login",
+  "/api/portal/signup",
+  "/api/portal/logout",
+];
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Allow login page and login/logout API through without auth
+  // ── Admin auth (existing) ──
   if (pathname === "/admin/login") return NextResponse.next();
   if (pathname === "/api/admin/login") return NextResponse.next();
   if (pathname === "/api/admin/logout") return NextResponse.next();
@@ -18,30 +32,53 @@ export async function middleware(request: NextRequest) {
   const isAdminPage = pathname.startsWith("/admin");
   const isAdminApi = pathname.startsWith("/api/admin");
 
-  if (!isAdminPage && !isAdminApi) return NextResponse.next();
-
-  const token = request.cookies.get("admin_session")?.value;
-
-  if (!token) {
-    if (isAdminApi) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (isAdminPage || isAdminApi) {
+    const token = request.cookies.get("admin_session")?.value;
+    if (!token) {
+      if (isAdminApi) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+      return NextResponse.redirect(new URL("/admin/login", request.url));
     }
-    const loginUrl = new URL("/admin/login", request.url);
-    return NextResponse.redirect(loginUrl);
+    try {
+      await jwtVerify(token, getAdminSecret());
+      return NextResponse.next();
+    } catch {
+      if (isAdminApi) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+      return NextResponse.redirect(new URL("/admin/login", request.url));
+    }
   }
 
-  try {
-    await jwtVerify(token, getSecret());
-    return NextResponse.next();
-  } catch {
-    if (isAdminApi) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  // ── Portal auth ──
+  if (PUBLIC_PORTAL_PATHS.includes(pathname)) return NextResponse.next();
+
+  const isPortalPage = pathname.startsWith("/portal");
+  const isPortalApi = pathname.startsWith("/api/portal");
+
+  if (isPortalPage || isPortalApi) {
+    const token = request.cookies.get("client_session")?.value;
+    if (!token) {
+      if (isPortalApi) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+      return NextResponse.redirect(new URL("/portal/login", request.url));
     }
-    const loginUrl = new URL("/admin/login", request.url);
-    return NextResponse.redirect(loginUrl);
+    try {
+      await jwtVerify(token, getClientSecret());
+      return NextResponse.next();
+    } catch {
+      if (isPortalApi) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+      return NextResponse.redirect(new URL("/portal/login", request.url));
+    }
   }
+
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/admin/:path*"],
+  matcher: ["/admin/:path*", "/api/admin/:path*", "/portal/:path*", "/api/portal/:path*"],
 };
