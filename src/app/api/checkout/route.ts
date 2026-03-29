@@ -2,22 +2,14 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { db } from "@/lib/db";
 import { bookings } from "@/lib/schema";
-import { calcWorkHours } from "@/lib/scheduling";
 import {
-  calcPhotography,
-  calcDronePhotography,
-  calcStandardVideo,
-  calcAgentPresentedVideo,
-  calcVideoDrone,
-  calcSocialMediaVideo,
-  calcSocialMediaPresentedVideo,
-  calcStandardFloorPlan,
-  calcPremiumFloorPlan,
-  calcFloorPlan3D,
+  evaluatePrice,
+  evaluateDuration,
   calcMultiPropertyDiscount,
-  calcPropertyTotal,
-  type PropertyServices,
-} from "@/lib/pricing";
+  type PricingRules,
+} from "@/lib/pricing-engine";
+import { getServicesForBrand } from "@/lib/services";
+import { getBrandMode } from "@/lib/brand";
 
 let _stripe: Stripe;
 function getStripe() {
@@ -25,23 +17,25 @@ function getStripe() {
   return _stripe;
 }
 
-interface PropertyPayload extends PropertyServices {
+interface SelectedServicePayload {
+  serviceId: string;
+  inputs: Record<string, number | string | boolean>;
+}
+
+interface PropertyPayload {
   id: string;
   address: string;
   postcode: string;
+  bedrooms: number;
   preferredDate: string;
   timeSlot: string;
   notes: string;
+  selectedServices: SelectedServicePayload[];
 }
 
 interface CheckoutBody {
   properties: PropertyPayload[];
-  agent: {
-    name: string;
-    company: string;
-    email: string;
-    phone: string;
-  };
+  agent: { name: string; company: string; email: string; phone: string };
   discountCode?: string;
   discountPercentage?: number;
 }
@@ -53,7 +47,15 @@ function formatSlotTime(time: string): string {
   return m === 0 ? `${hour}${period}` : `${hour}:${String(m).padStart(2, "0")}${period}`;
 }
 
-function formatBookingLabel(p: PropertyPayload): string {
+function calcShootMinsForLabel(p: PropertyPayload, allServices: { id: string; durationRules: any }[]): number {
+  return p.selectedServices.reduce((total, sel) => {
+    const svc = allServices.find(s => s.id === sel.serviceId);
+    if (!svc) return total;
+    return total + evaluateDuration(svc.durationRules, { ...sel.inputs, bedrooms: p.bedrooms });
+  }, 0);
+}
+
+function formatBookingLabel(p: PropertyPayload, allServices: { id: string; durationRules: any }[]): string {
   const parts: string[] = [p.address || "Property"];
 
   if (p.preferredDate) {
@@ -67,7 +69,7 @@ function formatBookingLabel(p: PropertyPayload): string {
   }
 
   if (p.timeSlot) {
-    const shootMins = calcShootMinsForLabel(p);
+    const shootMins = calcShootMinsForLabel(p, allServices);
     const [h, m] = p.timeSlot.split(":").map(Number);
     const endTotal = h * 60 + m + shootMins;
     const endTime = `${String(Math.floor(endTotal / 60)).padStart(2, "0")}:${String(endTotal % 60).padStart(2, "0")}`;
@@ -77,188 +79,37 @@ function formatBookingLabel(p: PropertyPayload): string {
   return parts.join(" · ");
 }
 
-/** Quick duration calc for the label — mirrors scheduling.ts logic */
-function calcShootMinsForLabel(p: PropertyPayload): number {
-  let mins = 0;
-  if (p.photography) mins += 40 + Math.max(0, Math.max(p.photoCount, 20) - 20) * 5;
-  if (p.dronePhotography) mins += 25;
-  if (p.agentPresentedVideo) {
-    mins += 105 + Math.max(0, p.bedrooms - 2) * 10;
-    if (p.agentPresentedVideoDrone) mins += 25;
-  } else if (p.standardVideo) {
-    mins += 40 + Math.max(0, p.bedrooms - 2) * 5;
-    if (p.standardVideoDrone) mins += 25;
-  }
-  if (p.socialMediaPresentedVideo) {
-    mins += 60 + Math.max(0, p.bedrooms - 2) * 10;
-  } else if (p.socialMediaVideo) {
-    mins += 25 + Math.max(0, p.bedrooms - 2) * 5;
-  }
-  if (p.standardFloorPlan || p.premiumFloorPlan || p.floorPlan3D) {
-    mins += 25 + Math.max(0, p.bedrooms - 2) * 5;
-  }
-  return mins;
-}
+async function buildLineItems(properties: PropertyPayload[]) {
+  const categories = await getServicesForBrand(getBrandMode());
+  const allServices = categories.flatMap(c => c.services);
 
-function buildLineItems(
-  properties: PropertyPayload[],
-): Stripe.Checkout.SessionCreateParams.LineItem[] {
   const items: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
 
   for (const p of properties) {
-    const label = formatBookingLabel(p);
+    const label = formatBookingLabel(p, allServices);
 
-    if (p.photography) {
-      const price = calcPhotography(p.photoCount);
-      const bulkApplied = p.photoCount >= 100;
-      items.push({
-        price_data: {
-          currency: "gbp",
-          product_data: {
-            name: `Photography (${p.photoCount} photos)${bulkApplied ? " — 10% off" : ""}`,
-            description: label,
-          },
-          unit_amount: Math.round(price * 100),
-        },
-        quantity: 1,
-      });
-    }
+    for (const sel of p.selectedServices) {
+      const svc = allServices.find(s => s.id === sel.serviceId);
+      if (!svc) continue;
 
-    if (p.dronePhotography) {
-      const price = calcDronePhotography(p.dronePhotoCount);
-      items.push({
-        price_data: {
-          currency: "gbp",
-          product_data: {
-            name: `Drone Photography (${p.dronePhotoCount} photos)`,
-            description: label,
-          },
-          unit_amount: Math.round(price * 100),
-        },
-        quantity: 1,
-      });
-    }
+      const inputs = { ...sel.inputs, bedrooms: p.bedrooms };
+      const result = evaluatePrice(svc.pricingRules, inputs);
 
-    if (p.agentPresentedVideo) {
-      const price = calcAgentPresentedVideo(p.bedrooms);
       items.push({
         price_data: {
           currency: "gbp",
           product_data: {
-            name: `Agent Presented Video (${p.bedrooms}-bed)`,
+            name: svc.name,
             description: label,
           },
-          unit_amount: Math.round(price * 100),
-        },
-        quantity: 1,
-      });
-      if (p.agentPresentedVideoDrone) {
-        items.push({
-          price_data: {
-            currency: "gbp",
-            product_data: {
-              name: "Drone Footage (with Agent Presented Video)",
-              description: label,
-            },
-            unit_amount: Math.round(calcVideoDrone() * 100),
-          },
-          quantity: 1,
-        });
-      }
-    } else if (p.standardVideo) {
-      const price = calcStandardVideo(p.bedrooms);
-      items.push({
-        price_data: {
-          currency: "gbp",
-          product_data: {
-            name: `Unpresented Property Video (${p.bedrooms}-bed)`,
-            description: label,
-          },
-          unit_amount: Math.round(price * 100),
-        },
-        quantity: 1,
-      });
-      if (p.standardVideoDrone) {
-        items.push({
-          price_data: {
-            currency: "gbp",
-            product_data: {
-              name: "Drone Footage (with Unpresented Video)",
-              description: label,
-            },
-            unit_amount: Math.round(calcVideoDrone() * 100),
-          },
-          quantity: 1,
-        });
-      }
-    }
-
-    if (p.socialMediaPresentedVideo) {
-      items.push({
-        price_data: {
-          currency: "gbp",
-          product_data: {
-            name: `Social Media Video — Presented (${p.bedrooms}-bed)`,
-            description: label,
-          },
-          unit_amount: Math.round(calcSocialMediaPresentedVideo(p.bedrooms) * 100),
-        },
-        quantity: 1,
-      });
-    } else if (p.socialMediaVideo) {
-      items.push({
-        price_data: {
-          currency: "gbp",
-          product_data: {
-            name: `Social Media Video — Unpresented (${p.bedrooms}-bed)`,
-            description: label,
-          },
-          unit_amount: Math.round(calcSocialMediaVideo(p.bedrooms) * 100),
-        },
-        quantity: 1,
-      });
-    }
-
-    if (p.floorPlan3D) {
-      items.push({
-        price_data: {
-          currency: "gbp",
-          product_data: {
-            name: `3D Floor Plan (${p.bedrooms}-bed)`,
-            description: label,
-          },
-          unit_amount: Math.round(calcFloorPlan3D(p.bedrooms) * 100),
-        },
-        quantity: 1,
-      });
-    } else if (p.premiumFloorPlan) {
-      items.push({
-        price_data: {
-          currency: "gbp",
-          product_data: {
-            name: `Premium Floor Plan (${p.bedrooms}-bed)`,
-            description: label,
-          },
-          unit_amount: Math.round(calcPremiumFloorPlan(p.bedrooms) * 100),
-        },
-        quantity: 1,
-      });
-    } else if (p.standardFloorPlan) {
-      items.push({
-        price_data: {
-          currency: "gbp",
-          product_data: {
-            name: `Standard Floor Plan (${p.bedrooms}-bed)`,
-            description: label,
-          },
-          unit_amount: Math.round(calcStandardFloorPlan(p.bedrooms) * 100),
+          unit_amount: Math.round(result.total * 100),
         },
         quantity: 1,
       });
     }
   }
 
-  return items;
+  return { items, allServices };
 }
 
 function calcTotalDiscountPence(
@@ -295,7 +146,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const lineItems = buildLineItems(properties);
+    const { items: lineItems, allServices } = await buildLineItems(properties);
 
     if (!lineItems.length) {
       return NextResponse.json(
@@ -341,7 +192,6 @@ export async function POST(request: Request) {
 
     for (let i = 0; i < properties.length; i++) {
       const p = properties[i];
-      // Split each property across two metadata keys to stay under Stripe's 500-char limit
       metadata[`prop_${i}_info`] = JSON.stringify({
         a: p.address,
         pc: p.postcode,
@@ -350,21 +200,9 @@ export async function POST(request: Request) {
         t: p.timeSlot,
         n: (p.notes || "").slice(0, 100),
       });
-      metadata[`prop_${i}_svc`] = JSON.stringify({
-        ph: p.photography,
-        phc: p.photoCount,
-        dr: p.dronePhotography,
-        drc: p.dronePhotoCount,
-        sv: p.standardVideo,
-        svd: p.standardVideoDrone,
-        av: p.agentPresentedVideo,
-        avd: p.agentPresentedVideoDrone,
-        sm: p.socialMediaVideo,
-        smp: p.socialMediaPresentedVideo,
-        sfp: p.standardFloorPlan,
-        pfp: p.premiumFloorPlan,
-        fp3: p.floorPlan3D,
-      });
+      metadata[`prop_${i}_svc`] = JSON.stringify(
+        p.selectedServices.map(s => ({ id: s.serviceId, in: s.inputs }))
+      );
     }
 
     const session = await stripe.checkout.sessions.create({
@@ -380,44 +218,32 @@ export async function POST(request: Request) {
     // ── Save pending bookings BEFORE redirecting to Stripe ──
     const discountPct = discountPercentage || 0;
     for (const p of properties) {
-      const services: PropertyServices = {
-        bedrooms: p.bedrooms,
-        photography: p.photography,
-        photoCount: p.photoCount,
-        dronePhotography: p.dronePhotography,
-        dronePhotoCount: p.dronePhotoCount,
-        standardVideo: p.standardVideo,
-        standardVideoDrone: p.standardVideoDrone,
-        agentPresentedVideo: p.agentPresentedVideo,
-        agentPresentedVideoDrone: p.agentPresentedVideoDrone,
-        socialMediaVideo: p.socialMediaVideo || false,
-        socialMediaPresentedVideo: p.socialMediaPresentedVideo || false,
-        standardFloorPlan: p.standardFloorPlan || false,
-        premiumFloorPlan: p.premiumFloorPlan || false,
-        floorPlan3D: p.floorPlan3D || false,
-      };
-
-      const subtotal = Math.round(calcPropertyTotal(services) * 100);
-      const propDiscount = discountPct
-        ? Math.round(subtotal * (discountPct / 100))
-        : 0;
-      const total = subtotal - propDiscount;
-
-      const workHours = calcWorkHours({
-        photography: p.photography,
-        photoCount: p.photoCount || 20,
-        dronePhotography: p.dronePhotography,
-        standardVideo: p.standardVideo,
-        standardVideoDrone: p.standardVideoDrone || false,
-        agentPresentedVideo: p.agentPresentedVideo,
-        agentPresentedVideoDrone: p.agentPresentedVideoDrone || false,
-        socialMediaVideo: p.socialMediaVideo || false,
-        socialMediaPresentedVideo: p.socialMediaPresentedVideo || false,
-        standardFloorPlan: p.standardFloorPlan || false,
-        premiumFloorPlan: p.premiumFloorPlan || false,
-        floorPlan3D: p.floorPlan3D || false,
-        bedrooms: p.bedrooms,
+      const servicesData = p.selectedServices.map(sel => {
+        const svc = allServices.find(s => s.id === sel.serviceId);
+        return {
+          serviceId: sel.serviceId,
+          serviceName: svc?.name ?? "Unknown",
+          inputs: sel.inputs,
+          computedPrice: svc
+            ? evaluatePrice(svc.pricingRules, { ...sel.inputs, bedrooms: p.bedrooms }).total
+            : 0,
+        };
       });
+
+      const workHours =
+        Math.round(
+          (p.selectedServices.reduce((total, sel) => {
+            const svc = allServices.find(s => s.id === sel.serviceId);
+            if (!svc) return total;
+            return total + evaluateDuration(svc.durationRules, { ...sel.inputs, bedrooms: p.bedrooms });
+          }, 0) / 60) * 100
+        ) / 100;
+
+      const subtotal = Math.round(
+        servicesData.reduce((sum, s) => sum + s.computedPrice, 0) * 100
+      );
+      const propDiscount = discountPct ? Math.round(subtotal * (discountPct / 100)) : 0;
+      const total = subtotal - propDiscount;
 
       let startTime: string | null = p.timeSlot || null;
       let endTime: string | null = null;
@@ -442,7 +268,7 @@ export async function POST(request: Request) {
         agentCompany: agent.company || null,
         agentEmail: agent.email,
         agentPhone: agent.phone || null,
-        services: JSON.stringify(services),
+        services: JSON.stringify(servicesData),
         workHours,
         subtotal,
         discountCode: discountCode || null,
