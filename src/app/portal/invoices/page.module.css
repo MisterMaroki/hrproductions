@@ -1,17 +1,17 @@
 .main {
   min-height: 100vh;
-  background: #f5f0eb;
-  padding: 40px 20px;
+  background: #ffffff;
+  padding: 48px 32px;
 }
 
 .container {
-  max-width: 900px;
+  max-width: 1000px;
   margin: 0 auto;
 }
 
 .title {
   margin: 0 0 24px;
-  font-size: 24px;
+  font-size: 1.5rem;
   font-weight: 700;
   color: #0a0a0a;
 }
@@ -19,8 +19,8 @@
 .empty {
   text-align: center;
   color: #8a8580;
-  font-size: 14px;
-  padding: 40px;
+  font-size: 15px;
+  padding: 60px 40px;
 }
 
 .list {
@@ -31,12 +31,18 @@
 
 .card {
   background: #ffffff;
-  border: 2px solid #0a0a0a;
+  border: 1px solid #e8e4df;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.15s ease;
+}
+
+.card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .cardHeader {
   width: 100%;
-  padding: 16px 20px;
+  padding: 20px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -80,6 +86,7 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   border: 1px solid;
+  border-radius: 2px;
 }
 
 .badge_pending {
@@ -101,7 +108,7 @@
 }
 
 .cardBody {
-  padding: 0 20px 20px;
+  padding: 0 24px 24px;
   border-top: 1px solid #e8e4df;
 }
 
@@ -122,13 +129,13 @@
 
 .itemsTable th {
   text-align: left;
-  padding: 6px 0;
+  padding: 8px 0;
   font-size: 9px;
   font-weight: 700;
   color: #8a8580;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  border-bottom: 1px solid #e8e4df;
+  border-bottom: 1px solid #f0ece7;
 }
 
 .itemsTable th:last-child {
@@ -136,10 +143,10 @@
 }
 
 .itemsTable td {
-  padding: 8px 0;
+  padding: 10px 0;
   font-size: 13px;
   color: #0a0a0a;
-  border-bottom: 1px solid #e8e4df;
+  border-bottom: 1px solid #f0ece7;
 }
 
 .itemsTable td:last-child {
@@ -149,8 +156,8 @@
 
 .downloadBtn {
   display: inline-block;
-  margin-top: 12px;
-  padding: 8px 16px;
+  margin-top: 14px;
+  padding: 9px 18px;
   background: #0a0a0a;
   color: #ffffff;
   font-size: 11px;
@@ -158,4 +165,5 @@
   text-transform: uppercase;
   letter-spacing: 0.1em;
   text-decoration: none;
+  border: 1px solid #0a0a0a;
 }

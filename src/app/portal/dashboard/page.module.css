@@ -1,7 +1,7 @@
 .main {
   min-height: 100vh;
-  background: #f5f0eb;
-  padding: 40px 20px;
+  background: #ffffff;
+  padding: 48px 40px;
 }
 
 .container {
@@ -15,36 +15,49 @@
   font-size: 14px;
 }
 
+.titleArea {
+  margin-bottom: 32px;
+  padding-bottom: 32px;
+  border-bottom: 1px solid #e8e4df;
+}
+
 .title {
-  margin: 0 0 24px;
-  font-size: 24px;
+  margin: 0 0 6px;
+  font-size: 1.75rem;
   font-weight: 700;
   color: #0a0a0a;
-  letter-spacing: 0.02em;
+  letter-spacing: -0.01em;
+}
+
+.companyLabel {
+  font-size: 13px;
+  color: #8a8580;
+  font-weight: 400;
+  letter-spacing: 0.01em;
 }
 
 .bannerWarning {
-  padding: 14px 18px;
+  padding: 16px 20px;
   background: #fefce8;
-  border: 2px solid #ca8a04;
+  border: 1px solid #ca8a04;
   color: #854d0e;
   font-size: 14px;
   margin-bottom: 20px;
 }
 
 .bannerError {
-  padding: 14px 18px;
+  padding: 16px 20px;
   background: #fef2f2;
-  border: 2px solid #dc2626;
+  border: 1px solid #dc2626;
   color: #dc2626;
   font-size: 14px;
   margin-bottom: 20px;
 }
 
 .bannerAction {
-  padding: 14px 18px;
+  padding: 16px 20px;
   background: #ffffff;
-  border: 2px solid #0a0a0a;
+  border: 1px solid #0a0a0a;
   font-size: 14px;
   color: #0a0a0a;
   margin-bottom: 20px;
@@ -75,15 +88,16 @@
 
 .statCard {
   background: #ffffff;
-  border: 2px solid #0a0a0a;
-  padding: 20px;
+  border: 1px solid #e8e4df;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  padding: 28px;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
 .statLabel {
-  font-size: 9px;
+  font-size: 0.72rem;
   font-weight: 700;
   color: #8a8580;
   text-transform: uppercase;
@@ -91,15 +105,17 @@
 }
 
 .statValue {
-  font-size: 28px;
+  font-size: 2rem;
   font-weight: 700;
   color: #0a0a0a;
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
 }
 
 .statSub {
   font-size: 12px;
   color: #8a8580;
+  margin-top: 6px;
 }
 
 .actions {
@@ -108,7 +124,7 @@
 }
 
 .primaryBtn {
-  padding: 12px 24px;
+  padding: 14px 28px;
   background: #0a0a0a;
   color: #ffffff;
   font-size: 13px;
@@ -116,21 +132,35 @@
   text-transform: uppercase;
   letter-spacing: 0.1em;
   text-decoration: none;
+  transition: opacity 0.15s;
+}
+
+.primaryBtn:hover {
+  opacity: 0.85;
 }
 
 .secondaryBtn {
-  padding: 12px 24px;
-  background: #ffffff;
-  border: 2px solid #0a0a0a;
+  padding: 14px 28px;
+  background: transparent;
+  border: 1px solid #0a0a0a;
   color: #0a0a0a;
   font-size: 13px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   text-decoration: none;
+  transition: background 0.15s;
+}
+
+.secondaryBtn:hover {
+  background: rgba(10, 10, 10, 0.05);
 }
 
 @media (max-width: 640px) {
+  .main {
+    padding: 48px 20px;
+  }
+
   .statsGrid {
     grid-template-columns: 1fr;
   }

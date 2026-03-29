@@ -56,7 +56,10 @@ export default function DashboardPage() {
       <PortalNav />
       <main className={styles.main}>
         <div className={styles.container}>
-          <h1 className={styles.title}>Welcome, {client.companyName}</h1>
+          <div className={styles.titleArea}>
+            <h1 className={styles.title}>Welcome back, {client.contactName.split(" ")[0]}</h1>
+            <p className={styles.companyLabel}>{client.companyName}</p>
+          </div>
 
           {client.status === "pending_approval" && (
             <div className={styles.bannerWarning}>

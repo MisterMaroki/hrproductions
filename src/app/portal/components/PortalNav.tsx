@@ -17,7 +17,7 @@ export default function PortalNav() {
     <nav className={styles.nav}>
       <div className={styles.inner}>
         <Link href="/portal/dashboard" className={styles.brand}>
-          PropertyRoom
+          THE PROPERTY ROOM
         </Link>
         <div className={styles.links}>
           <Link
