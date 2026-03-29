@@ -1,3 +1,5 @@
+import { evaluateDuration, type DurationRules } from "@/lib/pricing-engine";
+
 /** Working day: 9:00–18:00, Monday–Saturday */
 export const DAY_START = 9 * 60; // 540 mins from midnight
 export const DAY_END = 18 * 60; // 1080 mins from midnight
@@ -149,4 +151,20 @@ export function isWorkingDay(dateStr: string): boolean {
   const date = new Date(dateStr + "T12:00:00");
   const day = date.getDay();
   return day >= 1 && day <= 6; // 0 = Sunday
+}
+
+export interface DynamicServiceSelection {
+  durationRules: DurationRules;
+  inputs: Record<string, number | string | boolean>;
+}
+
+export function calcDynamicShootMinutes(selectedServices: DynamicServiceSelection[]): number {
+  return selectedServices.reduce(
+    (total, svc) => total + evaluateDuration(svc.durationRules, svc.inputs),
+    0
+  );
+}
+
+export function calcDynamicWorkHours(selectedServices: DynamicServiceSelection[]): number {
+  return Math.round((calcDynamicShootMinutes(selectedServices) / 60) * 100) / 100;
 }

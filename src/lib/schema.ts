@@ -95,3 +95,36 @@ export const invoiceItems = sqliteTable("invoice_items", {
   bookingId: text("booking_id").notNull(),
   amount: integer("amount").notNull(),
 });
+
+export const serviceCategories = sqliteTable("service_categories", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const services = sqliteTable("services", {
+  id: text("id").primaryKey(),
+  categoryId: text("category_id").notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  pricingRules: text("pricing_rules").notNull(),
+  durationRules: text("duration_rules").notNull(),
+  inputFields: text("input_fields").notNull(),
+  isAddon: integer("is_addon").notNull().default(0),
+  parentServiceId: text("parent_service_id"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  visible: integer("visible").notNull().default(1),
+  createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text("updated_at").default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const serviceBrandOverrides = sqliteTable("service_brand_overrides", {
+  id: text("id").primaryKey(),
+  serviceId: text("service_id").notNull(),
+  brandMode: text("brand_mode").notNull(),
+  visible: integer("visible").notNull().default(1),
+  pricingRules: text("pricing_rules"),
+  durationRules: text("duration_rules"),
+  inputFields: text("input_fields"),
+});
