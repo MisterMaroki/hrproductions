@@ -138,7 +138,9 @@ export default function AccountPage() {
             <h2 className={styles.sectionTitle}>Payment Method</h2>
             {hasMandateSetup ? (
               <div className={styles.mandateActive}>
-                <span className={styles.mandateCheck}>✓</span>
+                <span className={styles.mandateCheck}>
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="9" fill="#16a34a"/><path d="M5.5 9L8 11.5L12.5 6.5" stroke="#fff" strokeWidth="1.5" strokeLinecap="square"/></svg>
+                </span>
                 <span>Direct Debit mandate is active</span>
               </div>
             ) : (

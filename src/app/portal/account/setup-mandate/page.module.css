@@ -1,18 +1,19 @@
 .main {
   min-height: 100vh;
-  background: #f5f0eb;
-  padding: 40px 20px;
+  background: #ffffff;
+  padding: 48px 20px 40px;
 }
 
 .container {
-  max-width: 560px;
+  max-width: 520px;
   margin: 0 auto;
 }
 
 .setupBox,
 .successBox {
   background: #ffffff;
-  border: 2px solid #0a0a0a;
+  border: 1px solid #e8e4df;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   padding: 36px;
   display: flex;
   flex-direction: column;
@@ -21,31 +22,41 @@
 
 .title {
   margin: 0;
-  font-size: 22px;
+  font-size: 1.5rem;
   font-weight: 700;
   color: #0a0a0a;
-  letter-spacing: 0.02em;
+  letter-spacing: -0.02em;
 }
 
 .description {
   margin: 0;
-  font-size: 14px;
+  font-size: 15px;
   color: #3d3933;
-  line-height: 1.6;
+  line-height: 1.65;
 }
 
 .bulletList {
   margin: 0;
-  padding-left: 20px;
+  padding-left: 0;
+  list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .bulletList li {
-  font-size: 13px;
+  font-size: 14px;
   color: #5a5550;
-  line-height: 1.5;
+  line-height: 1.55;
+  padding-left: 18px;
+  position: relative;
+}
+
+.bulletList li::before {
+  content: "–";
+  position: absolute;
+  left: 0;
+  color: #b5b0aa;
 }
 
 .errorMsg {
@@ -55,12 +66,13 @@
   font-weight: 600;
   padding: 10px 14px;
   background: #fef2f2;
-  border: 2px solid #dc2626;
+  border: 1px solid #fecaca;
 }
 
 .primaryBtn {
-  display: inline-block;
-  padding: 12px 24px;
+  display: block;
+  width: 100%;
+  padding: 14px 24px;
   background: #0a0a0a;
   color: #ffffff;
   font-size: 12px;
@@ -70,9 +82,9 @@
   text-decoration: none;
   border: none;
   cursor: pointer;
-  align-self: flex-start;
   font-family: inherit;
-  transition: opacity 0.15s;
+  text-align: center;
+  transition: opacity 0.15s, background-color 0.15s;
 }
 
 .primaryBtn:disabled {
@@ -88,7 +100,7 @@
   font-size: 13px;
   color: #8a8580;
   text-decoration: underline;
-  align-self: flex-start;
+  align-self: center;
 }
 
 .cancelLink:hover {
@@ -106,7 +118,7 @@
   display: inline-block;
   width: 18px;
   height: 18px;
-  border: 2px solid #d4cfc9;
+  border: 2px solid #e8e4df;
   border-top-color: #0a0a0a;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
