@@ -14,15 +14,96 @@ import {
   calcStandardFloorPlan,
   calcPremiumFloorPlan,
   calcFloorPlan3D,
-  type PropertyServices,
 } from "@/lib/pricing";
-import { calcWorkHours } from "@/lib/scheduling";
 import { sendBookingEmails } from "@/lib/email";
 
 let _stripe: Stripe;
 function getStripe() {
   if (!_stripe) _stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
   return _stripe;
+}
+
+/** Build a services list from the legacy boolean-flags format stored in booking.services. */
+function buildLegacyServices(
+  p: Record<string, unknown>
+): { name: string; amount: number }[] {
+  const services: { name: string; amount: number }[] = [];
+
+  if (p.photography) {
+    const count = (p.photoCount as number) || 20;
+    services.push({
+      name: `Photography (${count} photos)`,
+      amount: Math.round(calcPhotography(count) * 100),
+    });
+  }
+  if (p.dronePhotography) {
+    const count = (p.dronePhotoCount as 8 | 20) || 8;
+    services.push({
+      name: `Drone Photography (${count} photos)`,
+      amount: Math.round(calcDronePhotography(count) * 100),
+    });
+  }
+  if (p.agentPresentedVideo) {
+    const beds = (p.bedrooms as number) || 2;
+    services.push({
+      name: `Agent Presented Video (${beds}-bed)`,
+      amount: Math.round(calcAgentPresentedVideo(beds) * 100),
+    });
+    if (p.agentPresentedVideoDrone) {
+      services.push({
+        name: "Drone Footage (with Agent Presented Video)",
+        amount: Math.round(calcVideoDrone() * 100),
+      });
+    }
+  } else if (p.standardVideo) {
+    const beds = (p.bedrooms as number) || 2;
+    services.push({
+      name: `Unpresented Property Video (${beds}-bed)`,
+      amount: Math.round(calcStandardVideo(beds) * 100),
+    });
+    if (p.standardVideoDrone) {
+      services.push({
+        name: "Drone Footage (with Unpresented Video)",
+        amount: Math.round(calcVideoDrone() * 100),
+      });
+    }
+  }
+
+  if (p.socialMediaPresentedVideo) {
+    const beds = (p.bedrooms as number) || 2;
+    services.push({
+      name: `Social Media Video — Presented (${beds}-bed)`,
+      amount: Math.round(calcSocialMediaPresentedVideo(beds) * 100),
+    });
+  } else if (p.socialMediaVideo) {
+    const beds = (p.bedrooms as number) || 2;
+    services.push({
+      name: `Social Media Video — Unpresented (${beds}-bed)`,
+      amount: Math.round(calcSocialMediaVideo(beds) * 100),
+    });
+  }
+
+  if (p.floorPlan3D) {
+    const beds = (p.bedrooms as number) || 2;
+    services.push({
+      name: `3D Floor Plan (${beds}-bed)`,
+      amount: Math.round(calcFloorPlan3D(beds) * 100),
+    });
+  } else if (p.premiumFloorPlan) {
+    const beds = (p.bedrooms as number) || 2;
+    services.push({
+      name: `Premium Floor Plan (${beds}-bed)`,
+      amount: Math.round(calcPremiumFloorPlan(beds) * 100),
+    });
+  } else if (p.standardFloorPlan) {
+    const beds = (p.bedrooms as number) || 2;
+    services.push({
+      name: `Standard Floor Plan (${beds}-bed)`,
+      amount: Math.round(calcStandardFloorPlan(beds) * 100),
+    });
+  }
+
+  return services;
 }
 
 export async function POST(request: Request) {
@@ -51,43 +132,6 @@ export async function POST(request: Request) {
     const meta = session.metadata || {};
 
     try {
-      const propertyCount = Number(meta.property_count || 0);
-      const properties = [];
-      for (let i = 0; i < propertyCount; i++) {
-        // Support both old single-key and new split-key metadata formats
-        const raw = meta[`property_${i}`];
-        if (raw) {
-          properties.push(JSON.parse(raw));
-        } else {
-          const infoRaw = meta[`prop_${i}_info`];
-          const svcRaw = meta[`prop_${i}_svc`];
-          if (infoRaw && svcRaw) {
-            const info = JSON.parse(infoRaw);
-            const svc = JSON.parse(svcRaw);
-            properties.push({
-              address: info.a,
-              postcode: info.pc,
-              bedrooms: info.b,
-              preferredDate: info.d,
-              timeSlot: info.t,
-              notes: info.n,
-              photography: svc.ph,
-              photoCount: svc.phc,
-              dronePhotography: svc.dr,
-              dronePhotoCount: svc.drc,
-              standardVideo: svc.sv,
-              standardVideoDrone: svc.svd,
-              agentPresentedVideo: svc.av,
-              agentPresentedVideoDrone: svc.avd,
-              socialMediaVideo: svc.sm,
-              socialMediaPresentedVideo: svc.smp,
-              standardFloorPlan: svc.sfp,
-              premiumFloorPlan: svc.pfp,
-              floorPlan3D: svc.fp3,
-            });
-          }
-        }
-      }
       const discountCode = meta.discount_code || null;
       const discountPercentage = Number(meta.discount_percentage || 0);
 
@@ -106,124 +150,49 @@ export async function POST(request: Request) {
 
       // ── Send confirmation invoice + notification emails ──
       try {
-        const emailProperties = properties.map((p: Record<string, unknown>) => {
-          const services: { name: string; amount: number }[] = [];
+        // Fetch the just-confirmed bookings from DB
+        const confirmedBookings = await db
+          .select()
+          .from(bookings)
+          .where(eq(bookings.stripeSession, session.id));
 
-          if (p.photography) {
-            const count = (p.photoCount as number) || 20;
-            services.push({
-              name: `Photography (${count} photos)`,
-              amount: Math.round(calcPhotography(count) * 100),
-            });
-          }
-          if (p.dronePhotography) {
-            const count = (p.dronePhotoCount as 8 | 20) || 8;
-            services.push({
-              name: `Drone Photography (${count} photos)`,
-              amount: Math.round(calcDronePhotography(count) * 100),
-            });
-          }
-          if (p.agentPresentedVideo) {
-            const beds = (p.bedrooms as number) || 2;
-            services.push({
-              name: `Agent Presented Video (${beds}-bed)`,
-              amount: Math.round(calcAgentPresentedVideo(beds) * 100),
-            });
-            if (p.agentPresentedVideoDrone) {
-              services.push({
-                name: "Drone Footage (with Agent Presented Video)",
-                amount: Math.round(calcVideoDrone() * 100),
-              });
+        const emailProperties = confirmedBookings.map((booking) => {
+          let services: { name: string; amount: number }[] = [];
+
+          try {
+            const parsed = JSON.parse(booking.services);
+
+            if (Array.isArray(parsed)) {
+              // New format: array of { serviceId, serviceName, inputs, computedPrice }
+              services = parsed.map(
+                (s: { serviceName?: string; serviceId?: string; computedPrice?: number }) => ({
+                  name: s.serviceName || s.serviceId || "Service",
+                  amount: Math.round((s.computedPrice ?? 0) * 100), // convert pounds → pence
+                })
+              );
+            } else if (parsed && typeof parsed === "object") {
+              // Legacy format: boolean flags object
+              services = buildLegacyServices(parsed as Record<string, unknown>);
             }
-          } else if (p.standardVideo) {
-            const beds = (p.bedrooms as number) || 2;
-            services.push({
-              name: `Unpresented Property Video (${beds}-bed)`,
-              amount: Math.round(calcStandardVideo(beds) * 100),
-            });
-            if (p.standardVideoDrone) {
-              services.push({
-                name: "Drone Footage (with Unpresented Video)",
-                amount: Math.round(calcVideoDrone() * 100),
-              });
-            }
+          } catch {
+            // If services JSON is unparseable, leave services as empty array
           }
 
-          if (p.socialMediaPresentedVideo) {
-            const beds = (p.bedrooms as number) || 2;
-            services.push({
-              name: `Social Media Video — Presented (${beds}-bed)`,
-              amount: Math.round(calcSocialMediaPresentedVideo(beds) * 100),
-            });
-          } else if (p.socialMediaVideo) {
-            const beds = (p.bedrooms as number) || 2;
-            services.push({
-              name: `Social Media Video — Unpresented (${beds}-bed)`,
-              amount: Math.round(calcSocialMediaVideo(beds) * 100),
-            });
-          }
-
-          if (p.floorPlan3D) {
-            const beds = (p.bedrooms as number) || 2;
-            services.push({
-              name: `3D Floor Plan (${beds}-bed)`,
-              amount: Math.round(calcFloorPlan3D(beds) * 100),
-            });
-          } else if (p.premiumFloorPlan) {
-            const beds = (p.bedrooms as number) || 2;
-            services.push({
-              name: `Premium Floor Plan (${beds}-bed)`,
-              amount: Math.round(calcPremiumFloorPlan(beds) * 100),
-            });
-          } else if (p.standardFloorPlan) {
-            const beds = (p.bedrooms as number) || 2;
-            services.push({
-              name: `Standard Floor Plan (${beds}-bed)`,
-              amount: Math.round(calcStandardFloorPlan(beds) * 100),
-            });
-          }
-
-          const subtotal = services.reduce((s, svc) => s + svc.amount, 0);
+          const subtotal = services.reduce((sum, s) => sum + s.amount, 0);
 
           return {
-            address: p.address as string,
-            postcode: (p.postcode as string) || null,
-            bedrooms: (p.bedrooms as number) || 2,
-            preferredDate: p.preferredDate as string,
-            startTime: (p.timeSlot as string) || null,
-            endTime: (() => {
-              const slot = p.timeSlot as string | undefined;
-              if (!slot) return null;
-              const svc: PropertyServices = {
-                bedrooms: (p.bedrooms as number) || 2,
-                photography: !!p.photography,
-                photoCount: (p.photoCount as number) || 20,
-                dronePhotography: !!p.dronePhotography,
-                dronePhotoCount: ((p.dronePhotoCount as 8 | 20) || 8),
-                standardVideo: !!p.standardVideo,
-                standardVideoDrone: !!p.standardVideoDrone,
-                agentPresentedVideo: !!p.agentPresentedVideo,
-                agentPresentedVideoDrone: !!p.agentPresentedVideoDrone,
-                socialMediaVideo: !!p.socialMediaVideo,
-                socialMediaPresentedVideo: !!p.socialMediaPresentedVideo,
-                standardFloorPlan: !!p.standardFloorPlan,
-                premiumFloorPlan: !!p.premiumFloorPlan,
-                floorPlan3D: !!p.floorPlan3D,
-              };
-              const wh = calcWorkHours(svc);
-              const [h, m] = slot.split(":").map(Number);
-              const endMins = h * 60 + m + Math.round(wh * 60);
-              return `${String(Math.floor(endMins / 60)).padStart(2, "0")}:${String(endMins % 60).padStart(2, "0")}`;
-            })(),
+            address: booking.address,
+            postcode: booking.postcode,
+            bedrooms: booking.bedrooms,
+            preferredDate: booking.preferredDate,
+            startTime: booking.startTime,
+            endTime: booking.endTime,
             services,
             subtotal,
           };
         });
 
-        const grandSubtotal = emailProperties.reduce(
-          (s: number, p: { subtotal: number }) => s + p.subtotal,
-          0,
-        );
+        const grandSubtotal = emailProperties.reduce((s, p) => s + p.subtotal, 0);
         const totalDiscountAmount = discountPercentage
           ? Math.round(grandSubtotal * (discountPercentage / 100))
           : 0;
