@@ -1,0 +1,524 @@
+/* ── Layout ──────────────────────────────────────────────────────────────── */
+
+.main {
+  min-height: 100vh;
+  background: #f5f0eb;
+  padding: 40px 20px 80px;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.pageHeader {
+  margin-bottom: 28px;
+}
+
+.title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #0a0a0a;
+  letter-spacing: -0.01em;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 24px;
+  align-items: start;
+}
+
+/* ── Form column ─────────────────────────────────────────────────────────── */
+
+.formCol {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ── Property block ──────────────────────────────────────────────────────── */
+
+.propertyBlock {
+  background: #ffffff;
+  border: 2px solid #0a0a0a;
+  padding: 24px;
+  margin-bottom: 16px;
+}
+
+.blockHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.blockTitle {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #0a0a0a;
+}
+
+.removeBtn {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8a8580;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+  transition: color 0.15s;
+}
+
+.removeBtn:hover {
+  color: #0a0a0a;
+}
+
+/* ── Fields ──────────────────────────────────────────────────────────────── */
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #8a8580;
+}
+
+.input {
+  font-family: inherit;
+  font-size: 14px;
+  padding: 10px 12px;
+  border: 2px solid #e8e4df;
+  border-radius: 0;
+  background: #fafaf9;
+  color: #0a0a0a;
+  outline: none;
+  transition: border-color 0.15s;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.input:focus {
+  border-color: #0a0a0a;
+  background: #ffffff;
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 80px;
+  line-height: 1.5;
+}
+
+.inputError {
+  border-color: #c0392b;
+}
+
+.errorMsg {
+  font-size: 11px;
+  color: #c0392b;
+  font-weight: 600;
+}
+
+/* ── Date availability ───────────────────────────────────────────────────── */
+
+.dateChecking {
+  font-size: 12px;
+  color: #8a8580;
+  margin: 4px 0 0;
+  font-style: italic;
+}
+
+.dateAvailable {
+  font-size: 12px;
+  color: #2d7a3a;
+  margin: 4px 0 0;
+  font-weight: 600;
+}
+
+.dateUnavailable {
+  font-size: 12px;
+  color: #c0392b;
+  margin: 4px 0 0;
+  font-weight: 600;
+}
+
+/* ── Time slots ──────────────────────────────────────────────────────────── */
+
+.slotDuration {
+  font-size: 11px;
+  font-weight: 400;
+  color: #8a8580;
+  margin-left: 6px;
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+
+.slotGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 2px;
+}
+
+.slotGridError {
+  outline: 2px solid #c0392b;
+}
+
+.slotPill {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 8px 10px;
+  border: 2px solid #e8e4df;
+  background: #fafaf9;
+  color: #0a0a0a;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.slotPill:hover {
+  background: #0a0a0a;
+  color: #ffffff;
+  border-color: #0a0a0a;
+}
+
+.slotActive {
+  background: #0a0a0a;
+  color: #ffffff;
+  border-color: #0a0a0a;
+}
+
+.slotActive:hover {
+  opacity: 0.85;
+}
+
+/* ── Services ────────────────────────────────────────────────────────────── */
+
+.servicesSection {
+  margin-bottom: 16px;
+}
+
+.servicesLabel {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #8a8580;
+  margin-bottom: 10px;
+}
+
+.serviceGroup {
+  margin-bottom: 4px;
+}
+
+.pill {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  padding: 10px 14px;
+  border: 2px solid #e8e4df;
+  background: #fafaf9;
+  color: #0a0a0a;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: background-color 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.pill:hover {
+  background: #0a0a0a;
+  color: #ffffff;
+  border-color: #0a0a0a;
+}
+
+.pillActive {
+  background: #0a0a0a;
+  color: #ffffff;
+  border-color: #0a0a0a;
+}
+
+.pillActive:hover {
+  opacity: 0.85;
+}
+
+.serviceOption {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 10px 14px;
+  border: 2px solid #e8e4df;
+  border-top: none;
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.numInput {
+  max-width: 100px;
+  padding: 6px 10px;
+}
+
+.selectInput {
+  min-width: 200px;
+}
+
+.checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: #0a0a0a;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* ── Property subtotal ───────────────────────────────────────────────────── */
+
+.propertySubtotal {
+  font-size: 13px;
+  text-align: right;
+  padding-top: 14px;
+  border-top: 2px solid #e8e4df;
+  color: #0a0a0a;
+}
+
+.propertySubtotal strong {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* ── Add property & disclaimer ───────────────────────────────────────────── */
+
+.addPropertyBtn {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 12px 20px;
+  background: #ffffff;
+  border: 2px solid #0a0a0a;
+  color: #0a0a0a;
+  cursor: pointer;
+  width: 100%;
+  transition: background-color 0.15s;
+  margin-bottom: 20px;
+}
+
+.addPropertyBtn:hover {
+  background: #f5f0eb;
+}
+
+.disclaimer {
+  padding: 16px 20px;
+  border: 2px solid #e8e4df;
+  background: #ffffff;
+  margin-bottom: 0;
+}
+
+.disclaimerTitle {
+  margin: 0 0 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #8a8580;
+}
+
+.disclaimerList {
+  margin: 0;
+  padding: 0 0 0 16px;
+  font-size: 12px;
+  color: #8a8580;
+  line-height: 1.6;
+}
+
+.disclaimerList li {
+  margin-bottom: 4px;
+}
+
+/* ── Summary column ──────────────────────────────────────────────────────── */
+
+.summaryCol {
+  position: sticky;
+  top: 24px;
+}
+
+.summary {
+  background: #ffffff;
+  border: 2px solid #0a0a0a;
+  padding: 20px;
+}
+
+.summaryTitle {
+  margin: 0 0 16px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #0a0a0a;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #e8e4df;
+}
+
+.summaryEmpty {
+  font-size: 13px;
+  color: #8a8580;
+  margin: 0 0 16px;
+}
+
+.summaryProperty {
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e8e4df;
+}
+
+.summaryAddress {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0a0a0a;
+  margin: 0 0 8px;
+}
+
+.lineItem {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  color: #0a0a0a;
+  padding: 3px 0;
+}
+
+.lineItemIndented {
+  padding-left: 12px;
+  color: #8a8580;
+}
+
+.propSubtotal {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 700;
+  color: #0a0a0a;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #e8e4df;
+}
+
+.discountLine {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #2d7a3a;
+  font-weight: 600;
+  padding: 6px 0;
+  border-bottom: 1px solid #e8e4df;
+}
+
+.grandTotal {
+  display: flex;
+  justify-content: space-between;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0a0a0a;
+  padding: 12px 0;
+  border-top: 2px solid #0a0a0a;
+  margin-top: 4px;
+}
+
+.submitError {
+  font-size: 12px;
+  color: #c0392b;
+  font-weight: 600;
+  padding: 10px 12px;
+  border: 2px solid #c0392b;
+  background: #fef2f2;
+  margin: 12px 0;
+}
+
+.bookBtn {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 14px 20px;
+  background: #0a0a0a;
+  color: #ffffff;
+  border: 2px solid #0a0a0a;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 12px;
+  transition: opacity 0.15s;
+}
+
+.bookBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.bookBtn:not(:disabled):hover {
+  opacity: 0.85;
+}
+
+.summaryNote {
+  font-size: 11px;
+  color: #8a8580;
+  margin: 12px 0 0;
+  line-height: 1.5;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+
+@media (max-width: 800px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .summaryCol {
+    position: static;
+    order: -1;
+  }
+
+  .row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 500px) {
+  .row {
+    grid-template-columns: 1fr;
+  }
+
+  .slotGrid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+}
