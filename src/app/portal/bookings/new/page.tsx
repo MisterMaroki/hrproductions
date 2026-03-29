@@ -1,27 +1,19 @@
 "use client";
 
-import { useState, useCallback, useMemo, useEffect, useRef } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import PortalNav from "../../components/PortalNav";
 import DatePicker from "@/components/DatePicker";
-import {
-  calcPropertyTotal,
-  calcMultiPropertyDiscount,
-  calcPhotography,
-  calcDronePhotography,
-  calcStandardVideo,
-  calcAgentPresentedVideo,
-  calcVideoDrone,
-  calcSocialMediaVideo,
-  calcSocialMediaPresentedVideo,
-  calcStandardFloorPlan,
-  calcPremiumFloorPlan,
-  calcFloorPlan3D,
-} from "@/lib/pricing";
-import { calcShootMinutes, isWorkingDay, TRAVEL_BUFFER, type TimeSlot } from "@/lib/scheduling";
+import { evaluatePrice, evaluateDuration, calcMultiPropertyDiscount } from "@/lib/pricing-engine";
+import { isWorkingDay, TRAVEL_BUFFER, type TimeSlot } from "@/lib/scheduling";
 import styles from "./page.module.css";
 
 // ── Types ────────────────────────────────────────────────────────────────────
+
+interface SelectedService {
+  serviceId: string;
+  inputs: Record<string, number | string | boolean>;
+}
 
 interface PropertyBooking {
   id: string;
@@ -31,19 +23,7 @@ interface PropertyBooking {
   preferredDate: string;
   timeSlot: string;
   notes: string;
-  photography: boolean;
-  photoCount: number;
-  dronePhotography: boolean;
-  dronePhotoCount: 8 | 20;
-  standardVideo: boolean;
-  standardVideoDrone: boolean;
-  agentPresentedVideo: boolean;
-  agentPresentedVideoDrone: boolean;
-  socialMediaVideo: boolean;
-  socialMediaPresentedVideo: boolean;
-  standardFloorPlan: boolean;
-  premiumFloorPlan: boolean;
-  floorPlan3D: boolean;
+  selectedServices: SelectedService[];
 }
 
 function createProperty(): PropertyBooking {
@@ -55,19 +35,7 @@ function createProperty(): PropertyBooking {
     preferredDate: "",
     timeSlot: "",
     notes: "",
-    photography: false,
-    photoCount: 20,
-    dronePhotography: false,
-    dronePhotoCount: 8,
-    standardVideo: false,
-    standardVideoDrone: false,
-    agentPresentedVideo: false,
-    agentPresentedVideoDrone: false,
-    socialMediaVideo: false,
-    socialMediaPresentedVideo: false,
-    standardFloorPlan: false,
-    premiumFloorPlan: false,
-    floorPlan3D: false,
+    selectedServices: [],
   };
 }
 
@@ -82,6 +50,7 @@ interface SiblingBooking {
 interface PropertyRowProps {
   property: PropertyBooking;
   index: number;
+  serviceCategories: any[];
   siblingBookings: SiblingBooking[];
   onChange: (updates: Partial<PropertyBooking>) => void;
   onRemove: () => void;
@@ -100,6 +69,7 @@ function formatTime(time: string) {
 function PropertyRow({
   property,
   index,
+  serviceCategories,
   siblingBookings,
   onChange,
   onRemove,
@@ -111,7 +81,19 @@ function PropertyRow({
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [dateMessage, setDateMessage] = useState<{ text: string; ok: boolean } | null>(null);
 
-  const shootMinutes = calcShootMinutes(property);
+  const allServices = useMemo(
+    () => serviceCategories.flatMap((c: any) => c.services ?? []),
+    [serviceCategories]
+  );
+
+  // Total shoot duration in minutes
+  const shootMinutes = useMemo(() => {
+    return property.selectedServices.reduce((acc, sel) => {
+      const svc = allServices.find((s: any) => s.id === sel.serviceId);
+      if (!svc) return acc;
+      return acc + evaluateDuration(svc.durationRules, { ...sel.inputs, bedrooms: property.bedrooms });
+    }, 0);
+  }, [property.selectedServices, property.bedrooms, allServices]);
 
   const fetchSlots = useCallback(async (date: string, duration: number) => {
     if (!date || duration <= 0) {
@@ -198,38 +180,103 @@ function PropertyRow({
     }
   }, [slots]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const subtotal = calcPropertyTotal(property);
+  // Subtotal for this property
+  const subtotal = useMemo(() => {
+    return property.selectedServices.reduce((acc, sel) => {
+      const svc = allServices.find((s: any) => s.id === sel.serviceId);
+      if (!svc) return acc;
+      return acc + evaluatePrice(svc.pricingRules, { ...sel.inputs, bedrooms: property.bedrooms }).total;
+    }, 0);
+  }, [property.selectedServices, property.bedrooms, allServices]);
 
-  // Service toggles
-  const togglePhotography = () => onChange({ photography: !property.photography });
-  const toggleDronePhotography = () => onChange({ dronePhotography: !property.dronePhotography });
-  const toggleStandardVideo = () => {
-    const next = !property.standardVideo;
-    onChange({ standardVideo: next, agentPresentedVideo: false, agentPresentedVideoDrone: false, standardVideoDrone: next ? property.standardVideoDrone : false });
+  // Service toggle
+  const toggleService = (serviceId: string) => {
+    const existing = property.selectedServices.find(s => s.serviceId === serviceId);
+    if (existing) {
+      const svc = allServices.find((s: any) => s.id === serviceId);
+      const idsToRemove = new Set([serviceId]);
+      if (!svc?.isAddon) {
+        allServices
+          .filter((s: any) => s.parentServiceId === serviceId)
+          .forEach((s: any) => idsToRemove.add(s.id));
+      }
+      onChange({ selectedServices: property.selectedServices.filter(s => !idsToRemove.has(s.serviceId)) });
+    } else {
+      const svc = allServices.find((s: any) => s.id === serviceId);
+      if (!svc) return;
+      const defaults: Record<string, number | string | boolean> = {};
+      for (const field of (svc.inputFields ?? [])) {
+        defaults[field.key] =
+          field.default !== undefined
+            ? field.default
+            : field.type === "number"
+            ? (field.min ?? 0)
+            : field.type === "boolean"
+            ? false
+            : field.options?.[0]?.value ?? "";
+      }
+      onChange({ selectedServices: [...property.selectedServices, { serviceId, inputs: defaults }] });
+    }
   };
-  const toggleAgentPresentedVideo = () => {
-    const next = !property.agentPresentedVideo;
-    onChange({ agentPresentedVideo: next, standardVideo: false, standardVideoDrone: false, agentPresentedVideoDrone: next ? property.agentPresentedVideoDrone : false });
+
+  const updateInput = (serviceId: string, key: string, value: number | string | boolean) => {
+    const newServices = property.selectedServices.map(sel =>
+      sel.serviceId === serviceId
+        ? { ...sel, inputs: { ...sel.inputs, [key]: value } }
+        : sel
+    );
+    onChange({ selectedServices: newServices });
   };
-  const toggleSocialMediaVideo = () => {
-    const next = !property.socialMediaVideo;
-    onChange({ socialMediaVideo: next, socialMediaPresentedVideo: false });
-  };
-  const toggleSocialMediaPresentedVideo = () => {
-    const next = !property.socialMediaPresentedVideo;
-    onChange({ socialMediaPresentedVideo: next, socialMediaVideo: false });
-  };
-  const toggleStandardFloorPlan = () => {
-    const next = !property.standardFloorPlan;
-    onChange({ standardFloorPlan: next, premiumFloorPlan: false, floorPlan3D: false });
-  };
-  const togglePremiumFloorPlan = () => {
-    const next = !property.premiumFloorPlan;
-    onChange({ standardFloorPlan: false, premiumFloorPlan: next, floorPlan3D: false });
-  };
-  const toggleFloorPlan3D = () => {
-    const next = !property.floorPlan3D;
-    onChange({ standardFloorPlan: false, premiumFloorPlan: false, floorPlan3D: next });
+
+  const renderInputField = (serviceId: string, field: any, currentInputs: Record<string, any>) => {
+    if (field.type === "number") {
+      return (
+        <div key={field.key} className={styles.serviceOption}>
+          <span>{field.label}</span>
+          <input
+            type="number"
+            value={currentInputs[field.key] ?? field.default ?? field.min ?? 0}
+            min={field.min}
+            max={field.max}
+            onChange={(e) => updateInput(serviceId, field.key, parseInt(e.target.value, 10) || 0)}
+            className={`${styles.input} ${styles.numInput}`}
+          />
+        </div>
+      );
+    }
+    if (field.type === "select") {
+      return (
+        <div key={field.key} className={styles.serviceOption}>
+          <span>{field.label}</span>
+          <select
+            value={currentInputs[field.key] ?? field.default ?? field.options?.[0]?.value}
+            onChange={(e) => {
+              const opt = field.options?.find((o: any) => String(o.value) === e.target.value);
+              updateInput(serviceId, field.key, opt?.value ?? e.target.value);
+            }}
+            className={`${styles.input} ${styles.selectInput}`}
+          >
+            {field.options?.map((opt: any) => (
+              <option key={String(opt.value)} value={String(opt.value)}>{opt.label}</option>
+            ))}
+          </select>
+        </div>
+      );
+    }
+    if (field.type === "boolean") {
+      return (
+        <label key={field.key} className={styles.serviceOption}>
+          <input
+            type="checkbox"
+            checked={!!(currentInputs[field.key] ?? field.default ?? false)}
+            onChange={(e) => updateInput(serviceId, field.key, e.target.checked)}
+            className={styles.checkbox}
+          />
+          <span>{field.label}</span>
+        </label>
+      );
+    }
+    return null;
   };
 
   return (
@@ -350,147 +397,83 @@ function PropertyRow({
         </label>
       </div>
 
-      {/* Services */}
+      {/* Dynamic Services */}
       <div className={styles.servicesSection}>
         <span className={styles.servicesLabel}>Services</span>
 
-        <div className={styles.serviceGroup}>
-          <button
-            type="button"
-            className={`${styles.pill} ${property.photography ? styles.pillActive : ""}`}
-            onClick={togglePhotography}
-          >
-            Photography
-          </button>
-          {property.photography && (
-            <div className={styles.serviceOption}>
-              <span>Number of photos</span>
-              <input
-                type="number"
-                value={property.photoCount}
-                onChange={(e) => { onChange({ photoCount: parseInt(e.target.value, 10) || 0 }); onClearError("photoCount"); }}
-                className={`${styles.input} ${styles.numInput} ${errors.photoCount ? styles.inputError : ""}`}
-                min={20}
-              />
-              {errors.photoCount && <span className={styles.errorMsg}>{errors.photoCount}</span>}
+        {serviceCategories.length === 0 ? (
+          <p className={styles.dateChecking}>Loading services…</p>
+        ) : (
+          serviceCategories.map((cat: any) => (
+            <div key={cat.id} className={styles.serviceGroup}>
+              {cat.services
+                .filter((svc: any) => !svc.isAddon)
+                .map((svc: any) => {
+                  const sel = property.selectedServices.find(s => s.serviceId === svc.id);
+                  const isSelected = !!sel;
+                  const price = isSelected
+                    ? evaluatePrice(svc.pricingRules, { ...sel!.inputs, bedrooms: property.bedrooms }).total
+                    : evaluatePrice(svc.pricingRules, { bedrooms: property.bedrooms }).total;
+
+                  // Addons for this service
+                  const addons = allServices.filter(
+                    (s: any) => s.isAddon && s.parentServiceId === svc.id
+                  );
+
+                  return (
+                    <div key={svc.id}>
+                      <button
+                        type="button"
+                        className={`${styles.pill} ${isSelected ? styles.pillActive : ""}`}
+                        onClick={() => toggleService(svc.id)}
+                      >
+                        {svc.name}
+                        {!isSelected && price > 0 && (
+                          <span className={styles.pillPrice}> — £{price.toFixed(0)}</span>
+                        )}
+                      </button>
+
+                      {/* Input fields */}
+                      {isSelected && svc.inputFields?.length > 0 && (
+                        <div>
+                          {svc.inputFields.map((field: any) =>
+                            renderInputField(svc.id, field, sel!.inputs)
+                          )}
+                        </div>
+                      )}
+
+                      {/* Addon services */}
+                      {isSelected && addons.map((addon: any) => {
+                        const addonSel = property.selectedServices.find(s => s.serviceId === addon.id);
+                        const addonSelected = !!addonSel;
+                        const addonPrice = evaluatePrice(addon.pricingRules, { bedrooms: property.bedrooms }).total;
+                        return (
+                          <div key={addon.id}>
+                            <label className={styles.serviceOption}>
+                              <input
+                                type="checkbox"
+                                checked={addonSelected}
+                                onChange={() => toggleService(addon.id)}
+                                className={styles.checkbox}
+                              />
+                              <span>{addon.name} (+£{addonPrice.toFixed(0)})</span>
+                            </label>
+                            {addonSelected && addon.inputFields?.length > 0 && (
+                              <div>
+                                {addon.inputFields.map((field: any) =>
+                                  renderInputField(addon.id, field, addonSel!.inputs)
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
             </div>
-          )}
-        </div>
-
-        <div className={styles.serviceGroup}>
-          <button
-            type="button"
-            className={`${styles.pill} ${property.dronePhotography ? styles.pillActive : ""}`}
-            onClick={toggleDronePhotography}
-          >
-            Drone Photography
-          </button>
-          {property.dronePhotography && (
-            <div className={styles.serviceOption}>
-              <span>Package</span>
-              <select
-                value={property.dronePhotoCount}
-                onChange={(e) => onChange({ dronePhotoCount: parseInt(e.target.value, 10) as 8 | 20 })}
-                className={`${styles.input} ${styles.selectInput}`}
-              >
-                <option value={8}>8 photos — £75</option>
-                <option value={20}>20 photos — £140</option>
-              </select>
-            </div>
-          )}
-        </div>
-
-        <div className={styles.serviceGroup}>
-          <button
-            type="button"
-            className={`${styles.pill} ${property.standardVideo ? styles.pillActive : ""}`}
-            onClick={toggleStandardVideo}
-          >
-            Unpresented Property Video
-          </button>
-          {property.standardVideo && (
-            <label className={styles.serviceOption}>
-              <input
-                type="checkbox"
-                checked={property.standardVideoDrone}
-                onChange={(e) => onChange({ standardVideoDrone: e.target.checked })}
-                className={styles.checkbox}
-              />
-              <span>Add drone footage (+£65)</span>
-            </label>
-          )}
-        </div>
-
-        <div className={styles.serviceGroup}>
-          <button
-            type="button"
-            className={`${styles.pill} ${property.agentPresentedVideo ? styles.pillActive : ""}`}
-            onClick={toggleAgentPresentedVideo}
-          >
-            Agent Presented Video
-          </button>
-          {property.agentPresentedVideo && (
-            <label className={styles.serviceOption}>
-              <input
-                type="checkbox"
-                checked={property.agentPresentedVideoDrone}
-                onChange={(e) => onChange({ agentPresentedVideoDrone: e.target.checked })}
-                className={styles.checkbox}
-              />
-              <span>Add drone footage (+£65)</span>
-            </label>
-          )}
-        </div>
-
-        <div className={styles.serviceGroup}>
-          <button
-            type="button"
-            className={`${styles.pill} ${property.socialMediaVideo ? styles.pillActive : ""}`}
-            onClick={toggleSocialMediaVideo}
-          >
-            Social Media Video (Unpresented)
-          </button>
-        </div>
-
-        <div className={styles.serviceGroup}>
-          <button
-            type="button"
-            className={`${styles.pill} ${property.socialMediaPresentedVideo ? styles.pillActive : ""}`}
-            onClick={toggleSocialMediaPresentedVideo}
-          >
-            Social Media Video (Presented)
-          </button>
-        </div>
-
-        <div className={styles.serviceGroup}>
-          <button
-            type="button"
-            className={`${styles.pill} ${property.standardFloorPlan ? styles.pillActive : ""}`}
-            onClick={toggleStandardFloorPlan}
-          >
-            Standard Floor Plan
-          </button>
-        </div>
-
-        <div className={styles.serviceGroup}>
-          <button
-            type="button"
-            className={`${styles.pill} ${property.premiumFloorPlan ? styles.pillActive : ""}`}
-            onClick={togglePremiumFloorPlan}
-          >
-            Premium Floor Plan
-          </button>
-        </div>
-
-        <div className={styles.serviceGroup}>
-          <button
-            type="button"
-            className={`${styles.pill} ${property.floorPlan3D ? styles.pillActive : ""}`}
-            onClick={toggleFloorPlan3D}
-          >
-            3D Floor Plan
-          </button>
-        </div>
+          ))
+        )}
       </div>
 
       {subtotal > 0 && (
@@ -502,47 +485,22 @@ function PropertyRow({
   );
 }
 
-// ── Line items for summary ────────────────────────────────────────────────────
-
-function getLineItems(p: PropertyBooking) {
-  const items: { label: string; price: number; indent?: boolean }[] = [];
-  if (p.photography) {
-    const price = calcPhotography(p.photoCount);
-    items.push({ label: `Photography (${p.photoCount} photos)${p.photoCount >= 100 ? " — 10% off" : ""}`, price });
-  }
-  if (p.dronePhotography) {
-    items.push({ label: `Drone Photography (${p.dronePhotoCount} photos)`, price: calcDronePhotography(p.dronePhotoCount) });
-  }
-  if (p.agentPresentedVideo) {
-    items.push({ label: `Agent Presented Video (${p.bedrooms}-bed)`, price: calcAgentPresentedVideo(p.bedrooms) });
-    if (p.agentPresentedVideoDrone) items.push({ label: "Drone footage", price: calcVideoDrone(), indent: true });
-  } else if (p.standardVideo) {
-    items.push({ label: `Unpresented Video (${p.bedrooms}-bed)`, price: calcStandardVideo(p.bedrooms) });
-    if (p.standardVideoDrone) items.push({ label: "Drone footage", price: calcVideoDrone(), indent: true });
-  }
-  if (p.socialMediaPresentedVideo) {
-    items.push({ label: `Social Media Video — Presented (${p.bedrooms}-bed)`, price: calcSocialMediaPresentedVideo(p.bedrooms) });
-  } else if (p.socialMediaVideo) {
-    items.push({ label: `Social Media Video — Unpresented (${p.bedrooms}-bed)`, price: calcSocialMediaVideo(p.bedrooms) });
-  }
-  if (p.floorPlan3D) {
-    items.push({ label: `3D Floor Plan (${p.bedrooms}-bed)`, price: calcFloorPlan3D(p.bedrooms) });
-  } else if (p.premiumFloorPlan) {
-    items.push({ label: `Premium Floor Plan (${p.bedrooms}-bed)`, price: calcPremiumFloorPlan(p.bedrooms) });
-  } else if (p.standardFloorPlan) {
-    items.push({ label: `Standard Floor Plan (${p.bedrooms}-bed)`, price: calcStandardFloorPlan(p.bedrooms) });
-  }
-  return items;
-}
-
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function PortalNewBookingPage() {
   const router = useRouter();
   const [properties, setProperties] = useState<PropertyBooking[]>([createProperty()]);
+  const [serviceCategories, setServiceCategories] = useState<any[]>([]);
   const [errors, setErrors] = useState<Record<string, Record<string, string>>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/services")
+      .then((r) => r.json())
+      .then(setServiceCategories)
+      .catch(console.error);
+  }, []);
 
   const addProperty = () => setProperties((prev) => [...prev, createProperty()]);
 
@@ -552,6 +510,11 @@ export default function PortalNewBookingPage() {
   const removeProperty = (id: string) =>
     setProperties((prev) => prev.filter((p) => p.id !== id));
 
+  const allServices = useMemo(
+    () => serviceCategories.flatMap((c: any) => c.services ?? []),
+    [serviceCategories]
+  );
+
   const siblingMap = useMemo(() => {
     const map = new Map<string, SiblingBooking[]>();
     for (const p of properties) {
@@ -560,12 +523,16 @@ export default function PortalNewBookingPage() {
         .map((s) => ({
           date: s.preferredDate,
           timeSlot: s.timeSlot,
-          durationMins: calcShootMinutes(s),
+          durationMins: s.selectedServices.reduce((total, sel) => {
+            const svc = allServices.find((sv: any) => sv.id === sel.serviceId);
+            if (!svc) return total;
+            return total + evaluateDuration(svc.durationRules, { ...sel.inputs, bedrooms: s.bedrooms });
+          }, 0),
         }));
       map.set(p.id, siblings);
     }
     return map;
-  }, [properties]);
+  }, [properties, allServices]);
 
   const clearPropertyError = useCallback((propertyId: string, field: string) => {
     setErrors((prev) => {
@@ -606,16 +573,12 @@ export default function PortalNewBookingPage() {
           pErr.preferredDate = "We only operate Monday – Saturday";
         }
       }
-      const hasServices =
-        p.photography || p.dronePhotography || p.standardVideo || p.agentPresentedVideo ||
-        p.socialMediaVideo || p.socialMediaPresentedVideo || p.standardFloorPlan ||
-        p.premiumFloorPlan || p.floorPlan3D;
+      const hasServices = p.selectedServices.length > 0;
       if (!hasServices) {
         pErr.services = "Select at least one service";
       } else if (!p.timeSlot) {
         pErr.timeSlot = "Please select a time slot";
       }
-      if (p.photography && p.photoCount < 20) pErr.photoCount = "Minimum 20 photos";
       if (Object.keys(pErr).length > 0) propErrors[p.id] = pErr;
     }
 
@@ -632,11 +595,17 @@ export default function PortalNewBookingPage() {
   }, [properties]);
 
   // Summary calculations
-  const propertyTotals = properties.map((p) => ({
-    property: p,
-    items: getLineItems(p),
-    subtotal: calcPropertyTotal(p),
-  }));
+  const propertyTotals = properties.map((p) => {
+    const items = p.selectedServices.map((sel) => {
+      const svc = allServices.find((s: any) => s.id === sel.serviceId);
+      if (!svc) return null;
+      const result = evaluatePrice(svc.pricingRules, { ...sel.inputs, bedrooms: p.bedrooms });
+      return { label: svc.name, price: result.total };
+    }).filter(Boolean) as { label: string; price: number }[];
+
+    const subtotal = items.reduce((sum, item) => sum + item.price, 0);
+    return { property: p, items, subtotal };
+  });
 
   const subtotalBeforeDiscount = propertyTotals.reduce((sum, p) => sum + p.subtotal, 0);
   const multiDiscount = calcMultiPropertyDiscount(properties.length);
@@ -681,6 +650,7 @@ export default function PortalNewBookingPage() {
                     key={property.id}
                     property={property}
                     index={index}
+                    serviceCategories={serviceCategories}
                     siblingBookings={siblingMap.get(property.id) || []}
                     onChange={(updates) => updateProperty(property.id, updates)}
                     onRemove={() => removeProperty(property.id)}
@@ -722,11 +692,8 @@ export default function PortalNewBookingPage() {
                             {property.address || "No address yet"}
                           </p>
                           {items.map((item) => (
-                            <div
-                              key={item.label}
-                              className={`${styles.lineItem} ${item.indent ? styles.lineItemIndented : ""}`}
-                            >
-                              <span>{item.indent ? `+ ${item.label}` : item.label}</span>
+                            <div key={item.label} className={styles.lineItem}>
+                              <span>{item.label}</span>
                               <span>£{item.price.toFixed(2)}</span>
                             </div>
                           ))}

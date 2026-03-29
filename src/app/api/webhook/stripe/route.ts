@@ -3,19 +3,57 @@ import Stripe from "stripe";
 import { db } from "@/lib/db";
 import { bookings, discountCodes } from "@/lib/schema";
 import { eq, sql } from "drizzle-orm";
-import {
-  calcPhotography,
-  calcDronePhotography,
-  calcStandardVideo,
-  calcAgentPresentedVideo,
-  calcVideoDrone,
-  calcSocialMediaVideo,
-  calcSocialMediaPresentedVideo,
-  calcStandardFloorPlan,
-  calcPremiumFloorPlan,
-  calcFloorPlan3D,
-} from "@/lib/pricing";
 import { sendBookingEmails } from "@/lib/email";
+
+// ── Legacy pricing helpers (inlined for backward-compat with old boolean-flag bookings) ──
+
+function legacyCalcPhotography(count: number): number {
+  const base = count * 2.5;
+  return count >= 100 ? base * 0.9 : base;
+}
+
+function legacyCalcDronePhotography(count: 8 | 20 | number): number {
+  return count === 20 ? 140 : 75;
+}
+
+function legacyCalcStandardVideo(bedrooms: number): number {
+  const tiers: Record<number, number> = { 1: 150, 2: 175, 3: 200, 4: 225, 5: 250 };
+  return tiers[Math.min(bedrooms, 5)] ?? 250;
+}
+
+function legacyCalcAgentPresentedVideo(bedrooms: number): number {
+  const tiers: Record<number, number> = { 1: 225, 2: 250, 3: 275, 4: 300, 5: 325 };
+  return tiers[Math.min(bedrooms, 5)] ?? 325;
+}
+
+function legacyCalcVideoDrone(): number {
+  return 65;
+}
+
+function legacyCalcSocialMediaVideo(bedrooms: number): number {
+  const tiers: Record<number, number> = { 1: 125, 2: 150, 3: 175, 4: 200, 5: 225 };
+  return tiers[Math.min(bedrooms, 5)] ?? 225;
+}
+
+function legacyCalcSocialMediaPresentedVideo(bedrooms: number): number {
+  const tiers: Record<number, number> = { 1: 175, 2: 200, 3: 225, 4: 250, 5: 275 };
+  return tiers[Math.min(bedrooms, 5)] ?? 275;
+}
+
+function legacyCalcStandardFloorPlan(bedrooms: number): number {
+  const tiers: Record<number, number> = { 1: 60, 2: 70, 3: 80, 4: 90, 5: 100 };
+  return tiers[Math.min(bedrooms, 5)] ?? 100;
+}
+
+function legacyCalcPremiumFloorPlan(bedrooms: number): number {
+  const tiers: Record<number, number> = { 1: 90, 2: 100, 3: 110, 4: 120, 5: 130 };
+  return tiers[Math.min(bedrooms, 5)] ?? 130;
+}
+
+function legacyCalcFloorPlan3D(bedrooms: number): number {
+  const tiers: Record<number, number> = { 1: 120, 2: 140, 3: 160, 4: 180, 5: 200 };
+  return tiers[Math.min(bedrooms, 5)] ?? 200;
+}
 
 let _stripe: Stripe;
 function getStripe() {
@@ -33,38 +71,38 @@ function buildLegacyServices(
     const count = (p.photoCount as number) || 20;
     services.push({
       name: `Photography (${count} photos)`,
-      amount: Math.round(calcPhotography(count) * 100),
+      amount: Math.round(legacyCalcPhotography(count) * 100),
     });
   }
   if (p.dronePhotography) {
     const count = (p.dronePhotoCount as 8 | 20) || 8;
     services.push({
       name: `Drone Photography (${count} photos)`,
-      amount: Math.round(calcDronePhotography(count) * 100),
+      amount: Math.round(legacyCalcDronePhotography(count) * 100),
     });
   }
   if (p.agentPresentedVideo) {
     const beds = (p.bedrooms as number) || 2;
     services.push({
       name: `Agent Presented Video (${beds}-bed)`,
-      amount: Math.round(calcAgentPresentedVideo(beds) * 100),
+      amount: Math.round(legacyCalcAgentPresentedVideo(beds) * 100),
     });
     if (p.agentPresentedVideoDrone) {
       services.push({
         name: "Drone Footage (with Agent Presented Video)",
-        amount: Math.round(calcVideoDrone() * 100),
+        amount: Math.round(legacyCalcVideoDrone() * 100),
       });
     }
   } else if (p.standardVideo) {
     const beds = (p.bedrooms as number) || 2;
     services.push({
       name: `Unpresented Property Video (${beds}-bed)`,
-      amount: Math.round(calcStandardVideo(beds) * 100),
+      amount: Math.round(legacyCalcStandardVideo(beds) * 100),
     });
     if (p.standardVideoDrone) {
       services.push({
         name: "Drone Footage (with Unpresented Video)",
-        amount: Math.round(calcVideoDrone() * 100),
+        amount: Math.round(legacyCalcVideoDrone() * 100),
       });
     }
   }
@@ -73,13 +111,13 @@ function buildLegacyServices(
     const beds = (p.bedrooms as number) || 2;
     services.push({
       name: `Social Media Video — Presented (${beds}-bed)`,
-      amount: Math.round(calcSocialMediaPresentedVideo(beds) * 100),
+      amount: Math.round(legacyCalcSocialMediaPresentedVideo(beds) * 100),
     });
   } else if (p.socialMediaVideo) {
     const beds = (p.bedrooms as number) || 2;
     services.push({
       name: `Social Media Video — Unpresented (${beds}-bed)`,
-      amount: Math.round(calcSocialMediaVideo(beds) * 100),
+      amount: Math.round(legacyCalcSocialMediaVideo(beds) * 100),
     });
   }
 
@@ -87,19 +125,19 @@ function buildLegacyServices(
     const beds = (p.bedrooms as number) || 2;
     services.push({
       name: `3D Floor Plan (${beds}-bed)`,
-      amount: Math.round(calcFloorPlan3D(beds) * 100),
+      amount: Math.round(legacyCalcFloorPlan3D(beds) * 100),
     });
   } else if (p.premiumFloorPlan) {
     const beds = (p.bedrooms as number) || 2;
     services.push({
       name: `Premium Floor Plan (${beds}-bed)`,
-      amount: Math.round(calcPremiumFloorPlan(beds) * 100),
+      amount: Math.round(legacyCalcPremiumFloorPlan(beds) * 100),
     });
   } else if (p.standardFloorPlan) {
     const beds = (p.bedrooms as number) || 2;
     services.push({
       name: `Standard Floor Plan (${beds}-bed)`,
-      amount: Math.round(calcStandardFloorPlan(beds) * 100),
+      amount: Math.round(legacyCalcStandardFloorPlan(beds) * 100),
     });
   }
 
