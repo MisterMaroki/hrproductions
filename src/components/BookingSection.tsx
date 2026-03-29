@@ -247,15 +247,17 @@ export default function BookingSection() {
               + Add Another Property
             </button>
 
-            <div className={styles.disclaimer}>
-              <h4 className={styles.disclaimerTitle}>Important Information</h4>
-              <ul className={styles.disclaimerList}>
-                <li>Shoot times are allocated automatically based on your selected services. Available time slots are shown after you choose a date.</li>
-                <li>Properties must include a full address. Shoots within 10 miles of Brighton are included. Properties beyond 10 miles will incur a per-mile travel charge, quoted separately.</li>
-                <li>Multi-property bookings on the same day receive £15 off each additional property.</li>
-                <li>All prices are exclusive of VAT.</li>
-              </ul>
-            </div>
+            {!whiteLabel && (
+              <div className={styles.disclaimer}>
+                <h4 className={styles.disclaimerTitle}>Important Information</h4>
+                <ul className={styles.disclaimerList}>
+                  <li>Shoot times are allocated automatically based on your selected services. Available time slots are shown after you choose a date.</li>
+                  <li>Properties must include a full address. Shoots within 10 miles of Brighton are included. Properties beyond 10 miles will incur a per-mile travel charge, quoted separately.</li>
+                  <li>Multi-property bookings on the same day receive £15 off each additional property.</li>
+                  <li>All prices are exclusive of VAT.</li>
+                </ul>
+              </div>
+            )}
           </div>
           <div className={styles.basket}>
             {!whiteLabel && (
