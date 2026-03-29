@@ -1,0 +1,138 @@
+.main {
+  min-height: 100vh;
+  background: #f5f0eb;
+  padding: 40px 20px;
+}
+
+.container {
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.setupBox,
+.successBox {
+  background: #ffffff;
+  border: 2px solid #0a0a0a;
+  padding: 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #0a0a0a;
+  letter-spacing: 0.02em;
+}
+
+.description {
+  margin: 0;
+  font-size: 14px;
+  color: #3d3933;
+  line-height: 1.6;
+}
+
+.bulletList {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bulletList li {
+  font-size: 13px;
+  color: #5a5550;
+  line-height: 1.5;
+}
+
+.errorMsg {
+  margin: 0;
+  font-size: 13px;
+  color: #dc2626;
+  font-weight: 600;
+  padding: 10px 14px;
+  background: #fef2f2;
+  border: 2px solid #dc2626;
+}
+
+.primaryBtn {
+  display: inline-block;
+  padding: 12px 24px;
+  background: #0a0a0a;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  align-self: flex-start;
+  font-family: inherit;
+  transition: opacity 0.15s;
+}
+
+.primaryBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.primaryBtn:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.cancelLink {
+  font-size: 13px;
+  color: #8a8580;
+  text-decoration: underline;
+  align-self: flex-start;
+}
+
+.cancelLink:hover {
+  color: #0a0a0a;
+}
+
+/* Success / polling */
+.pollingRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #d4cfc9;
+  border-top-color: #0a0a0a;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.pollingText {
+  margin: 0;
+  font-size: 14px;
+  color: #5a5550;
+}
+
+.successText {
+  margin: 0;
+  font-size: 14px;
+  color: #3d3933;
+  line-height: 1.6;
+}
+
+@media (max-width: 640px) {
+  .setupBox,
+  .successBox {
+    padding: 24px;
+  }
+}
