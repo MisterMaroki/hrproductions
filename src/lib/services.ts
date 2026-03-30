@@ -78,7 +78,6 @@ export async function getServicesForBrand(
     db
       .select()
       .from(services)
-      .where(eq(services.visible, 1))
       .orderBy(asc(services.sortOrder)),
     db
       .select()
@@ -104,8 +103,9 @@ export async function getServicesForBrand(
   for (const service of allServices) {
     const override = overrideMap.get(service.id);
 
-    // If override explicitly hides this service, skip it
-    if (override && override.visible === 0) {
+    // Determine effective visibility: override takes precedence, else fall back to global
+    const effectiveVisible = override != null ? override.visible : service.visible;
+    if (!effectiveVisible) {
       continue;
     }
 
