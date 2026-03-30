@@ -56,11 +56,16 @@ export default function PropertyBlock({
       if (!svc) return;
       const defaults: Record<string, number | string | boolean> = {};
       for (const field of (svc.inputFields ?? [])) {
+        // Check if pricing rules have a minimum for this field
+        const minRule = svc.pricingRules?.rules?.find((r: any) => r.type === "minimum" && r.input === field.key);
+        const effectiveMin = minRule ? minRule.minValue : field.min;
+        const effectiveDefault = field.default !== undefined ? field.default : effectiveMin;
+
         defaults[field.key] =
-          field.default !== undefined
-            ? field.default
+          effectiveDefault !== undefined
+            ? effectiveDefault
             : field.type === "number"
-            ? (field.min ?? 0)
+            ? (effectiveMin ?? 0)
             : field.type === "boolean"
             ? false
             : field.options?.[0]?.value ?? "";
@@ -69,7 +74,7 @@ export default function PropertyBlock({
     }
   };
 
-  const renderInputField = (serviceId: string, field: any, currentInputs: Record<string, any>) => {
+  const renderInputField = (serviceId: string, field: any, currentInputs: Record<string, any>, pricingRules?: any) => {
     const updateInput = (key: string, value: any) => {
       const newServices = property.selectedServices.map(sel =>
         sel.serviceId === serviceId
@@ -80,13 +85,17 @@ export default function PropertyBlock({
     };
 
     if (field.type === "number") {
+      // Check if pricing rules have a minimum rule for this field
+      const minRule = pricingRules?.rules?.find((r: any) => r.type === "minimum" && r.input === field.key);
+      const effectiveMin = minRule ? minRule.minValue : field.min;
+
       return (
         <label key={field.key} className={styles.serviceOption}>
-          <span>{field.label}</span>
+          <span>{field.label}{effectiveMin ? ` (min ${effectiveMin})` : ""}</span>
           <input
             type="number"
             value={currentInputs[field.key] ?? field.default ?? ""}
-            min={field.min}
+            min={effectiveMin}
             max={field.max}
             onChange={e => updateInput(field.key, parseInt(e.target.value, 10) || 0)}
             className={styles.input}
@@ -407,7 +416,7 @@ export default function PropertyBlock({
                   {isSelected && (svc.inputFields ?? []).length > 0 && (
                     <div>
                       {(svc.inputFields ?? []).map((field: any) =>
-                        renderInputField(svc.id, field, sel?.inputs ?? {})
+                        renderInputField(svc.id, field, sel?.inputs ?? {}, svc.pricingRules)
                       )}
                     </div>
                   )}

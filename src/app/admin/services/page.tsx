@@ -90,7 +90,7 @@ function PricingRulesEditor({ rules, onChange, availableInputs }: PricingRulesEd
   const perUnit = rules.rules.find((r) => r.type === "perUnit");
   const fixedTier = rules.rules.find((r) => r.type === "fixedTier");
   const bulkDiscount = rules.rules.find((r) => r.type === "bulkDiscount");
-  const minQty = rules.rules.find((r) => r.type === "minQuantity");
+  const minQty = rules.rules.find((r) => r.type === "minimum");
 
   const pricingType = perUnit ? "perUnit" : fixedTier ? "fixedTier" : "flatRate";
 
@@ -189,19 +189,19 @@ function PricingRulesEditor({ rules, onChange, availableInputs }: PricingRulesEd
       onChange({
         ...rules,
         rules: [
-          ...rules.rules.filter((r) => r.type !== "minQuantity"),
-          { type: "minQuantity", input: availableInputs[0] || "", minValue: 1 },
+          ...rules.rules.filter((r) => r.type !== "minimum"),
+          { type: "minimum", input: availableInputs[0] || "", minValue: 1 },
         ],
       });
     } else {
-      onChange({ ...rules, rules: rules.rules.filter((r) => r.type !== "minQuantity") });
+      onChange({ ...rules, rules: rules.rules.filter((r) => r.type !== "minimum") });
     }
   };
 
   const updateMinQty = (patch: Partial<PricingRule>) => {
     onChange({
       ...rules,
-      rules: rules.rules.map((r) => (r.type === "minQuantity" ? { ...r, ...patch } : r)),
+      rules: rules.rules.map((r) => (r.type === "minimum" ? { ...r, ...patch } : r)),
     });
   };
 
