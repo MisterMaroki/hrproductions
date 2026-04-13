@@ -1,10 +1,58 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { clients, bookings, invoices } from "@/lib/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { clients, bookings, invoices, bookingsWhitelabel, whitelabelInvoices } from "@/lib/schema";
+import { eq, and, sql, isNull, desc } from "drizzle-orm";
 import { getClientSession } from "@/lib/client-auth";
+import { getWhitelabelSession } from "@/lib/whitelabel-auth";
+import { isWhiteLabel } from "@/lib/brand";
 
 export async function GET() {
+  if (isWhiteLabel()) {
+    return handleWhitelabelDashboard();
+  }
+  return handleMainDashboard();
+}
+
+async function handleWhitelabelDashboard() {
+  const session = await getWhitelabelSession();
+  if (!session?.sub) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+
+  const upcoming = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(bookingsWhitelabel)
+    .where(
+      and(
+        sql`${bookingsWhitelabel.preferredDate} >= ${today}`,
+        eq(bookingsWhitelabel.status, "confirmed"),
+      )
+    );
+
+  const uninvoiced = await db
+    .select({ total: sql<number>`coalesce(sum(${bookingsWhitelabel.total}), 0)` })
+    .from(bookingsWhitelabel)
+    .where(isNull(bookingsWhitelabel.whitelabelInvoiceId));
+
+  const latest = await db
+    .select()
+    .from(whitelabelInvoices)
+    .orderBy(desc(whitelabelInvoices.generatedAt))
+    .limit(1);
+
+  return NextResponse.json({
+    brand: "whitelabel",
+    companyName: process.env.WHITELABEL_INVOICE_COMPANY || "",
+    upcomingCount: upcoming[0]?.count ?? 0,
+    uninvoicedTotal: uninvoiced[0]?.total ?? 0,
+    lastInvoiceAt: latest[0]?.generatedAt ?? null,
+    lastInvoiceNumber: latest[0]?.invoiceNumber ?? null,
+  });
+}
+
+async function handleMainDashboard() {
   const session = await getClientSession();
   if (!session?.sub) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -53,6 +101,7 @@ export async function GET() {
     );
 
   return NextResponse.json({
+    brand: "main",
     client: {
       id: client.id,
       companyName: client.companyName,
