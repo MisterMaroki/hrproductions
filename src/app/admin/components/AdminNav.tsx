@@ -60,6 +60,12 @@ export default function AdminNav() {
 					>
 						Photos
 					</Link>
+					<Link
+						href="/admin/whitelabel-invoice"
+						className={`${styles.link} ${pathname?.startsWith('/admin/whitelabel-invoice') ? styles.active : ''}`}
+					>
+						Whitelabel
+					</Link>
 					<button className={styles.logout} onClick={handleLogout}>
 						Log Out
 					</button>
