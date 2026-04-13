@@ -1,4 +1,4 @@
-import { bookings, discountCodes, blockedDays } from "../schema";
+import { bookings, discountCodes, blockedDays, bookingsWhitelabel, whitelabelInvoices } from "../schema";
 
 describe("schema exports", () => {
   it("exports bookings table", () => {
@@ -11,5 +11,13 @@ describe("schema exports", () => {
 
   it("exports blockedDays table", () => {
     expect(blockedDays).toBeDefined();
+  });
+
+  it("exports bookingsWhitelabel table", () => {
+    expect(bookingsWhitelabel).toBeDefined();
+  });
+
+  it("exports whitelabelInvoices table", () => {
+    expect(whitelabelInvoices).toBeDefined();
   });
 });

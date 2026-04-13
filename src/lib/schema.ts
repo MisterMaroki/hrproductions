@@ -128,3 +128,35 @@ export const serviceBrandOverrides = sqliteTable("service_brand_overrides", {
   durationRules: text("duration_rules"),
   inputFields: text("input_fields"),
 });
+
+export const bookingsWhitelabel = sqliteTable("bookings_whitelabel", {
+  id: text("id").primaryKey(),
+  address: text("address").notNull(),
+  postcode: text("postcode"),
+  bedrooms: integer("bedrooms").notNull(),
+  preferredDate: text("preferred_date").notNull(),
+  startTime: text("start_time"),
+  endTime: text("end_time"),
+  notes: text("notes"),
+  agentName: text("agent_name").notNull(),
+  agentCompany: text("agent_company"),
+  agentEmail: text("agent_email").notNull(),
+  agentPhone: text("agent_phone"),
+  services: text("services").notNull(),
+  workHours: real("work_hours").notNull(),
+  subtotal: integer("subtotal").notNull(),
+  discountCode: text("discount_code"),
+  discountAmount: integer("discount_amount").default(0),
+  total: integer("total").notNull(),
+  status: text("status").notNull().default("confirmed"),
+  whitelabelInvoiceId: text("whitelabel_invoice_id"),
+  createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const whitelabelInvoices = sqliteTable("whitelabel_invoices", {
+  id: text("id").primaryKey(),
+  invoiceNumber: text("invoice_number").notNull().unique(),
+  totalAmount: integer("total_amount").notNull(),
+  bookingCount: integer("booking_count").notNull(),
+  generatedAt: text("generated_at").default(sql`CURRENT_TIMESTAMP`),
+});
