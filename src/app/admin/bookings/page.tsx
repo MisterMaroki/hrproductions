@@ -28,9 +28,11 @@ interface Booking {
   createdAt: string | null;
   clientId: string | null;
   clientCompanyName: string | null;
+  source?: "main" | "whitelabel";
 }
 
 type StatusFilter = "all" | "confirmed" | "pending" | "completed" | "cancelled" | "invoiced" | "paid" | "payment_failed";
+type SourceFilter = "all" | "main" | "whitelabel";
 
 function formatDate(iso: string): string {
   const d = new Date(iso + "T12:00:00");
@@ -80,6 +82,7 @@ export default function BookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
   const [search, setSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -115,6 +118,10 @@ export default function BookingsPage() {
       list = list.filter((b) => b.status === statusFilter);
     }
 
+    if (sourceFilter !== "all") {
+      list = list.filter((b) => b.source === sourceFilter);
+    }
+
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(
@@ -128,7 +135,7 @@ export default function BookingsPage() {
     }
 
     return list;
-  }, [bookings, statusFilter, search]);
+  }, [bookings, statusFilter, sourceFilter, search]);
 
   // Group bookings by date
   const grouped = useMemo(() => {
@@ -238,6 +245,19 @@ export default function BookingsPage() {
                 </button>
               ))}
             </div>
+
+            {/* Source filter */}
+            <div className={styles.statusTabs}>
+              {(["all", "main", "whitelabel"] as SourceFilter[]).map((s) => (
+                <button
+                  key={s}
+                  className={`${styles.statusTab} ${sourceFilter === s ? styles.statusTabActive : ""}`}
+                  onClick={() => setSourceFilter(s)}
+                >
+                  {s === "all" ? "All Sources" : s === "main" ? "HR Productions" : "Whitelabel"}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Results */}
@@ -282,6 +302,9 @@ export default function BookingsPage() {
                           <div className={styles.cardLeft}>
                             <span className={styles.cardAddress}>
                               {b.address}{b.postcode ? `, ${b.postcode}` : ""}
+                              {b.source === "whitelabel" && (
+                                <span className={styles.whitelabelBadge}>WL</span>
+                              )}
                             </span>
                             <span className={styles.cardAgent}>{b.agentName}{b.agentCompany ? ` · ${b.agentCompany}` : ""}</span>
                             {b.clientCompanyName && (

@@ -17,6 +17,7 @@ interface Booking {
   services: string;
   clientId?: string | null;
   clientCompanyName?: string | null;
+  source?: "main" | "whitelabel";
 }
 
 interface BlockedDay {
@@ -215,6 +216,9 @@ export default function CalendarPage() {
                       <div className={styles.bookingHeader}>
                         <div className={styles.bookingAddressRow}>
                           <p className={styles.bookingAddress}>{b.address}</p>
+                          {b.source === "whitelabel" && (
+                            <span className={styles.whitelabelBadge}>WL</span>
+                          )}
                           {b.clientCompanyName && (
                             <span className={styles.companyBadge}>{b.clientCompanyName}</span>
                           )}

@@ -388,3 +388,17 @@
   padding: 0.2rem 0.5rem;
   white-space: nowrap;
 }
+
+.whitelabelBadge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: #eef3ff;
+  color: #2a4a9e;
+  border-radius: 4px;
+  vertical-align: middle;
+}
