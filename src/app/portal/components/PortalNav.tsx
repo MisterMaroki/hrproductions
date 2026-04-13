@@ -17,9 +17,11 @@ export default function PortalNav() {
   return (
     <nav className={styles.nav}>
       <div className={styles.inner}>
-        <Link href="/portal/dashboard" className={styles.brand}>
-          {isWhiteLabel() ? "Client Portal" : "THE PROPERTY ROOM"}
-        </Link>
+        {!isWhiteLabel() && (
+          <Link href="/portal/dashboard" className={styles.brand}>
+            THE PROPERTY ROOM
+          </Link>
+        )}
         <div className={styles.links}>
           <Link
             href="/portal/dashboard"
