@@ -52,12 +52,41 @@ export async function middleware(request: NextRequest) {
   }
 
   // ── Portal auth ──
-  if (PUBLIC_PORTAL_PATHS.includes(pathname)) return NextResponse.next();
+  const brandModeEnv = process.env.NEXT_PUBLIC_BRAND_MODE || process.env.BRAND_MODE;
+  const isWhitelabelEnv = brandModeEnv === "whitelabel";
+
+  const publicPaths = isWhitelabelEnv
+    ? ["/portal/login", "/api/portal/login", "/api/portal/logout"]
+    : PUBLIC_PORTAL_PATHS;
+
+  if (publicPaths.includes(pathname)) return NextResponse.next();
 
   const isPortalPage = pathname.startsWith("/portal");
   const isPortalApi = pathname.startsWith("/api/portal");
 
   if (isPortalPage || isPortalApi) {
+    if (isWhitelabelEnv) {
+      const token = request.cookies.get("whitelabel_session")?.value;
+      if (!token) {
+        if (isPortalApi) {
+          return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+        return NextResponse.redirect(new URL("/portal/login", request.url));
+      }
+      try {
+        const secret = process.env.WHITELABEL_JWT_SECRET;
+        if (!secret) throw new Error("WHITELABEL_JWT_SECRET not set");
+        await jwtVerify(token, new TextEncoder().encode(secret));
+        return NextResponse.next();
+      } catch {
+        if (isPortalApi) {
+          return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+        return NextResponse.redirect(new URL("/portal/login", request.url));
+      }
+    }
+
+    // Main deployment — existing client_session behavior
     const token = request.cookies.get("client_session")?.value;
     if (!token) {
       if (isPortalApi) {
