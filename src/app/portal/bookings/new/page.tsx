@@ -6,6 +6,7 @@ import PortalNav from "../../components/PortalNav";
 import DatePicker from "@/components/DatePicker";
 import { evaluatePrice, evaluateDuration, calcMultiPropertyDiscount } from "@/lib/pricing-engine";
 import { isWorkingDay, TRAVEL_BUFFER, type TimeSlot } from "@/lib/scheduling";
+import { isWhiteLabel } from "@/lib/brand";
 import styles from "./page.module.css";
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -489,6 +490,20 @@ function PropertyRow({
 
 export default function PortalNewBookingPage() {
   const router = useRouter();
+  const whitelabel = isWhiteLabel();
+
+  useEffect(() => {
+    if (whitelabel) router.replace("/book");
+  }, [whitelabel, router]);
+
+  if (whitelabel) {
+    return (
+      <main style={{ padding: 40 }}>
+        <p>Redirecting to booking form…</p>
+      </main>
+    );
+  }
+
   const [properties, setProperties] = useState<PropertyBooking[]>([createProperty()]);
   const [serviceCategories, setServiceCategories] = useState<any[]>([]);
   const [errors, setErrors] = useState<Record<string, Record<string, string>>>({});
