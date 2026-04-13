@@ -39,12 +39,14 @@ export default function PortalNav() {
           >
             Invoices
           </Link>
-          <Link
-            href="/portal/account"
-            className={`${styles.link} ${pathname?.startsWith("/portal/account") ? styles.active : ""}`}
-          >
-            Account
-          </Link>
+          {!isWhiteLabel() && (
+            <Link
+              href="/portal/account"
+              className={`${styles.link} ${pathname?.startsWith("/portal/account") ? styles.active : ""}`}
+            >
+              Account
+            </Link>
+          )}
           <button className={styles.logout} onClick={handleLogout}>
             Log Out
           </button>
