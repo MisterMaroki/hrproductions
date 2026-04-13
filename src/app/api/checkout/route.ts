@@ -10,6 +10,7 @@ import {
 } from "@/lib/pricing-engine";
 import { getServicesForBrand } from "@/lib/services";
 import { getBrandMode } from "@/lib/brand";
+import { computeBookingRow } from "@/lib/booking-calc";
 
 let _stripe: Stripe;
 function getStripe() {
@@ -218,42 +219,20 @@ export async function POST(request: Request) {
     // ── Save pending bookings BEFORE redirecting to Stripe ──
     const discountPct = discountPercentage || 0;
     for (const p of properties) {
-      const servicesData = p.selectedServices.map(sel => {
-        const svc = allServices.find(s => s.id === sel.serviceId);
-        return {
-          serviceId: sel.serviceId,
-          serviceName: svc?.name ?? "Unknown",
-          inputs: sel.inputs,
-          computedPrice: svc
-            ? evaluatePrice(svc.pricingRules, { ...sel.inputs, bedrooms: p.bedrooms }).total
-            : 0,
-        };
-      });
-
-      const workHours =
-        Math.round(
-          (p.selectedServices.reduce((total, sel) => {
-            const svc = allServices.find(s => s.id === sel.serviceId);
-            if (!svc) return total;
-            return total + evaluateDuration(svc.durationRules, { ...sel.inputs, bedrooms: p.bedrooms });
-          }, 0) / 60) * 100
-        ) / 100;
-
-      const subtotal = Math.round(
-        servicesData.reduce((sum, s) => sum + s.computedPrice, 0) * 100
+      const row = computeBookingRow(
+        {
+          id: p.id,
+          address: p.address,
+          postcode: p.postcode || null,
+          bedrooms: p.bedrooms,
+          preferredDate: p.preferredDate,
+          timeSlot: p.timeSlot || null,
+          notes: p.notes,
+          selectedServices: p.selectedServices,
+        },
+        allServices,
+        discountPct,
       );
-      const propDiscount = discountPct ? Math.round(subtotal * (discountPct / 100)) : 0;
-      const total = subtotal - propDiscount;
-
-      let startTime: string | null = p.timeSlot || null;
-      let endTime: string | null = null;
-      if (startTime) {
-        const [h, m] = startTime.split(":").map(Number);
-        const endMins = h * 60 + m + Math.round(workHours * 60);
-        const endH = Math.floor(endMins / 60);
-        const endM = endMins % 60;
-        endTime = `${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}`;
-      }
 
       await db.insert(bookings).values({
         id: crypto.randomUUID(),
@@ -261,19 +240,19 @@ export async function POST(request: Request) {
         postcode: p.postcode || null,
         bedrooms: p.bedrooms,
         preferredDate: p.preferredDate,
-        startTime,
-        endTime,
+        startTime: row.startTime,
+        endTime: row.endTime,
         notes: p.notes || null,
         agentName: agent.name,
         agentCompany: agent.company || null,
         agentEmail: agent.email,
         agentPhone: agent.phone || null,
-        services: JSON.stringify(servicesData),
-        workHours,
-        subtotal,
+        services: row.services,
+        workHours: row.workHours,
+        subtotal: row.subtotal,
         discountCode: discountCode || null,
-        discountAmount: propDiscount,
-        total,
+        discountAmount: row.discountAmount,
+        total: row.total,
         stripeSession: session.id,
         status: "pending",
       });
