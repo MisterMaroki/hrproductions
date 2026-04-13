@@ -167,3 +167,61 @@
   text-decoration: none;
   border: 1px solid #0a0a0a;
 }
+
+/* ── Whitelabel invoices ── */
+
+.summaryCard {
+  border: 1px solid #e7e3de;
+  border-radius: 12px;
+  padding: 20px;
+  background: #fff;
+  margin-bottom: 32px;
+}
+
+.summaryLabel {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #8a857f;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.summaryValue {
+  font-size: 32px;
+  font-weight: 700;
+  color: #0a0a0a;
+}
+
+.summaryNote {
+  font-size: 13px;
+  color: #8a857f;
+  margin-top: 8px;
+}
+
+.subheading {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 16px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: 10px 8px;
+  border-bottom: 1px solid #f0ece7;
+}
+
+.table th {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #8a857f;
+  font-weight: 600;
+}
