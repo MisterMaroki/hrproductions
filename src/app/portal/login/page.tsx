@@ -19,6 +19,8 @@ export default function ClientLoginPage() {
   const router = useRouter();
   const [imageIndex, setImageIndex] = useState(0);
   const [imageLoaded, setImageLoaded] = useState(true);
+  const whitelabel = isWhiteLabel();
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -42,10 +44,14 @@ export default function ClientLoginPage() {
     setLoading(true);
 
     try {
+      const body = whitelabel
+        ? { username, password }
+        : { email, password };
+
       const res = await fetch("/api/portal/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(body),
       });
 
       const data = await res.json();
@@ -56,6 +62,12 @@ export default function ClientLoginPage() {
         return;
       }
 
+      if (data.brand === "whitelabel") {
+        router.push("/portal/dashboard");
+        return;
+      }
+
+      // Main-site post-login logic (unchanged)
       if (data.client.status === "pending_approval") {
         router.push("/portal/dashboard");
       } else if (!data.client.hasMandateSetup) {
@@ -109,10 +121,12 @@ export default function ClientLoginPage() {
       <div className={styles.formPanel}>
         <div className={styles.formContainer}>
           {/* Header with sign-up link */}
-          <div className={styles.formHeader}>
-            <span className={styles.formHeaderText}>Don&apos;t have an account?</span>
-            <Link href="/portal/signup" className={styles.signUpLink}>Sign up</Link>
-          </div>
+          {!whitelabel && (
+            <div className={styles.formHeader}>
+              <span className={styles.formHeaderText}>Don&apos;t have an account?</span>
+              <Link href="/portal/signup" className={styles.signUpLink}>Sign up</Link>
+            </div>
+          )}
 
           <div className={styles.formBody}>
             <div className={styles.formIntro}>
@@ -121,21 +135,33 @@ export default function ClientLoginPage() {
             </div>
 
             <form onSubmit={handleSubmit} className={styles.fields}>
-              <label className={styles.label}>
-                <span className={styles.labelText}>Email Address</span>
-                <input
-                  className={`${styles.input} ${error ? styles.inputError : ""}`}
-                  type="email"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    if (error) setError("");
-                  }}
-                  placeholder="james@foxtons.co.uk"
-                  required
-                  autoFocus
-                />
-              </label>
+              {whitelabel ? (
+                <label className={styles.label}>
+                  <span className={styles.labelText}>Username</span>
+                  <input
+                    className={`${styles.input} ${error ? styles.inputError : ""}`}
+                    type="text"
+                    value={username}
+                    onChange={(e) => { setUsername(e.target.value); if (error) setError(""); }}
+                    placeholder="Your username"
+                    required
+                    autoFocus
+                  />
+                </label>
+              ) : (
+                <label className={styles.label}>
+                  <span className={styles.labelText}>Email Address</span>
+                  <input
+                    className={`${styles.input} ${error ? styles.inputError : ""}`}
+                    type="email"
+                    value={email}
+                    onChange={(e) => { setEmail(e.target.value); if (error) setError(""); }}
+                    placeholder="james@foxtons.co.uk"
+                    required
+                    autoFocus
+                  />
+                </label>
+              )}
 
               <label className={styles.label}>
                 <span className={styles.labelText}>Password</span>
