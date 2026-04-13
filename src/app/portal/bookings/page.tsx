@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import PortalNav from "../components/PortalNav";
 import styles from "./page.module.css";
+import { isWhiteLabel } from "@/lib/brand";
 
 interface Booking {
   id: string;
@@ -65,6 +66,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export default function PortalBookingsPage() {
+  const whitelabel = isWhiteLabel();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<StatusFilter>("all");
