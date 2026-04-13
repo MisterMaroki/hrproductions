@@ -1,13 +1,26 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { bookings, clients } from "@/lib/schema";
-import { eq } from "drizzle-orm";
+import { bookings, bookingsWhitelabel, clients } from "@/lib/schema";
+import { eq, desc } from "drizzle-orm";
 import { getClientSession } from "@/lib/client-auth";
+import { getWhitelabelSession } from "@/lib/whitelabel-auth";
 import { evaluatePrice, evaluateDuration } from "@/lib/pricing-engine";
 import { getServicesForBrand } from "@/lib/services";
-import { getBrandMode } from "@/lib/brand";
+import { getBrandMode, isWhiteLabel } from "@/lib/brand";
 
 export async function GET() {
+  if (isWhiteLabel()) {
+    const session = await getWhitelabelSession();
+    if (!session?.sub) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const rows = await db
+      .select()
+      .from(bookingsWhitelabel)
+      .orderBy(desc(bookingsWhitelabel.preferredDate));
+    return NextResponse.json(rows);
+  }
+
   const session = await getClientSession();
   if (!session?.sub) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -23,6 +36,10 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  if (isWhiteLabel()) {
+    return NextResponse.json({ error: "Not available on whitelabel" }, { status: 404 });
+  }
+
   const session = await getClientSession();
   if (!session?.sub) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
