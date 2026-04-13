@@ -21,12 +21,21 @@ interface DashboardData {
   totalPaidToDate: number;
 }
 
+interface WhitelabelDashboardData {
+  brand: "whitelabel";
+  companyName: string;
+  upcomingCount: number;
+  uninvoicedTotal: number;
+  lastInvoiceAt: string | null;
+  lastInvoiceNumber: string | null;
+}
+
 function pence(amount: number): string {
   return `£${(amount / 100).toFixed(2)}`;
 }
 
 export default function DashboardPage() {
-  const [data, setData] = useState<DashboardData | null>(null);
+  const [data, setData] = useState<DashboardData | WhitelabelDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -49,7 +58,52 @@ export default function DashboardPage() {
     );
   }
 
-  const { client } = data;
+  if (data && "brand" in data && data.brand === "whitelabel") {
+    return (
+      <>
+        <PortalNav />
+        <main className={styles.main}>
+          <div className={styles.container}>
+            <div className={styles.titleArea}>
+              <h1 className={styles.title}>Welcome back</h1>
+              <p className={styles.companyLabel}>{data.companyName}</p>
+            </div>
+
+            <div className={styles.statsGrid}>
+              <div className={styles.statCard}>
+                <div className={styles.statLabel}>Upcoming shoots</div>
+                <div className={styles.statValue}>{data.upcomingCount}</div>
+              </div>
+              <div className={styles.statCard}>
+                <div className={styles.statLabel}>Un-invoiced total</div>
+                <div className={styles.statValue}>{pence(data.uninvoicedTotal)}</div>
+              </div>
+              <div className={styles.statCard}>
+                <div className={styles.statLabel}>Last invoice</div>
+                <div className={styles.statValue}>
+                  {data.lastInvoiceAt
+                    ? new Date(data.lastInvoiceAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+                    : "—"}
+                </div>
+                {data.lastInvoiceNumber && (
+                  <div className={styles.statMeta}>{data.lastInvoiceNumber}</div>
+                )}
+              </div>
+            </div>
+
+            <div className={styles.actionsRow}>
+              <Link href="/book" className={styles.primaryBtn}>New Booking</Link>
+              <Link href="/portal/bookings" className={styles.secondaryBtn}>View Bookings</Link>
+              <Link href="/portal/invoices" className={styles.secondaryBtn}>View Invoices</Link>
+            </div>
+          </div>
+        </main>
+      </>
+    );
+  }
+
+  const mainData = data as DashboardData;
+  const { client } = mainData;
 
   return (
     <>
@@ -92,19 +146,19 @@ export default function DashboardPage() {
             <div className={styles.statsGrid}>
               <div className={styles.statCard}>
                 <span className={styles.statLabel}>Running Total</span>
-                <span className={styles.statValue}>{pence(data.runningTotal)}</span>
+                <span className={styles.statValue}>{pence(mainData.runningTotal)}</span>
                 <span className={styles.statSub}>
-                  {data.completedShootCount} completed shoot{data.completedShootCount !== 1 ? "s" : ""} awaiting invoice
+                  {mainData.completedShootCount} completed shoot{mainData.completedShootCount !== 1 ? "s" : ""} awaiting invoice
                 </span>
               </div>
               <div className={styles.statCard}>
                 <span className={styles.statLabel}>Upcoming Shoots</span>
-                <span className={styles.statValue}>{data.pendingShootCount}</span>
+                <span className={styles.statValue}>{mainData.pendingShootCount}</span>
                 <span className={styles.statSub}>pending</span>
               </div>
               <div className={styles.statCard}>
                 <span className={styles.statLabel}>Total Paid</span>
-                <span className={styles.statValue}>{pence(data.totalPaidToDate)}</span>
+                <span className={styles.statValue}>{pence(mainData.totalPaidToDate)}</span>
                 <span className={styles.statSub}>to date</span>
               </div>
             </div>
