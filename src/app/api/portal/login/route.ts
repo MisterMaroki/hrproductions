@@ -7,8 +7,62 @@ import {
   createClientSessionToken,
   setClientSessionCookie,
 } from "@/lib/client-auth";
+import { isWhiteLabel } from "@/lib/brand";
+import {
+  verifyWhitelabelPassword,
+  createWhitelabelSessionToken,
+  setWhitelabelSessionCookie,
+} from "@/lib/whitelabel-auth";
 
 export async function POST(request: Request) {
+  if (isWhiteLabel()) {
+    return handleWhitelabelLogin(request);
+  }
+  return handleMainLogin(request);
+}
+
+async function handleWhitelabelLogin(request: Request) {
+  try {
+    const { username, password } = await request.json();
+
+    if (!username || !password) {
+      return NextResponse.json(
+        { error: "Username and password are required" },
+        { status: 400 }
+      );
+    }
+
+    const expectedUsername = process.env.WHITELABEL_PORTAL_USERNAME;
+    if (!expectedUsername || username !== expectedUsername) {
+      return NextResponse.json(
+        { error: "Invalid username or password" },
+        { status: 401 }
+      );
+    }
+
+    const valid = await verifyWhitelabelPassword(password);
+    if (!valid) {
+      return NextResponse.json(
+        { error: "Invalid username or password" },
+        { status: 401 }
+      );
+    }
+
+    const token = await createWhitelabelSessionToken();
+    await setWhitelabelSessionCookie(token);
+
+    return NextResponse.json({
+      success: true,
+      brand: "whitelabel",
+      companyName: process.env.WHITELABEL_INVOICE_COMPANY || "",
+    });
+  } catch (err) {
+    console.error("Whitelabel login error:", err);
+    return NextResponse.json({ error: "Login failed" }, { status: 500 });
+  }
+}
+
+async function handleMainLogin(request: Request) {
   try {
     const { email, password } = await request.json();
 
@@ -66,9 +120,6 @@ export async function POST(request: Request) {
     });
   } catch (err) {
     console.error("Login error:", err);
-    return NextResponse.json(
-      { error: "Login failed" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Login failed" }, { status: 500 });
   }
 }
