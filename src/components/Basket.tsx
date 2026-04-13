@@ -15,7 +15,7 @@ interface Props {
   serviceCategories: any[]; // ResolvedCategory[]
 }
 
-type CheckoutMode = "choose" | "pay" | "account";
+type CheckoutMode = "choose" | "pay" | "account" | "whitelabel";
 
 function getLineItems(property: PropertyBooking, allServices: any[]) {
   const items: { label: string; price: number; indent?: boolean }[] = [];
@@ -39,7 +39,7 @@ function getLineItems(property: PropertyBooking, allServices: any[]) {
 
 export default function Basket({ properties, agent, discountCode, discountPercentage, onValidate, serviceCategories }: Props) {
   const [loading, setLoading] = useState(false);
-  const [mode, setMode] = useState<CheckoutMode>(isWhiteLabel() ? "pay" : "choose");
+  const [mode, setMode] = useState<CheckoutMode>(isWhiteLabel() ? "whitelabel" : "choose");
   const [accountPassword, setAccountPassword] = useState("");
   const [accountConfirm, setAccountConfirm] = useState("");
   const [accountError, setAccountError] = useState("");
@@ -132,6 +132,30 @@ export default function Basket({ properties, agent, discountCode, discountPercen
     }
   }, [properties, agent, accountPassword, accountConfirm, onValidate]);
 
+  const [wlSuccess, setWlSuccess] = useState(false);
+
+  const handleWhitelabelSubmit = useCallback(async () => {
+    if (!onValidate()) return;
+    setLoading(true);
+    try {
+      const res = await fetch("/api/whitelabel/book", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ properties, agent, discountCode, discountPercentage }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Submission failed");
+      }
+      setWlSuccess(true);
+    } catch (err) {
+      console.error("Whitelabel booking error:", err);
+      alert("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }, [properties, agent, discountCode, discountPercentage, onValidate]);
+
   const basketContent = (
     <>
       {propertyTotals.map(({ property, items, subtotal }) => {
@@ -174,8 +198,26 @@ export default function Basket({ properties, agent, discountCode, discountPercen
         <span>£{grandTotal.toFixed(2)}</span>
       </div>
 
-      {/* Account signup success state */}
-      {accountSuccess ? (
+      {/* Checkout flow */}
+      {wlSuccess ? (
+        <div className={styles.accountSuccess}>
+          <div className={styles.accountSuccessIcon}>
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="16" fill="#0a0a0a"/><path d="M10 16.5L14 20.5L22 12.5" stroke="#fff" strokeWidth="2.5" strokeLinecap="square"/></svg>
+          </div>
+          <h4 className={styles.accountSuccessTitle}>Booking Confirmed</h4>
+          <p className={styles.accountSuccessText}>
+            Thanks {agent.name}. We&apos;ve received your booking. You&apos;ll get a confirmation email at <strong>{agent.email}</strong>.
+          </p>
+        </div>
+      ) : mode === "whitelabel" ? (
+        <button
+          className={styles.checkout}
+          onClick={handleWhitelabelSubmit}
+          disabled={!hasItems || loading}
+        >
+          {loading ? "Submitting..." : "Submit Booking"}
+        </button>
+      ) : accountSuccess ? (
         <div className={styles.accountSuccess}>
           <div className={styles.accountSuccessIcon}>
             <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="16" fill="#0a0a0a"/><path d="M10 16.5L14 20.5L22 12.5" stroke="#fff" strokeWidth="2.5" strokeLinecap="square"/></svg>
@@ -267,15 +309,13 @@ export default function Basket({ properties, agent, discountCode, discountPercen
           >
             {loading ? "Redirecting..." : "Proceed to Payment"}
           </button>
-          {!isWhiteLabel() && (
-            <button
-              className={styles.backToOptions}
-              onClick={() => setMode("choose")}
-              disabled={loading}
-            >
-              Back to options
-            </button>
-          )}
+          <button
+            className={styles.backToOptions}
+            onClick={() => setMode("choose")}
+            disabled={loading}
+          >
+            Back to options
+          </button>
         </>
       ) : (
         /* Choose: pay now or create account */
