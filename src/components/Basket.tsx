@@ -133,6 +133,7 @@ export default function Basket({ properties, agent, discountCode, discountPercen
   }, [properties, agent, accountPassword, accountConfirm, onValidate]);
 
   const [wlSuccess, setWlSuccess] = useState(false);
+  const [wlLoggedIn, setWlLoggedIn] = useState(false);
 
   const handleWhitelabelSubmit = useCallback(async () => {
     if (!onValidate()) return;
@@ -147,6 +148,8 @@ export default function Basket({ properties, agent, discountCode, discountPercen
       if (!res.ok) {
         throw new Error(data.error || "Submission failed");
       }
+      const sessionRes = await fetch("/api/portal/dashboard");
+      setWlLoggedIn(sessionRes.ok);
       setWlSuccess(true);
     } catch (err) {
       console.error("Whitelabel booking error:", err);
@@ -206,7 +209,16 @@ export default function Basket({ properties, agent, discountCode, discountPercen
           </div>
           <h4 className={styles.accountSuccessTitle}>Booking Confirmed</h4>
           <p className={styles.accountSuccessText}>
-            Thanks {agent.name}. We&apos;ve received your booking. You&apos;ll get a confirmation email at <strong>{agent.email}</strong>.
+            Thanks {agent.name}. We&apos;ve received your booking.{" "}
+            {wlLoggedIn ? (
+              <>
+                You can view it in <a href="/portal/bookings" className={styles.accountSuccessLink}>your bookings</a>.
+              </>
+            ) : (
+              <>
+                <a href="/portal/login" className={styles.accountSuccessLink}>Sign in</a> to view your bookings.
+              </>
+            )}
           </p>
         </div>
       ) : mode === "whitelabel" ? (
