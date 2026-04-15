@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { invoices, invoiceItems, bookings, bookingsWhitelabel, whitelabelInvoices } from "@/lib/schema";
-import { eq, isNull, desc, sql, and, ne } from "drizzle-orm";
+import { eq, isNull, desc, sql, and, inArray } from "drizzle-orm";
 import { getClientSession } from "@/lib/client-auth";
 import { getWhitelabelSession } from "@/lib/whitelabel-auth";
 import { isWhiteLabel } from "@/lib/brand";
@@ -20,7 +20,7 @@ export async function GET() {
         .where(
           and(
             isNull(bookingsWhitelabel.whitelabelInvoiceId),
-            ne(bookingsWhitelabel.status, "cancelled"),
+            inArray(bookingsWhitelabel.status, ["pending", "confirmed", "completed"]),
           )
         ),
       db

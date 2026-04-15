@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { clients, bookings, invoices, bookingsWhitelabel, whitelabelInvoices } from "@/lib/schema";
-import { eq, and, ne, sql, isNull, desc } from "drizzle-orm";
+import { eq, and, sql, isNull, inArray, desc } from "drizzle-orm";
 import { getClientSession } from "@/lib/client-auth";
 import { getWhitelabelSession } from "@/lib/whitelabel-auth";
 import { isWhiteLabel } from "@/lib/brand";
@@ -37,7 +37,7 @@ async function handleWhitelabelDashboard() {
     .where(
       and(
         isNull(bookingsWhitelabel.whitelabelInvoiceId),
-        ne(bookingsWhitelabel.status, "cancelled"),
+        inArray(bookingsWhitelabel.status, ["pending", "confirmed", "completed"]),
       )
     );
 
