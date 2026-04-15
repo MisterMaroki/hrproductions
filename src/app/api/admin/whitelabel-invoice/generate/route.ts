@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { bookingsWhitelabel, whitelabelInvoices } from "@/lib/schema";
-import { isNull, eq, desc } from "drizzle-orm";
+import { and, isNull, eq, ne, desc } from "drizzle-orm";
 import { generateWhitelabelInvoicePdf, readBillToFromEnv } from "@/lib/whitelabel-invoice-pdf";
 
 function nextInvoiceNumber(existing: string | undefined): string {
@@ -15,7 +15,12 @@ export async function POST() {
   const pending = await db
     .select()
     .from(bookingsWhitelabel)
-    .where(isNull(bookingsWhitelabel.whitelabelInvoiceId));
+    .where(
+      and(
+        isNull(bookingsWhitelabel.whitelabelInvoiceId),
+        ne(bookingsWhitelabel.status, "cancelled"),
+      )
+    );
 
   if (pending.length === 0) {
     return NextResponse.json({ error: "No un-invoiced bookings" }, { status: 400 });

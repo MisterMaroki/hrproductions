@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { clients, bookings, invoices, bookingsWhitelabel, whitelabelInvoices } from "@/lib/schema";
-import { eq, and, sql, isNull, desc } from "drizzle-orm";
+import { eq, and, ne, sql, isNull, desc } from "drizzle-orm";
 import { getClientSession } from "@/lib/client-auth";
 import { getWhitelabelSession } from "@/lib/whitelabel-auth";
 import { isWhiteLabel } from "@/lib/brand";
@@ -34,7 +34,12 @@ async function handleWhitelabelDashboard() {
   const uninvoiced = await db
     .select({ total: sql<number>`coalesce(sum(${bookingsWhitelabel.total}), 0)` })
     .from(bookingsWhitelabel)
-    .where(isNull(bookingsWhitelabel.whitelabelInvoiceId));
+    .where(
+      and(
+        isNull(bookingsWhitelabel.whitelabelInvoiceId),
+        ne(bookingsWhitelabel.status, "cancelled"),
+      )
+    );
 
   const latest = await db
     .select()

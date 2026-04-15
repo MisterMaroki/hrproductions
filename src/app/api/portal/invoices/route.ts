@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { invoices, invoiceItems, bookings, bookingsWhitelabel, whitelabelInvoices } from "@/lib/schema";
-import { eq, isNull, desc, sql } from "drizzle-orm";
+import { eq, isNull, desc, sql, and, ne } from "drizzle-orm";
 import { getClientSession } from "@/lib/client-auth";
 import { getWhitelabelSession } from "@/lib/whitelabel-auth";
 import { isWhiteLabel } from "@/lib/brand";
@@ -17,7 +17,12 @@ export async function GET() {
       db
         .select({ total: sql<number>`coalesce(sum(${bookingsWhitelabel.total}), 0)` })
         .from(bookingsWhitelabel)
-        .where(isNull(bookingsWhitelabel.whitelabelInvoiceId)),
+        .where(
+          and(
+            isNull(bookingsWhitelabel.whitelabelInvoiceId),
+            ne(bookingsWhitelabel.status, "cancelled"),
+          )
+        ),
       db
         .select()
         .from(whitelabelInvoices)
