@@ -54,7 +54,7 @@ export default function Basket({ properties, agent, discountCode, discountPercen
   });
 
   const subtotalBeforeDiscount = propertyTotals.reduce((sum, p) => sum + p.subtotal, 0);
-  const discount = calcMultiPropertyDiscount(properties.length);
+  const discount = isWhiteLabel() ? 0 : calcMultiPropertyDiscount(properties.length);
   const codeDiscountAmount = discountPercentage > 0
     ? Math.round((subtotalBeforeDiscount - discount) * (discountPercentage / 100) * 100) / 100
     : 0;
