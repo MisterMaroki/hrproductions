@@ -188,3 +188,24 @@
   border-top: 1px solid #f0ece7;
   padding-top: 10px;
 }
+
+.cardActions {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.cancelBtn {
+  background: transparent;
+  border: 1px solid #d0d0d0;
+  color: #a33;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.cancelBtn:hover {
+  background: #fbecec;
+  border-color: #c88;
+}

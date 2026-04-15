@@ -71,11 +71,28 @@ export default function PortalBookingsPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<StatusFilter>("all");
 
+  const loadBookings = async () => {
+    setLoading(true);
+    const r = await fetch("/api/portal/bookings");
+    const d = await r.json();
+    setBookings(d);
+    setLoading(false);
+  };
+
   useEffect(() => {
-    fetch("/api/portal/bookings")
-      .then((r) => r.json())
-      .then((d) => { setBookings(d); setLoading(false); });
+    loadBookings();
   }, []);
+
+  const handleCancel = async (id: string) => {
+    if (!window.confirm("Cancel this shoot? This can't be undone.")) return;
+    const r = await fetch(`/api/portal/bookings/${id}/cancel`, { method: "POST" });
+    if (!r.ok) {
+      const data = await r.json().catch(() => ({}));
+      alert(data.error || "Failed to cancel booking");
+      return;
+    }
+    await loadBookings();
+  };
 
   const filtered = useMemo(() => {
     if (filter === "all") return bookings;
@@ -135,6 +152,17 @@ export default function PortalBookingsPage() {
                       </div>
                     </div>
                     <div className={styles.cardServices}>{services.join(" · ")}</div>
+                    {whitelabel && (b.status === "pending" || b.status === "confirmed") && (
+                      <div className={styles.cardActions}>
+                        <button
+                          type="button"
+                          className={styles.cancelBtn}
+                          onClick={() => handleCancel(b.id)}
+                        >
+                          Cancel shoot
+                        </button>
+                      </div>
+                    )}
                   </div>
                 );
               })}
