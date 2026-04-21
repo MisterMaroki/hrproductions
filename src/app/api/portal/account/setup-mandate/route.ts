@@ -35,7 +35,13 @@ export async function POST() {
 
     return NextResponse.json({ authorisationUrl });
   } catch (err) {
-    console.error("GoCardless mandate setup error:", err);
+    const gcErr = err as { message?: string; errors?: unknown; code?: number };
+    console.error("GoCardless mandate setup error:", {
+      message: gcErr.message,
+      code: gcErr.code,
+      errors: JSON.stringify(gcErr.errors, null, 2),
+      client: { email: client.email, name: client.contactName, company: client.companyName },
+    });
     return NextResponse.json(
       { error: "Failed to set up payment method" },
       { status: 500 }
