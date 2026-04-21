@@ -55,7 +55,9 @@ function parseServices(raw: string): string[] {
   try {
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed)) {
-      return parsed.map((s: { name?: string }) => s.name ?? String(s));
+      return parsed.map((s: { serviceName?: string; name?: string; serviceId?: string }) =>
+        s.serviceName ?? s.name ?? s.serviceId ?? "Service"
+      );
     }
     // Could be an object with boolean flags
     const labels: string[] = [];
