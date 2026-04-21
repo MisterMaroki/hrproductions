@@ -1,25 +1,15 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { isWhiteLabel } from "@/lib/brand";
 import styles from "./page.module.css";
-
-const SHOWCASE_IMAGES = [
-  "/images/IMG_2904.JPG",
-  "/images/IMG_2909.JPG",
-  "/images/IMG_2906.JPG",
-  "/images/IMG_2912.JPG",
-  "/images/IMG_2900.JPG",
-];
 
 type Step = 1 | 2 | 3;
 
 export default function ClientSignupPage() {
   const [step, setStep] = useState<Step>(1);
-  const [imageIndex, setImageIndex] = useState(0);
-  const [imageLoaded, setImageLoaded] = useState(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const [form, setForm] = useState({
     companyName: "",
@@ -33,16 +23,16 @@ export default function ClientSignupPage() {
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Cycle images
   useEffect(() => {
-    const timer = setInterval(() => {
-      setImageLoaded(false);
-      setTimeout(() => {
-        setImageIndex((i) => (i + 1) % SHOWCASE_IMAGES.length);
-        setImageLoaded(true);
-      }, 600);
-    }, 5000);
-    return () => clearInterval(timer);
+    const v = videoRef.current;
+    if (!v) return;
+    const mobile = window.matchMedia("(max-width: 768px)").matches;
+    const mobileSrc = process.env.NEXT_PUBLIC_BUNNY_CDN_HERO_URL_MOBILE;
+    const desktopSrc = process.env.NEXT_PUBLIC_BUNNY_CDN_HERO_URL || "/hero.mp4";
+    v.muted = true;
+    v.src = mobile && mobileSrc ? mobileSrc : desktopSrc;
+    v.load();
+    v.play().catch(() => {});
   }, []);
 
   const handleChange = (field: string, value: string) => {
@@ -143,15 +133,16 @@ export default function ClientSignupPage() {
 
   return (
     <main className={styles.page}>
-      {/* Left panel — imagery */}
+      {/* Left panel — hero video */}
       <div className={styles.imagePanel}>
-        <div className={`${styles.imageWrapper} ${imageLoaded ? styles.imageVisible : styles.imageHidden}`}>
-          <Image
-            src={SHOWCASE_IMAGES[imageIndex]}
-            alt="Property photography by The Property Room"
-            fill
+        <div className={styles.imageWrapper}>
+          <video
+            ref={videoRef}
+            muted
+            loop
+            playsInline
+            preload="none"
             className={styles.image}
-            priority={imageIndex === 0}
           />
         </div>
         <div className={styles.imageOverlay} />
@@ -167,14 +158,6 @@ export default function ClientSignupPage() {
                 ? "Professional property photography and visual media services."
                 : "Professional property marketing trusted by leading estate agents across the South East."}
             </p>
-            <div className={styles.imageDots}>
-              {SHOWCASE_IMAGES.map((_, i) => (
-                <span
-                  key={i}
-                  className={`${styles.imageDot} ${i === imageIndex ? styles.imageDotActive : ""}`}
-                />
-              ))}
-            </div>
           </div>
         </div>
       </div>
