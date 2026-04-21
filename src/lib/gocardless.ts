@@ -24,6 +24,7 @@ export function getGoCardlessClient(): GoCardlessClient {
  * Returns the authorisation URL to embed in the drop-in component.
  */
 export async function createBillingRequestFlow(
+  clientId: string,
   clientEmail: string,
   clientName: string,
   companyName: string
@@ -31,8 +32,10 @@ export async function createBillingRequestFlow(
   const gc = getGoCardlessClient();
 
   const billingRequest = await gc.billingRequests.create({
+    metadata: { client_id: clientId },
     mandate_request: {
       scheme: "bacs",
+      metadata: { client_id: clientId },
     },
   });
 

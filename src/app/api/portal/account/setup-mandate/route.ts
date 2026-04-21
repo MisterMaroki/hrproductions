@@ -28,6 +28,7 @@ export async function POST() {
 
   try {
     const { authorisationUrl } = await createBillingRequestFlow(
+      client.id,
       client.email,
       client.contactName,
       client.companyName
